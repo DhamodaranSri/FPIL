@@ -53,9 +53,22 @@
 		ECC9A53C1621942734B1AF8F /* Pods-FPIL.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FPIL.release.xcconfig"; path = "Target Support Files/Pods-FPIL/Pods-FPIL.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7939FE632E7C3FBE00C0D5B6 /* Exceptions for "FPIL" folder in "FPIL" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 79A01C612E4A3EC700215BC0 /* FPIL */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		79A01C642E4A3EC700215BC0 /* FPIL */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7939FE632E7C3FBE00C0D5B6 /* Exceptions for "FPIL" folder in "FPIL" target */,
+			);
 			path = FPIL;
 			sourceTree = "<group>";
 		};
@@ -529,6 +542,7 @@
 				DEVELOPMENT_TEAM = 35354K52VU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FPIL/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -562,6 +576,7 @@
 				DEVELOPMENT_TEAM = 35354K52VU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FPIL/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

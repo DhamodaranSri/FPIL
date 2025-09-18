@@ -14,6 +14,7 @@ struct TabBarItem: Codable, Hashable, Identifiable {
     let iconName: String
     let userType: [UserType]
     let userTypeIds: [Int]
+    let navBarTitle: String
 }
 
 struct UserType: Codable, Hashable, Identifiable {

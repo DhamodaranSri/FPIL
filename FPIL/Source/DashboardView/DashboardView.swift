@@ -20,9 +20,9 @@ struct DashboardView: View {
     var body: some View {
         VStack(spacing: 0) {
             CustomNavBar(
-                title: "AI Fire Inspector Pro",
+                title: viewModel.selectedTab?.navBarTitle ?? "",
                 showBackButton: false,
-                actions: [
+                actions: viewModel.selectedTab?.name == "Home" ? [
                     NavBarAction(icon: "plus") {
                         alertMessage = "Under Construction"
                         showAlert = true
@@ -31,9 +31,14 @@ struct DashboardView: View {
                         alertMessage = "Under Construction"
                         showAlert = true
                     }
+                ] : [
+                    NavBarAction(icon: "profile") {
+                        alertMessage = "Under Construction"
+                        showAlert = true
+                    }
                 ],
                 backgroundColor: .applicationBGcolor,
-                titleColor: .appPrimary
+                titleColor: viewModel.selectedTab?.name == "Home" ? .appPrimary : .white
             ).alert(alertMessage, isPresented: $showAlert) {
                 Button("OK", role: .cancel) { }
             }
