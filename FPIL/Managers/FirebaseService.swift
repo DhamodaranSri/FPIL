@@ -90,6 +90,34 @@ class FirebaseService<T: Codable & Identifiable> where T.ID == String? {
             }
     }
 
+    // Fetch by any field with Multiple Where (single or multiple matches)
+    func fetchByMultipleWhere(conditions: [(field: String, value: Any)], orderBy: String, completion: @escaping (Result<[T], Error>) -> Void) {
+        
+        var query: Query = collectionRef
+        
+        for condition in conditions {
+            query = query.whereField(condition.field, isEqualTo: condition.value)
+        }
+        
+        query
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                guard let documents = snapshot?.documents else {
+                    completion(.success([]))
+                    return
+                }
+                do {
+                    let items = try documents.compactMap { try $0.data(as: T.self) }
+                    completion(.success(items))
+                } catch {
+                    completion(.failure(error))
+                }
+            }
+    }
+
     // Fetch by any field (single or multiple matches)
     func fetchByContains(field: String, value: Any, orderBy: String, completion: @escaping (Result<[T], Error>) -> Void) {
         collectionRef

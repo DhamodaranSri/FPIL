@@ -9,12 +9,12 @@ import SwiftUI
 
 // MARK: - List View
 struct ExpandableListView: View {
-    @ObservedObject var viewModel: HomeViewModel
+    @ObservedObject var viewModel: JobListViewModel
     
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                let groupedArray = Dictionary(grouping: viewModel.filteredItems, by: { $0.buildingTyname })
+                let groupedArray = Dictionary(grouping: viewModel.filteredItems, by: { $0.buildingName })
                     .sorted { $0.key < $1.key }
                 ForEach(groupedArray, id: \.key) { key, value in
                     Text(key)
@@ -23,10 +23,12 @@ struct ExpandableListView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    ForEach(value) { site in
-                        SiteCardView(site: site) {
+                    let fetchBuildingNamedArray = viewModel.filteredItems.filter { $0.buildingName == key }
+                                        
+                    ForEach(fetchBuildingNamedArray, id:\.id) { job in
+                        JobCardView(job: job) {
                             withAnimation {
-                                viewModel.toggleExpand(for: site)
+                                viewModel.toggleExpand(for: job)
                             }
                         }
                     }
@@ -40,6 +42,6 @@ struct ExpandableListView: View {
 }
 
 #Preview {
-    ExpandableListView(viewModel: HomeViewModel())
+    ExpandableListView(viewModel: JobListViewModel())
 }
 
