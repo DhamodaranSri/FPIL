@@ -46,9 +46,10 @@ struct BottomTabBar: View {
                         .frame(maxWidth: .infinity)
                     
                     Text(tab.name)
-                        .font(.caption2)
+                        .font(
+                            currentTab?.name == tab.name ? ApplicationFont.bold(size: 10).value : ApplicationFont.regular(size: 10).value
+                        )
                         .foregroundColor(.white)
-                        .bold(currentTab?.name == tab.name)
                 }
             }
         }
@@ -68,5 +69,5 @@ extension View {
 }
 
 #Preview {
-    BottomTabBar(currentTab: .constant(TabBarItem(name: "Home", iconName: "home_ic", userType: [UserType(id: 0, type: "user")], userTypeIds: [0])), tabs: [TabBarItem(name: "Home", iconName: "home_ic", userType: [UserType(id: 0, type: "user")], userTypeIds: [0])])
+    BottomTabBar(currentTab: .constant(TabBarItem(name: "Home", iconName: "home_ic", userType: [UserType(id: 0, type: "user")], userTypeIds: [0], navBarTitle: "AI Fire Inspector Pro")), tabs: [TabBarItem(name: "Home", iconName: "home_ic", userType: [UserType(id: 0, type: "user")], userTypeIds: [0], navBarTitle: "AI Fire Inspector Pro")])
 }

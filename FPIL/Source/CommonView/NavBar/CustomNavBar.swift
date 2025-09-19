@@ -34,9 +34,7 @@ struct CustomNavBar: View {
             
             // Title
             Text(title)
-                .font(.headline)
-                .bold()
-                .fontWeight(.bold)
+                .font(ApplicationFont.bold(size: 18).value)
                 .foregroundColor(titleColor)
             
             Spacer()
@@ -75,4 +73,18 @@ struct NavBarAction: Identifiable, Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
+}
+
+#Preview {
+    CustomNavBar(
+        title: "AI Fire Inspector Pro",
+        showBackButton: false,
+        actions: [
+            NavBarAction(icon: "plus") {
+
+            }
+        ],
+        backgroundColor: .applicationBGcolor,
+        titleColor: .appPrimary
+    )
 }

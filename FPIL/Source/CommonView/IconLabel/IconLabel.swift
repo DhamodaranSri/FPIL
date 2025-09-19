@@ -15,6 +15,7 @@ struct IconLabel: View {
     var body: some View {
         Label {
             Text(labelTitle)
+                .font(ApplicationFont.regular(size: 12).value)
                 .foregroundColor(textColor)
                 .lineLimit(1)
         } icon: {
