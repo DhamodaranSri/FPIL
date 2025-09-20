@@ -1,8 +1,2 @@
-# Ignore real xcconfig files (these contain secrets)
-Configs/*.xcconfig
-
-# But allow safe template files
-!Configs/*.xcconfig.template
-
 # Ignore Google plist if accidentally added
 GoogleService-Info.plist

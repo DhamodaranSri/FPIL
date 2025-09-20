@@ -1,5 +1,5 @@
 //
-//  SiteCardView.swift
+//  JobCardView.swift
 //  FPIL
 //
 //  Created by OrganicFarmers on 18/09/25.
@@ -7,12 +7,16 @@
 
 import SwiftUI
 
-struct SiteCardView: View {
-    let site: Site
+struct JobCardView: View {
+    let job: JobModel
     let onToggle: () -> Void
     
     @State private var showAlert = false
     @State private var alertMessage = ""
+    
+    var lastVisits: [LastVisit] {
+        job.lastVist ?? []
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -20,26 +24,28 @@ struct SiteCardView: View {
             // Header
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(site.companyName)
+                    Text(job.companyName)
                         .font(ApplicationFont.bold(size: 14).value)
                         .foregroundColor(.white)
                     
-                    Text(site.address)
+                    Text(job.address)
                         .font(ApplicationFont.regular(size: 12).value)
                         .foregroundColor(.white)
                     
                     HStack {
                         Text("Site ID:")
                             .font(ApplicationFont.bold(size: 12).value)
-                        Text(site.siteId)
+                        Text(job.siteId)
                             .font(ApplicationFont.regular(size: 12).value)
                     }
                     .foregroundColor(.white)
                 }
                 Spacer()
                 
-                if site.isExpanded {
-                    Text("Due Soon (5 days)")
+                let days = abs(Calendar.current.dateComponents([.day], from: (job.lastDateToInspection ?? Date()), to: Date()).day!)
+                                
+                if (days < 6) {
+                    Text("Due Soon (\(days) days)")
                         .font(ApplicationFont.regular(size: 10).value)
                         .padding(6)
                         .padding(.horizontal, 6)
@@ -55,17 +61,17 @@ struct SiteCardView: View {
             
             // Contact Info
             HStack(spacing: 16) {
-                IconLabel(labelTitle: site.contactName, imageName: "user", textColor: .white)
+                IconLabel(labelTitle: job.contactName, imageName: "user", textColor: .white)
                 Button(action: {
                     alertMessage = "Under Construction"
                     showAlert = true
                 }) {
-                    IconLabel(labelTitle: site.phone, imageName: "phone", textColor: .white)
+                    IconLabel(labelTitle: job.phone, imageName: "phone", textColor: .white)
                 }
             }
             
             // Expanded Content
-            if site.isExpanded {
+            if job.isExpanded ?? false {
                 VStack(alignment: .leading, spacing: 12) {
                     
                     // Buttons
@@ -108,34 +114,38 @@ struct SiteCardView: View {
                         .foregroundColor(.white)
                         .contentShape(Rectangle())
                     }
-                                        
-                    Text("Last Visit Details")
-                        .font(ApplicationFont.bold(size: 12).value)
-                        .bold()
-                        .foregroundColor(.white)
                     
-                    VStack(alignment: .center, spacing: 8) {
-                        HStack(spacing: 20) {
-                            IconLabel(labelTitle: "Inspector Mike", imageName: "user", textColor: .white)
-                            IconLabel(labelTitle: "25/7/2025", imageName: "calander", textColor: .white)
-                            IconLabel(labelTitle: "Monthly", imageName: "loop", textColor: .white)
-                        }
-                        
-                        HStack(spacing: 5) {
-                            IconLabel(labelTitle: "999", imageName: "timeline", textColor: .white)
-                            Text(" | ").foregroundColor(.white)
-                            IconLabel(labelTitle: "Commercial", imageName: "commercial", textColor: .white)
-                            Text(" | ").foregroundColor(.white)
-                            IconLabel(labelTitle: "1.2 Hrs", imageName: "clock", textColor: .white)
-                            Text(" | ").foregroundColor(.white)
-                            IconLabel(labelTitle: "100", imageName: "alert", textColor: .warningBG)
-                        }
+                    if lastVisits.count > 0 {
+                        Text("Last Visit Details")
+                            .font(ApplicationFont.bold(size: 12).value)
+                            .bold()
+                            .foregroundColor(.white)
                     }
-                    .padding(.horizontal, 5)
-                    .padding(.vertical)
-                    .frame(maxWidth: .infinity)
-                    .background(RoundedRectangle(cornerRadius: 8).stroke(Color.appPrimary, lineWidth: 1))
-                    .foregroundColor(.white)
+                                        
+                    ForEach(lastVisits) { lastVisit in
+                        VStack(alignment: .center, spacing: 8) {
+                            HStack(spacing: 20) {
+                                IconLabel(labelTitle: lastVisit.inspectorName, imageName: "user", textColor: .white)
+                                IconLabel(labelTitle: lastVisit.visitDate.formatedDateAloneAsString(), imageName: "calander", textColor: .white)
+                                IconLabel(labelTitle: lastVisit.cycleName, imageName: "loop", textColor: .white)
+                            }
+                            
+                            HStack(spacing: 5) {
+                                IconLabel(labelTitle: "\(lastVisit.totalScore)", imageName: "timeline", textColor: .white)
+                                Text(" | ").foregroundColor(.white)
+                                IconLabel(labelTitle: lastVisit.buildTypeName, imageName: "commercial", textColor: .white)
+                                Text(" | ").foregroundColor(.white)
+                                IconLabel(labelTitle: lastVisit.totalSpentTime.formattedDuration(), imageName: "clock", textColor: .white)
+                                Text(" | ").foregroundColor(.white)
+                                IconLabel(labelTitle: "\(lastVisit.totalVoilations)", imageName: "alert", textColor: .warningBG)
+                            }
+                        }
+                        .padding(.horizontal, 5)
+                        .padding(.vertical)
+                        .frame(maxWidth: .infinity)
+                        .background(RoundedRectangle(cornerRadius: 8).stroke(Color.appPrimary, lineWidth: 1))
+                        .foregroundColor(.white)
+                    }
                 }
             }
         }
@@ -143,7 +153,7 @@ struct SiteCardView: View {
         .background(RoundedRectangle(cornerRadius: 10).stroke(Color.red, lineWidth: 1))
         .background(Color.inspectionCellBG)
         .cornerRadius(10)
-        .animation(.easeInOut, value: site.isExpanded)
+        .animation(.easeInOut, value: job.isExpanded)
         .onTapGesture {
             onToggle()
         }

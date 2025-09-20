@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct HorizontalSelectorView: View {
-    @ObservedObject var viewModel: HomeViewModel
+    @ObservedObject var viewModel: JobListViewModel
     
     var selectedColor: Color = .appPrimary
     var unselectedColor: Color = .tabbarIconSelected
@@ -16,7 +16,7 @@ struct HorizontalSelectorView: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .center, spacing: 12) {
-                let groupedArray = Dictionary(grouping: viewModel.items, by: { $0.buildingTyname })
+                let groupedArray = Dictionary(grouping: viewModel.items, by: { $0.buildingName })
                     .sorted { $0.key < $1.key }
                 if groupedArray.count > 0 {
                     Button(action: {
@@ -65,31 +65,43 @@ struct HorizontalSelectorView: View {
 
 @MainActor
 class HorizontalSelectorViewModel: ObservableObject {
-    @Published var items: [Site] = [
-        Site(companyName: "Demo Construction Co.",
-             address: "123 Safety Lane, Fire City, CA 90210",
-             siteId: "SITE-DEMO-001",
-             contactName: "Chief Johnson",
-             phone: "555-FIRE-001",
-             buildingType: 1,
-             buildingTyname: "Commercial Buildings"
-            ),
-        Site(companyName: "Demo Construction Co.",
-             address: "123 Safety Lane, Fire City, CA 90210",
-             siteId: "SITE-DEMO-001",
-             contactName: "Chief Johnson",
-             phone: "555-FIRE-001",
-             buildingType: 2,
-             buildingTyname: "Residential Buildings"
-            ),
-        Site(companyName: "Demo Construction Co.",
-             address: "123 Safety Lane, Fire City, CA 90210",
-             siteId: "SITE-DEMO-001",
-             contactName: "Chief Johnson",
-             phone: "555-FIRE-001",
-             buildingType: 2,
-             buildingTyname: "Residential Buildings"
-            )
+    @Published var items: [JobModel] = [
+        JobModel(
+            id: "Job1",
+            inspectorId: "Inspector1",
+            companyName: "Demo Construction Co.",
+            address: "123 Safety Lane",
+            siteId: "SITE-DEMO-001",
+            contactName: "Chief Johnson",
+            phone: "555-FIRE-001",
+            buildingType: 1,
+            buildingName: "Commercial Buildings",
+            isCompleted: false
+        ),
+        JobModel(
+            id: "Job2",
+            inspectorId: "Inspector1",
+            companyName: "Demo Construction Co.",
+            address: "456 Fire Street",
+            siteId: "SITE-DEMO-002",
+            contactName: "Chief Adams",
+            phone: "555-FIRE-002",
+            buildingType: 2,
+            buildingName: "Residential Buildings",
+            isCompleted: false
+        ),
+        JobModel(
+            id: "Job3",
+            inspectorId: "Inspector1",
+            companyName: "Demo Construction Co.",
+            address: "435 Ponder Street",
+            siteId: "SITE-DEMO-003",
+            contactName: "Sri Nivas",
+            phone: "555-FIRE-003",
+            buildingType: 2,
+            buildingName: "Residential Buildings",
+            isCompleted: false
+        )
     ]
     @Published var selectedId: String? = "All"
     
