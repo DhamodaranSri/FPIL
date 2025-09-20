@@ -14,8 +14,8 @@ struct JobCardView: View {
     @State private var showAlert = false
     @State private var alertMessage = ""
     
-    var lastVisits: [LastVisit]? {
-        job.lastVist
+    var lastVisits: [LastVisit] {
+        job.lastVist ?? []
     }
     
     var body: some View {
@@ -115,14 +115,14 @@ struct JobCardView: View {
                         .contentShape(Rectangle())
                     }
                     
-                    if (lastVisits?.count ?? 0) > 0 {
+                    if lastVisits.count > 0 {
                         Text("Last Visit Details")
                             .font(ApplicationFont.bold(size: 12).value)
                             .bold()
                             .foregroundColor(.white)
                     }
                                         
-                    ForEach(lastVisits ?? []) { lastVisit in
+                    ForEach(lastVisits) { lastVisit in
                         VStack(alignment: .center, spacing: 8) {
                             HStack(spacing: 20) {
                                 IconLabel(labelTitle: lastVisit.inspectorName, imageName: "user", textColor: .white)
@@ -161,26 +161,5 @@ struct JobCardView: View {
         .alert(alertMessage, isPresented: $showAlert) {
             Button("OK", role: .cancel) { }
         }
-    }
-}
-
-
-extension Int {
-    func formattedDuration() -> String {
-        let hours = self / 3600
-        let minutes = (self % 3600) / 60
-        let remainingSeconds = self % 60
-        
-        return String(format: "%02d:%02d:%02d", hours, minutes, remainingSeconds)
-    }
-}
-
-extension Date {
-    func formatedDateAloneAsString() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d/M/yyyy"
-        let formatted = formatter.string(from: self)
-        
-        return formatted
     }
 }
