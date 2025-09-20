@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.fpil.lmntech</string>
+	<string>com.blaster.fpil</string>
 	<key>PROJECT_ID</key>
 	<string>ai-fire-inspector</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:61636061492:ios:6f97e2e20645ab99af1d61</string>
+	<string>1:61636061492:ios:1450fedc569dc5d4af1d61</string>
 </dict>
 </plist>

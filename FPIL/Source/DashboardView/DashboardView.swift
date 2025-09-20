@@ -69,6 +69,7 @@ struct DashboardView: View {
             }
             .background(.clear)
         }
+        .navigationBarBackButtonHidden(true)
         .background(.applicationBGcolor)
         .ignoresSafeArea(edges: .bottom)
     }

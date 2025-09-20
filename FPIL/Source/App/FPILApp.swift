@@ -15,6 +15,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
         if Auth.auth().currentUser != nil {
+//            signOut()
             AppProvider.shared.isSignnedIn = true
             // User is signed in
         } else {
@@ -22,6 +23,13 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             AppProvider.shared.isSignnedIn = false
         }        
         return true
+    }
+    
+    func signOut() {
+        do {
+            try Auth.auth().signOut()
+        } catch {
+        }
     }
 }
 
@@ -35,7 +43,7 @@ struct FPILApp: App {
             if AppProvider.shared.isSignnedIn {
                 DashboardView()
             } else {
-                ContentView()
+                LoginView()
             }
         }
     }
