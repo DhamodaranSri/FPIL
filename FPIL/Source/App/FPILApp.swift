@@ -31,15 +31,10 @@ struct FPILApp: App {
     
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
-//    init() {
-//        // Make all pull-to-refresh spinners gray
-//        UIRefreshControl.appearance().tintColor = .gray
-//    }
-    
     var body: some Scene {
         WindowGroup {
             if AppProvider.shared.isSignnedIn {
-                switch AppProvider.shared.profile?.userType {
+                switch UserDefaultsStore.profileDetail?.userType {
                 case 1: OrganisationListView(viewModel: OrganisationViewModel())
                 case 2: DashboardView()
                 default: DashboardView()

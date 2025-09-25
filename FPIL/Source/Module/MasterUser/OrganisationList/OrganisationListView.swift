@@ -10,11 +10,11 @@ import SwiftUI
 // MARK: - List View
 struct OrganisationListView: View {
     @ObservedObject var viewModel: OrganisationViewModel
-    @State private var showCreateOrganisation = false
+    @State private var path = NavigationPath()
     
     var body: some View {
         
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack {
                 VStack(spacing: 0) {
                     CustomNavBar(
@@ -22,7 +22,10 @@ struct OrganisationListView: View {
                         showBackButton: false,
                         actions: [
                             NavBarAction(icon: "plus") {
-                                showCreateOrganisation = true
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                                path.append("createOrganisation")
                             },
                             NavBarAction(icon: "logout") {
                                 viewModel.signout()
@@ -111,7 +114,10 @@ struct OrganisationListView: View {
                                     ForEach(viewModel.filteredItems, id:\.id) { organisation in
                                         OrganisationListCell(organisation: organisation) { org in
                                             viewModel.selectedItem = org
-                                            showCreateOrganisation = true
+                                            if path.count > 0 {
+                                                path.removeLast()
+                                            }
+                                            path.append("createOrganisation")
                                         }
                                     }
                                 }
@@ -127,8 +133,16 @@ struct OrganisationListView: View {
                 .navigationBarBackButtonHidden(true)
                 .background(.applicationBGcolor)
                 .ignoresSafeArea(edges: .bottom)
-                .navigationDestination(isPresented: $showCreateOrganisation) {
-                    CreateOrganisationView(viewModel: viewModel)
+                .navigationDestination(for: String.self) { value in
+                    if value == "createOrganisation" {
+                        CreateOrganisationView(viewModel: viewModel) {
+                            DispatchQueue.main.async {
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                            }
+                        }
+                    }
                 }
                 .navigationDestination(isPresented: $viewModel.isUserSignedOut) {
                     LoginView()

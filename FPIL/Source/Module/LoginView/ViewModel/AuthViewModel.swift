@@ -29,7 +29,7 @@ class AuthViewModel: ObservableObject {
                 switch result {
                 case .success(let items):
                     if !items.isEmpty {
-                        AppProvider.shared.profile = items.first
+                        UserDefaultsStore.profileDetail = items.first
                         self?.profile = items.first
                         completion(true, nil)
                         return

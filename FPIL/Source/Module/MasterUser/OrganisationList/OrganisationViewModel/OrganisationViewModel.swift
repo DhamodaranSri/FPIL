@@ -130,7 +130,7 @@ extension OrganisationViewModel {
                 self?.isLoading = false
                 switch result {
                 case .success():
-                    AppProvider.shared.profile = nil
+                    UserDefaultsStore.profileDetail = nil
                     AppProvider.shared.isSignnedIn = false
                     self?.isUserSignedOut = true
                 case .failure(let error):

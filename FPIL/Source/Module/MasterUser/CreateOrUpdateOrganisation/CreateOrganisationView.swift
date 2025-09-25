@@ -9,9 +9,9 @@ import SwiftUI
 
 struct CreateOrganisationView: View {
     @ObservedObject var viewModel: OrganisationViewModel
-    @Environment(\.dismiss) var dismiss
     @StateObject private var form: OrganisationFormState
     @State private var isEditMode: Bool = false
+    var onClick: (() -> ())? = nil
     
     @State private var showConfirmationAlert = false
     @State private var alertType: AlertType? = nil
@@ -21,7 +21,8 @@ struct CreateOrganisationView: View {
         case toggleStatus
     }
     
-    init(viewModel: OrganisationViewModel) {
+    init(viewModel: OrganisationViewModel, onClick: (() -> ())? = nil) {
+        self.onClick = onClick
         self.viewModel = viewModel
         _form = StateObject(wrappedValue: OrganisationFormState(
             timeZones: [
@@ -63,7 +64,7 @@ struct CreateOrganisationView: View {
                     titleColor: .appPrimary,
                     backAction: {
                         viewModel.selectedItem = nil
-                        dismiss()
+                        onClick?()
                     }
                 )
                 ScrollView {
@@ -258,7 +259,7 @@ struct CreateOrganisationView: View {
             if error == nil {
                 DispatchQueue.main.async {
                     viewModel.selectedItem = nil
-                    dismiss()
+                    onClick?()
                 }
             }
         }
@@ -288,7 +289,7 @@ struct CreateOrganisationView: View {
             if error == nil {
                 DispatchQueue.main.async {
                     viewModel.selectedItem = nil
-                    dismiss()
+                    onClick?()
                 }
             }
         }
