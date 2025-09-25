@@ -47,6 +47,29 @@ class FirebaseService<T: Codable & Identifiable> where T.ID == String? {
         }
     }
     
+    func fetchAllData(completion: @escaping (Result<[T], Error>) -> Void) {
+        collectionRef.getDocuments { snapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let documents = snapshot?.documents else {
+                completion(.success([])) // no data
+                return
+            }
+            
+            do {
+                let users = try documents.compactMap { doc -> T? in
+                    return try doc.data(as: T.self)
+                }
+                completion(.success(users))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
+    
     // Fetch by ID
     func fetch(byId id: String, completion: @escaping (Result<T, Error>) -> Void) {
         collectionRef.document(id).getDocument { document, error in
@@ -99,6 +122,10 @@ class FirebaseService<T: Codable & Identifiable> where T.ID == String? {
             query = query.whereField(condition.field, isEqualTo: condition.value)
         }
         
+        if orderBy.isEmpty == false {
+            query = query.order(by: orderBy)
+        }
+
         query
             .getDocuments { snapshot, error in
                 if let error = error {

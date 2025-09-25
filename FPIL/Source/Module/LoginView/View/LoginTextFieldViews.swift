@@ -19,7 +19,7 @@ struct LoginTextFieldViews: View {
                 !textFieldValidators.isValidEmail(textFieldValidators.email) {
                 Text("Invalid email address")
                     .font(ApplicationFont.regular(size: 10).value)
-                    .foregroundColor(.red)
+                    .foregroundColor(.white)
                     .padding(.vertical, 0)
             }
             

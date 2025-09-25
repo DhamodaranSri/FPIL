@@ -52,3 +52,52 @@ enum ValidationType: String, CaseIterable {
     case email = "email"
     case all = "all"
 }
+
+struct Validator {
+    
+    static func isNotEmpty(_ value: String?, fieldName: String) -> String? {
+        guard let value = value, !value.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return "\(fieldName) is required."
+        }
+        return nil
+    }
+    
+    static func isValidEmail(_ email: String?) -> String? {
+        guard let email = email, !email.isEmpty else {
+            return "Email is required."
+        }
+        
+        let emailRegex = #"^\S+@\S+\.\S+$"#
+        if NSPredicate(format: "SELF MATCHES %@", emailRegex).evaluate(with: email) {
+            return nil
+        } else {
+            return "Invalid email address."
+        }
+    }
+    
+    static func isValidPhone(_ number: String?, fieldName: String) -> String? {
+        guard let number = number, !number.isEmpty else {
+            return "\(fieldName) is required."
+        }
+        
+        let regex = #"^[0-9]{10,15}$"#
+        if NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: number) {
+            return nil
+        } else {
+            return "\(fieldName) must be 10–15 digits."
+        }
+    }
+    
+    static func isValidZip(_ zip: String?) -> String? {
+        guard let zip = zip, !zip.isEmpty else {
+            return "Zip Code is required."
+        }
+        
+        let regex = #"^[0-9]{5,6}$"#
+        if NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: zip) {
+            return nil
+        } else {
+            return "Invalid Zip Code."
+        }
+    }
+}

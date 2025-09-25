@@ -30,11 +30,17 @@ struct DashboardView: View {
                     NavBarAction(icon: "profile") {
                         alertMessage = "Under Construction"
                         showAlert = true
+                    },
+                    NavBarAction(icon: "logout") {
+                        viewModel.signout()
                     }
                 ] : [
                     NavBarAction(icon: "profile") {
                         alertMessage = "Under Construction"
                         showAlert = true
+                    },
+                    NavBarAction(icon: "logout") {
+                        viewModel.signout()
                     }
                 ],
                 backgroundColor: .applicationBGcolor,
@@ -72,6 +78,9 @@ struct DashboardView: View {
         .navigationBarBackButtonHidden(true)
         .background(.applicationBGcolor)
         .ignoresSafeArea(edges: .bottom)
+        .navigationDestination(isPresented: $viewModel.isUserSignedOut) {
+            LoginView()
+        }
     }
 }
 

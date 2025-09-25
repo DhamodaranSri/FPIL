@@ -15,21 +15,14 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
         if Auth.auth().currentUser != nil {
-//            signOut()
             AppProvider.shared.isSignnedIn = true
             // User is signed in
         } else {
             // No User is Signed in
             AppProvider.shared.isSignnedIn = false
-        }        
-        return true
-    }
-    
-    func signOut() {
-        do {
-            try Auth.auth().signOut()
-        } catch {
         }
+        UIRefreshControl.appearance().tintColor = .gray
+        return true
     }
 }
 
@@ -38,10 +31,19 @@ struct FPILApp: App {
     
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
+//    init() {
+//        // Make all pull-to-refresh spinners gray
+//        UIRefreshControl.appearance().tintColor = .gray
+//    }
+    
     var body: some Scene {
         WindowGroup {
             if AppProvider.shared.isSignnedIn {
-                DashboardView()
+                switch AppProvider.shared.profile?.userType {
+                case 1: OrganisationListView(viewModel: OrganisationViewModel())
+                case 2: DashboardView()
+                default: DashboardView()
+                }
             } else {
                 LoginView()
             }

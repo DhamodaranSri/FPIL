@@ -17,11 +17,7 @@ struct ExpandableListView: View {
                 let groupedArray = Dictionary(grouping: viewModel.filteredItems, by: { $0.buildingName })
                     .sorted { $0.key < $1.key }
                 ForEach(groupedArray, id: \.key) { key, value in
-                    Text(key)
-                        .font(ApplicationFont.bold(size: 14).value)
-                        .bold()
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    HeaderCell(titleString: key)
                     
                     let fetchBuildingNamedArray = viewModel.filteredItems.filter { $0.buildingName == key }
                                         

@@ -12,6 +12,8 @@ final class DashboardViewModel: ObservableObject {
     @Published var tabs: [TabBarItem] = []
     @Published var selectedTab: TabBarItem?
     @Published var isLoading = false
+    @Published var isUserSignedOut: Bool = false
+    @Published var serviceError: Error? = nil
     
     private let repository: TabBarRepositoryProtocol
     
@@ -30,6 +32,7 @@ final class DashboardViewModel: ObservableObject {
                     self?.tabs = items
                     self?.selectedTab = items.first
                 case .failure(let error):
+                    self?.serviceError = error
                     print("Error fetching tabs: \(error)")
                 }
             }
@@ -38,5 +41,25 @@ final class DashboardViewModel: ObservableObject {
     
     func selectTab(_ tab: TabBarItem) {
         selectedTab = tab
+    }
+    
+    func signout() {
+        isLoading = true
+        
+        repository.userSignOut { [weak self] result in
+            DispatchQueue.main.async {
+
+                self?.isLoading = false
+                switch result {
+                case .success():
+                    AppProvider.shared.profile = nil
+                    AppProvider.shared.isSignnedIn = false
+                    self?.isUserSignedOut = true
+                case .failure(let error):
+                    self?.serviceError = error
+                    print("Error fetching tabs: \(error)")
+                }
+            }
+        }
     }
 }

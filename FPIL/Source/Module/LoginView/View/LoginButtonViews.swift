@@ -13,10 +13,6 @@ struct LoginButtonViews: View {
     @EnvironmentObject var textFieldValidators: TextFieldValidators
     var body: some View {
         VStack (spacing: 15) {
-            NavigationLink(destination: DashboardView(),
-                           isActive: $goToDashboard) {
-                EmptyView()
-            }
             PrimaryButton(sendAction: {
                 let email = textFieldValidators.email
                 let password = textFieldValidators.password
@@ -28,11 +24,17 @@ struct LoginButtonViews: View {
                         }
                     }
                 }
-            }, buttonTitle: "Login")
+            }, buttonTitle: "Login").navigationDestination(isPresented: $goToDashboard) {
+                switch authVM.profile?.userType {
+                case 1: OrganisationListView(viewModel: OrganisationViewModel())
+                case 2: DashboardView()
+                default: DashboardView()
+                }
+            }
             
             if let error = authVM.errorMessage {
                 Text(error)
-                    .foregroundColor(.red)
+                    .foregroundColor(.white)
                     .font(.caption)
             }
         }

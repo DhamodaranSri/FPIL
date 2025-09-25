@@ -11,6 +11,7 @@ final class AppProvider: NSObject {
     static let shared = AppProvider()
     
     var isSignnedIn: Bool = false
+    var profile: Profile? = nil
     
     private override init() { }
 }
