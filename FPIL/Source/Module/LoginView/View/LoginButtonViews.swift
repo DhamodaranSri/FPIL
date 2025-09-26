@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct LoginButtonViews: View {
-    @State var goToDashboard: Bool = false
     @EnvironmentObject var authVM: AuthViewModel
     @EnvironmentObject var textFieldValidators: TextFieldValidators
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
     var body: some View {
         VStack (spacing: 15) {
             PrimaryButton(sendAction: {
@@ -20,17 +20,11 @@ struct LoginButtonViews: View {
                 authVM.signIn(email: email, password: password) { result, error in
                     DispatchQueue.main.async {
                         if result {
-                            goToDashboard = true
+                            isLoggedIn = true
                         }
                     }
                 }
-            }, buttonTitle: "Login").navigationDestination(isPresented: $goToDashboard) {
-                switch authVM.profile?.userType {
-                case 1: OrganisationListView(viewModel: OrganisationViewModel())
-                case 2: DashboardView()
-                default: DashboardView()
-                }
-            }
+            }, buttonTitle: "Login")
             
             if let error = authVM.errorMessage {
                 Text(error)

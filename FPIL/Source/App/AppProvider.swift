@@ -10,7 +10,6 @@ import Foundation
 final class AppProvider: ObservableObject {
     static let shared = AppProvider()
     
-    var isSignnedIn: Bool = false
     var profile: Profile? = nil
     
     private init() { }

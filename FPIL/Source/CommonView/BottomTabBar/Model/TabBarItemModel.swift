@@ -12,13 +12,7 @@ struct TabBarItem: Codable, Hashable, Identifiable {
     var id: String? = UUID().uuidString
     let name: String
     let iconName: String
-    let userType: [UserType]
     let userTypeIds: [Int]
     let navBarTitle: String
 }
 
-struct UserType: Codable, Hashable, Identifiable {
-    let id: Int
-    let type: String
-    
-}

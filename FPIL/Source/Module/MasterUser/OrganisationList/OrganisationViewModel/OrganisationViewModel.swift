@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 // MARK: - ViewModel
 @MainActor
@@ -23,7 +24,7 @@ class OrganisationViewModel: ObservableObject {
     @Published private(set) var filteredItems: [OrganisationModel] = []
     @Published var serviceError: Error? = nil
     @Published var isLoading: Bool = false
-    @Published var isUserSignedOut: Bool = false
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
     
     init(organisationRepository: OrganisationRepositoryProtocol = FirebaseOrganisationRepository()) {
         self.organisationRepository = organisationRepository
@@ -130,9 +131,8 @@ extension OrganisationViewModel {
                 self?.isLoading = false
                 switch result {
                 case .success():
-                    UserDefaultsStore.profileDetail = nil
-                    AppProvider.shared.isSignnedIn = false
-                    self?.isUserSignedOut = true
+                    UserDefaultsStore.clearData()
+                    self?.isLoggedIn = false
                 case .failure(let error):
                     self?.serviceError = error
                 }

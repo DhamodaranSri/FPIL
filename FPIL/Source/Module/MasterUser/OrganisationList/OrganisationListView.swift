@@ -144,9 +144,6 @@ struct OrganisationListView: View {
                         }
                     }
                 }
-                .navigationDestination(isPresented: $viewModel.isUserSignedOut) {
-                    LoginView()
-                }
                 
                 if viewModel.isLoading {
                     LoadingView()

@@ -8,17 +8,17 @@
 import Foundation
 
 final class FirebaseInspectionJobRepository: InspectionJobRepositoryProtocol {
-    private let service: FirebaseService<JobModel>
+    private let inspectionService: FirebaseService<JobModel>
     
     init() {
-        service = FirebaseService<JobModel>(collectionName: "InspectionJobItems")
+        inspectionService = FirebaseService<JobModel>(collectionName: "InspectionJobItems")
     }
 
     func fetchInspectionJobs(
         forConditions conditions: [(field: String, value: Any)],
         completion: @escaping (Result<[JobModel], any Error>) -> Void
     ) {
-        service.fetchByMultipleWhere(conditions: conditions, orderBy: "") { result in
+        inspectionService.fetchByMultipleWhere(conditions: conditions, orderBy: "") { result in
             completion(result)
         }
     }

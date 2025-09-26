@@ -78,9 +78,6 @@ struct DashboardView: View {
         .navigationBarBackButtonHidden(true)
         .background(.applicationBGcolor)
         .ignoresSafeArea(edges: .bottom)
-        .navigationDestination(isPresented: $viewModel.isUserSignedOut) {
-            LoginView()
-        }
     }
 }
 

@@ -76,21 +76,23 @@ struct JobCardView: View {
                     
                     // Buttons
                     HStack(spacing: 20) {
-                        Button(action: {
-                            alertMessage = "Under Construction"
-                            showAlert = true
-                        }) {
-                            IconLabel(labelTitle: "Start", imageName: "play", textColor: .white)
-                                .font(ApplicationFont.bold(size: 12).value)
-                                .padding(.vertical, 6)
-                                .padding(.horizontal, 12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .stroke(Color.appPrimary, lineWidth: 1)
-                                )
+                        if (UserDefaultsStore.profileDetail?.userType != 2) {
+                            Button(action: {
+                                alertMessage = "Under Construction"
+                                showAlert = true
+                            }) {
+                                IconLabel(labelTitle: "Start", imageName: "play", textColor: .white)
+                                    .font(ApplicationFont.bold(size: 12).value)
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.appPrimary, lineWidth: 1)
+                                    )
+                            }
+                            .foregroundColor(.white)
+                            .contentShape(Rectangle())
                         }
-                        .foregroundColor(.white)
-                        .contentShape(Rectangle())
                         
                         Button {
                             alertMessage = "Under Construction"

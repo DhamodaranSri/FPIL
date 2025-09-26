@@ -7,19 +7,20 @@
 
 import Foundation
 import Combine
+import SwiftUI
 
 final class DashboardViewModel: ObservableObject {
     @Published var tabs: [TabBarItem] = []
     @Published var selectedTab: TabBarItem?
     @Published var isLoading = false
-    @Published var isUserSignedOut: Bool = false
     @Published var serviceError: Error? = nil
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
     
     private let repository: TabBarRepositoryProtocol
     
     init(repository: TabBarRepositoryProtocol = FirebaseTabBarRepository()) {
         self.repository = repository
-        fetchTabs(forUserType: 0) // Example: userTypeId = 0
+        fetchTabs(forUserType: UserDefaultsStore.profileDetail?.userType ?? 2)
     }
     
     func fetchTabs(forUserType userTypeId: Int) {
@@ -52,9 +53,8 @@ final class DashboardViewModel: ObservableObject {
                 self?.isLoading = false
                 switch result {
                 case .success():
-                    UserDefaultsStore.profileDetail = nil
-                    AppProvider.shared.isSignnedIn = false
-                    self?.isUserSignedOut = true
+                    UserDefaultsStore.clearData()
+                    self?.isLoggedIn = false
                 case .failure(let error):
                     self?.serviceError = error
                     print("Error fetching tabs: \(error)")

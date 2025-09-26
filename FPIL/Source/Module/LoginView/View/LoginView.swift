@@ -37,7 +37,6 @@ struct LoginView: View {
                     }
                     .padding()
                     .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-//                    .background(Color.applicationBGcolor)
                 }
             }
             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)

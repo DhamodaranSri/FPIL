@@ -119,15 +119,6 @@ final class FirebaseOrganisationRepository: OrganisationRepositoryProtocol {
             completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
         }
     }
-    
-    func fetchTabs(forUserType userTypeId: Int, completion: @escaping (Result<[TabBarItem], NSError>) -> Void) {
-        
-        //        let newJob = OrganisationModelDTO(id: UUID().uuidString, organisationName: "Solimo FireStation", businessOwnerName: "Adam Jason", organisationAddress: "111, Pendfold Street, VGN MayField Park, East Tambaram, Chennai - 600099", organisationContactNumber: "9600000000", businessOwnerContactNumber: "8475932147", organisationAdminEmail: "solimo@fire.com", timeZone: Timezone(id: "1", name: "CA"), jurisdiction: Jurisdiction(id: "1", name: "California"), codeReference: CodeReference(id: "1", name: "Ref-1"), billingCycle: BillingCycle(id: "1", name: "Monthly"))
-        //
-        //        tempService.save(newJob) { result in
-        //            print(result)
-        //        }
-    }
 }
 
 

@@ -9,13 +9,11 @@ import Foundation
 
 final class FirebaseTabBarRepository: TabBarRepositoryProtocol {
     private let service: FirebaseService<TabBarItem>
-    private let tempService: FirebaseService<JobDTO>
     private let fireAuthService: FirebaseAuthService
     
     init() {
         fireAuthService = FirebaseAuthService()
         service = FirebaseService<TabBarItem>(collectionName: "TabbarList")
-        tempService = FirebaseService<JobDTO>(collectionName: "InspectionJobItems")
     }
     
     func fetchTabs(forUserType userTypeId: Int, completion: @escaping (Result<[TabBarItem], Error>) -> Void) {

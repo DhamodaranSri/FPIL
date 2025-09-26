@@ -80,26 +80,6 @@ extension JobModel {
     }
 }
 
-//struct JobModel: Identifiable {
-//    var id: String = ""
-//    var inspector4Id: String = ""
-//    let companyName: String
-//    let address: String
-//    let siteId: String
-//    let contactName: String
-//    let phone: String
-//    var isExpanded: Bool = false
-//    let buildingType:Int
-//    let buildingTyname: String
-//    var isCompleted: Bool = false
-//    var lastVist: [LastVisit]? = nil
-//    var totalAverageScore: Int? = nil
-//    var totalVoilations: Int? = nil
-//    var totalImagesAttached: Int? = nil
-//    var totalNotesAdded: Int? = nil
-//    var checkList: CheckList? = nil
-//}
-
 struct LastVisit: Codable, Identifiable {
     var id: String? = UUID().uuidString
     let inspectorId: String

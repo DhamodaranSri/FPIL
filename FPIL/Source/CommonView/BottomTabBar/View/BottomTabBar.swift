@@ -69,5 +69,5 @@ extension View {
 }
 
 #Preview {
-    BottomTabBar(currentTab: .constant(TabBarItem(name: "Home", iconName: "home_ic", userType: [UserType(id: 0, type: "user")], userTypeIds: [0], navBarTitle: "AI Fire Inspector Pro")), tabs: [TabBarItem(name: "Home", iconName: "home_ic", userType: [UserType(id: 0, type: "user")], userTypeIds: [0], navBarTitle: "AI Fire Inspector Pro")])
+    BottomTabBar(currentTab: .constant(TabBarItem(name: "Home", iconName: "home_ic", userTypeIds: [0], navBarTitle: "AI Fire Inspector Pro")), tabs: [TabBarItem(name: "Home", iconName: "home_ic", userTypeIds: [0], navBarTitle: "AI Fire Inspector Pro")])
 }
