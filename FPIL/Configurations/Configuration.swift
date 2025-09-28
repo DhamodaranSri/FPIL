@@ -24,6 +24,7 @@ enum ApplicationFont {
 class UserDefaultsStore {
 
     private static var profileInfo = "profileInfo"
+    private static var fireStationInfo = "fireStationInfo"
     private static var userInfoDetails = "userInfoDetail"
     private static var lastLoginTimeStamp = "lastLoginTimeStamp"
     private static var isDarkMode = "isDarkMode"
@@ -45,6 +46,25 @@ class UserDefaultsStore {
             let encoder = JSONEncoder()
             if let encoded = try? encoder.encode(newValue) {
                 UserDefaults.standard.set(encoded, forKey: profileInfo)
+            }
+        }
+    }
+
+    static var fireStationDetail :OrganisationModel? {
+        get {
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: fireStationInfo)
+            {
+                let userDetail = try? decoder.decode(OrganisationModel.self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
+        }
+        set {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: fireStationInfo)
             }
         }
     }
@@ -78,6 +98,7 @@ class UserDefaultsStore {
    
     static func clearData(){
         UserDefaults.standard.removeObject(forKey: profileInfo)
+        UserDefaults.standard.removeObject(forKey: fireStationInfo)
         UserDefaults.standard.removeObject(forKey: userInfoDetails)
         UserDefaults.standard.removeObject(forKey: lastLoginTimeStamp)
         UserDefaults.standard.removeObject(forKey: isDarkMode)
