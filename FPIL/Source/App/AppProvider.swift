@@ -7,10 +7,10 @@
 
 import Foundation
 
-final class AppProvider: NSObject {
+final class AppProvider: ObservableObject {
     static let shared = AppProvider()
     
-    var isSignnedIn: Bool = false
+    var profile: Profile? = nil
     
-    private override init() { }
+    private init() { }
 }

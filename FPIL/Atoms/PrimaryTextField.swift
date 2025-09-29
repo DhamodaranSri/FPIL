@@ -25,3 +25,15 @@ struct PrimaryTextField: View {
 #Preview {
     PrimaryTextField(placeholder: "Enter your mobile number").environmentObject(TextFieldValidators())
 }
+
+
+struct HeaderCell: View {
+    var titleString: String = ""
+    var body: some View {
+        Text(titleString)
+            .font(ApplicationFont.bold(size: 14).value)
+            .bold()
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}

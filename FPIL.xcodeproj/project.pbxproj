@@ -16,6 +16,7 @@
 		79A01CC92E4A4D9200215BC0 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 79A01CC82E4A4D9200215BC0 /* FirebaseAppCheck */; };
 		79A01CCD2E4A4E9000215BC0 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 79A01CCC2E4A4E9000215BC0 /* FirebaseFirestore */; };
 		79A01CCF2E4A4EAE00215BC0 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 79A01CCE2E4A4EAE00215BC0 /* FirebaseFirestoreCombine-Community */; };
+		79B75A352E893B1E0030A79A /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 79B75A342E893B1E0030A79A /* FirebaseCrashlytics */; };
 		79CBC1A22E6745D000DBF31B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 79CBC1A12E6745D000DBF31B /* FirebaseAuth */; };
 		79CBC1A42E6745F100DBF31B /* FirebaseAuthCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 79CBC1A32E6745F100DBF31B /* FirebaseAuthCombine-Community */; };
 		8B8C0657F4C29E3FF3DF521B /* Pods_FPILTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57DD862E2F1E5F869F4644BB /* Pods_FPILTests.framework */; };
@@ -94,6 +95,7 @@
 				79A01CC72E4A4D9200215BC0 /* FirebaseAnalyticsIdentitySupport in Frameworks */,
 				79A01CC12E4A4D9200215BC0 /* FirebaseAI in Frameworks */,
 				79CBC1A22E6745D000DBF31B /* FirebaseAuth in Frameworks */,
+				79B75A352E893B1E0030A79A /* FirebaseCrashlytics in Frameworks */,
 				79A01CC32E4A4D9200215BC0 /* FirebaseAnalytics in Frameworks */,
 				79A01CC92E4A4D9200215BC0 /* FirebaseAppCheck in Frameworks */,
 				79A01CC52E4A4D9200215BC0 /* FirebaseAnalyticsCore in Frameworks */,
@@ -177,6 +179,7 @@
 				79A01C5E2E4A3EC700215BC0 /* Sources */,
 				79A01C5F2E4A3EC700215BC0 /* Frameworks */,
 				79A01C602E4A3EC700215BC0 /* Resources */,
+				79B75A362E893B9F0030A79A /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -349,6 +352,29 @@
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
+		};
+		79B75A362E893B9F0030A79A /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}.debug.dylib",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
 		};
 		E2CD931CC31861584F976C82 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -539,7 +565,8 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = SU5Z39MX2P;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -547,7 +574,9 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -575,7 +604,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = SU5Z39MX2P;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -583,7 +612,9 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -762,6 +793,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 79A01CBF2E4A4D9200215BC0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseFirestoreCombine-Community";
+		};
+		79B75A342E893B1E0030A79A /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 79A01CBF2E4A4D9200215BC0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
 		};
 		79CBC1A12E6745D000DBF31B /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
