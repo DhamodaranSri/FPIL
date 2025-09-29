@@ -24,9 +24,16 @@ struct FireInspectorListCell: View {
                             Text(inspector.firstName + " " + inspector.lastName)
                                 .font(ApplicationFont.bold(size: 14).value)
                                 .foregroundColor(.white)
-                            Text(" - " + (inspector.employeeId ?? "(Volunteer)"))
-                                .font(ApplicationFont.regular(size: 12).value)
-                                .foregroundColor(.white)
+                            if let inspector = inspector.employeeId, inspector.isEmpty {
+                                Text(" - (Volunteer)")
+                                    .font(ApplicationFont.regular(size: 12).value)
+                                    .foregroundColor(.white)
+                            } else {
+                                Text(" - " + (inspector.employeeId ?? "(Volunteer)"))
+                                    .font(ApplicationFont.regular(size: 12).value)
+                                    .foregroundColor(.white)
+                            }
+                            
                         }
                         
                         Spacer()

@@ -59,7 +59,9 @@ struct CreateOrUpdateInspector: View {
                         VStack(alignment: .leading) {
                             BottomBorderTextField(text: $form.firstName, placeholder: "First Name")
                             BottomBorderTextField(text: $form.lastName, placeholder: "Last Name")
-                            BottomBorderTextField(text: $form.employeeId, placeholder: "Employee ID")
+                            if form.selectedPosition.userTypeId == 3 {
+                                BottomBorderTextField(text: $form.employeeId, placeholder: "Employee ID")
+                            }
                             HStack {
                                 Text("Position: ")
                                     .font(ApplicationFont.regular(size: 14).value)

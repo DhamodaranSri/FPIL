@@ -54,6 +54,7 @@ class InspectorFormState: ObservableObject {
             parentId = parentId
             position = org.position
             employeeId = org.employeeId ?? ""
+            selectedPosition = org.position
         }
     }
 
@@ -91,13 +92,15 @@ class InspectorFormState: ObservableObject {
             status: status,
             parentId: parentId,
             position: selectedPosition,
-            employeeId: employeeId
+            employeeId: selectedPosition.userTypeId == 3 ? employeeId : ""
         )
     }
 
     func validate() -> [String] {
         var errors: [String] = []
-
+        if selectedPosition.userTypeId == 3 {
+            if let error = Validator.isNotEmpty(employeeId, fieldName: "Employee Code") { errors.append(error) }
+        }
         if let error = Validator.isNotEmpty(stationCode, fieldName: "Station Code") { errors.append(error) }
         if let error = Validator.isNotEmpty(address, fieldName: "Address") { errors.append(error) }
         if let error = Validator.isNotEmpty(city, fieldName: "City") { errors.append(error) }
