@@ -20,9 +20,9 @@ struct SmallCardInfoView: View {
                             .font(ApplicationFont.bold(size: 26).value)
                         Text("\(key)")
                             .foregroundColor(.white)
-                            .font(ApplicationFont.regular(size: 14).value)
+                            .font(ApplicationFont.regular(size: 12).value)
                     }
-                    .frame(alignment: .center)
+                    .frame(maxWidth: .infinity)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 10)
                     .background(RoundedRectangle(cornerRadius: 12).stroke(Color.red, lineWidth: 1))
@@ -31,7 +31,8 @@ struct SmallCardInfoView: View {
                     .contentShape(Rectangle())
                 }
             }
-        }.padding(5)
+        }.padding(.vertical, 5)
+            .padding(.horizontal, 10)
     }
 }
 

@@ -9,92 +9,77 @@ import Foundation
 import FirebaseFirestore
 
 // MARK: - Model
-
-struct JobDTO: Codable, Identifiable {
-    var id: String?  // Firestore auto doc ID
-    var inspectorId: String
-    var companyName: String
-    var address: String
-    var siteId: String
-    var contactName: String
-    var phone: String
-    var buildingType: Int
-    var buildingName: String
-    var isCompleted: Bool
-    var lastVist: [LastVisit]?
-    var totalAverageScore: Int?
-    var totalVoilations: Int?
-    var totalImagesAttached: Int?
-    var totalNotesAdded: Int?
-    var checkList: CheckList?
-    var jobCreatedDate: Date?
-    var lastDateToInspection: Date?
-}
-
 // UI Model
 struct JobModel: Codable, Identifiable {
     var id: String?
-    var inspectorId: String
-    let companyName: String
+    var inspectorId: String?
+    var inspectorName: String?
+    let siteName: String
     let address: String
-    let siteId: String
-    let contactName: String
+    let city: String
+    let street: String
+    let zipCode: String
+    let geoLocationAddress: String
+    let latitude: Double
+    let longitude: Double
+    var clientId: String?
+    let firstName: String
+    let lastName: String
     let phone: String
-    let buildingType: Int
-    let buildingName: String
+    let email: String
+    let alternateContactNumber: String?
+    let building: Building
+    let inspectionFrequency: InspectionFrequency
     var isCompleted: Bool
     var lastVist: [LastVisit]?
-    var totalAverageScore: Int?
-    var totalVoilations: Int?
-    var totalImagesAttached: Int?
-    var totalNotesAdded: Int?
-    var checkList: CheckList?
-    var jobCreatedDate: Date?
+    var jobCreatedDate: Date
+    var createdById: String?
+    let stationId: String
     var lastDateToInspection: Date?
+    var jobAssignedDate: Date?
     
     // Local only (UI state)
-    var isExpanded: Bool? = false
+    var isExpanded: Bool?
 }
 
-// Convert DTO → Model
-extension JobModel {
-    init(dto: JobDTO) {
-        self.id = dto.id ?? ""
-        self.inspectorId = dto.inspectorId
-        self.companyName = dto.companyName
-        self.address = dto.address
-        self.siteId = dto.siteId
-        self.contactName = dto.contactName
-        self.phone = dto.phone
-        self.buildingType = dto.buildingType
-        self.buildingName = dto.buildingName
-        self.isCompleted = dto.isCompleted
-        self.lastVist = dto.lastVist
-        self.totalAverageScore = dto.totalAverageScore
-        self.totalVoilations = dto.totalVoilations
-        self.totalImagesAttached = dto.totalImagesAttached
-        self.totalNotesAdded = dto.totalNotesAdded
-        self.checkList = dto.checkList
-        self.jobCreatedDate = dto.jobCreatedDate
-        self.lastDateToInspection = dto.lastDateToInspection
-    }
-}
-
-struct LastVisit: Codable, Identifiable {
+struct LastVisit: Codable, Identifiable, Hashable {
     var id: String? = UUID().uuidString
     let inspectorId: String
     let inspectorName: String
     let visitDate: Date
-    let cycleId: Int
-    let cycleName: String
+    let inspectionFrequency: InspectionFrequency
     let totalScore: Int
-    let buildType: Int
-    let buildTypeName: String
     let totalSpentTime: Int
     let totalVoilations: Int
 }
 
-struct CheckList: Codable {
-    let checkListId: String
+struct CheckList: Codable, Identifiable, Hashable {
+    var id: String? = UUID().uuidString
     let checkListName: String
+    let questions: [Question]
+    var totalAverageScore: Int?
+    var totalVoilations: Int?
+    var totalImagesAttached: Int?
+    var totalNotesAdded: Int?
+}
+
+struct Question: Codable, Hashable {
+    let question: String
+    var answers: [Answers]
+}
+
+struct Answers: Codable, Hashable {
+    let answer: String
+    var isSelected: Bool
+}
+
+struct InspectionFrequency: Codable, Identifiable, Hashable {
+    var id: String? = UUID().uuidString
+    let frequencyName: String
+}
+
+struct Building: Codable, Identifiable, Hashable {
+    var id: String? = UUID().uuidString
+    let buildingName: String
+    let checkLists: [CheckList]
 }

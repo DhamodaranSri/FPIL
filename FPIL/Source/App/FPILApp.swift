@@ -23,6 +23,23 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             isLoggedIn = false
         }
         UIRefreshControl.appearance().tintColor = .gray
+        
+        let appLaunchRepository = FirebaseAppLaunchRepository()
+        appLaunchRepository.fetchBuildings { result in
+            if case .success(let buildings) = result {
+                UserDefaultsStore.buildings = buildings
+            }
+        }
+        
+        appLaunchRepository.fetchBillingFrequency { result in
+            if case .success(let buildings) = result {
+                UserDefaultsStore.frequency = buildings
+            }
+        }
+        
+//        FirebaseAppLaunchRepository().fetchAllChecklist { result in
+//            
+//        }
         return true
     }
 }

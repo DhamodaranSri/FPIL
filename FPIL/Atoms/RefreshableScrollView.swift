@@ -62,7 +62,7 @@ struct RefreshableScrollView<Content: View>: UIViewRepresentable {
         @objc func handleRefresh(_ sender: UIRefreshControl) {
             Task {
                 await onRefresh()
-                sender.endRefreshing()
+                await sender.endRefreshing()
             }
         }
     }

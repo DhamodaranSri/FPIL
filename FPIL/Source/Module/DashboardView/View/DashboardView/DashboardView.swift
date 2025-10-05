@@ -10,6 +10,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
+    @StateObject private var jobListViewModel = JobListViewModel()
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var path = NavigationPath()
@@ -31,6 +32,11 @@ struct DashboardView: View {
                                     path.removeLast()
                                 }
                                 path.append("createFireInspector")
+                            } else if (viewModel.selectedTab?.name == "Sites" || viewModel.selectedTab?.name == "Home") {
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                                path.append("createSites")
                             } else {
                                 alertMessage = "Under Construction"
                                 showAlert = true
@@ -62,12 +68,17 @@ struct DashboardView: View {
                     if let selectedTab = viewModel.selectedTab {
                         switch selectedTab.name {
                         case "Home":
-                            HomeView()
+                            HomeView(path: $path)
                                 .background(.applicationBGcolor)
                                 .frame(alignment: .top)
                                 .padding(.bottom, tabBarHeight)
                         case "Inspectors":
                             InspectorsListView(viewModel: InspectorsListViewModel(), path: $path)
+                                .background(.applicationBGcolor)
+                                .frame(alignment: .top)
+                                .padding(.bottom, tabBarHeight)
+                        case "Sites":
+                            SiteListView(path: $path, viewModel: jobListViewModel)
                                 .background(.applicationBGcolor)
                                 .frame(alignment: .top)
                                 .padding(.bottom, tabBarHeight)

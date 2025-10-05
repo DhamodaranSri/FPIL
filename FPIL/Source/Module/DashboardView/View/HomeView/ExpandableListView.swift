@@ -10,22 +10,25 @@ import SwiftUI
 // MARK: - List View
 struct ExpandableListView: View {
     @ObservedObject var viewModel: JobListViewModel
+    let updateDetails: (JobModel) -> Void
     
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                let groupedArray = Dictionary(grouping: viewModel.filteredItems, by: { $0.buildingName })
+                let groupedArray = Dictionary(grouping: viewModel.filteredItems, by: { $0.building.buildingName })
                     .sorted { $0.key < $1.key }
                 ForEach(groupedArray, id: \.key) { key, value in
                     HeaderCell(titleString: key)
                     
-                    let fetchBuildingNamedArray = viewModel.filteredItems.filter { $0.buildingName == key }
+                    let fetchBuildingNamedArray = viewModel.filteredItems.filter { $0.building.buildingName == key }
                                         
                     ForEach(fetchBuildingNamedArray, id:\.id) { job in
                         JobCardView(job: job) {
                             withAnimation {
                                 viewModel.toggleExpand(for: job)
                             }
+                        } updateDetails: { updateJob in
+                            updateDetails(updateJob)
                         }
                     }
                 }
@@ -38,6 +41,6 @@ struct ExpandableListView: View {
 }
 
 #Preview {
-    ExpandableListView(viewModel: JobListViewModel())
+    ExpandableListView(viewModel: JobListViewModel(), updateDetails: {_ in })
 }
 

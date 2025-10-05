@@ -25,10 +25,8 @@ class UserDefaultsStore {
 
     private static var profileInfo = "profileInfo"
     private static var fireStationInfo = "fireStationInfo"
-    private static var userInfoDetails = "userInfoDetail"
-    private static var lastLoginTimeStamp = "lastLoginTimeStamp"
-    private static var isDarkMode = "isDarkMode"
-    private static var deviceTokenStored = "isStored"
+    private static var allBuildings = "allBuildings"
+    private static var allFrequency = "allFrequency"
     
     
     static var profileDetail :Profile? {
@@ -69,40 +67,49 @@ class UserDefaultsStore {
         }
     }
     
-    static var lastLoginDate : String? {
+    static var buildings :[Building]? {
         get {
-            return (UserDefaults.standard.string(forKey: lastLoginTimeStamp) ?? "")
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: allBuildings)
+            {
+                let userDetail = try? decoder.decode([Building].self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: lastLoginTimeStamp)
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: allBuildings)
+            }
         }
     }
-    
-    static var isDarkModeBool : Bool? {
+
+    static var frequency :[InspectionFrequency]? {
         get {
-            return UserDefaults.standard.bool(forKey: isDarkMode)
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: allFrequency)
+            {
+                let userDetail = try? decoder.decode([InspectionFrequency].self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: isDarkMode)
-        }
-    }
-    
-    static var isDeviceTokenStoredBool : Bool? {
-        get {
-            return UserDefaults.standard.bool(forKey: deviceTokenStored)
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: deviceTokenStored)
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: allFrequency)
+            }
         }
     }
    
     static func clearData(){
         UserDefaults.standard.removeObject(forKey: profileInfo)
         UserDefaults.standard.removeObject(forKey: fireStationInfo)
-        UserDefaults.standard.removeObject(forKey: userInfoDetails)
-        UserDefaults.standard.removeObject(forKey: lastLoginTimeStamp)
-        UserDefaults.standard.removeObject(forKey: isDarkMode)
-        UserDefaults.standard.removeObject(forKey: deviceTokenStored)
+        UserDefaults.standard.removeObject(forKey: allBuildings)
+        UserDefaults.standard.removeObject(forKey: allFrequency)
     }
     
     

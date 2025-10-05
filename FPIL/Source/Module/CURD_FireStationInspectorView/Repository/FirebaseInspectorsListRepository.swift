@@ -81,7 +81,7 @@ final class FirebaseInspectorsListRepository: InspectorsListRepositoryProtocol {
                     }
                     
                     let newProfile = Profile(
-                        id:UUID().uuidString,
+                        id:inspector.id,
                         firstName: inspector.firstName,
                         lastName: inspector.lastName,
                         email: inspector.email,
