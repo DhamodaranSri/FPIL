@@ -78,6 +78,7 @@ class SiteFormState: ObservableObject {
             clientId = org.clientId
             isCompletedInspection = org.isCompleted
             jobCreatedDate = org.jobCreatedDate
+            lastDateToInspection = org.lastDateToInspection ?? Date()
         }
     }
 
