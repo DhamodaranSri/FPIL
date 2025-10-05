@@ -15,4 +15,16 @@ extension Date {
         
         return formatted
     }
+    
+    func convertDateAloneFromFullDateFormat() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: self)
+    }
+}
+
+extension Date {
+    var endOfDay: Date {
+        Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: self)!
+    }
 }

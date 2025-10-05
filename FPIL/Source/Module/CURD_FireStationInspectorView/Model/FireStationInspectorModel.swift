@@ -30,7 +30,7 @@ struct FireStationInspectorModel: Codable, Identifiable {
 }
 
 struct FireStationEmployeeJobDesignations: Codable, Identifiable, Hashable {
-    let id: String
+    let id: String?
     let position: String
     let userTypeId: Int
 }

@@ -10,6 +10,7 @@ import SwiftUI
 struct JobCardView: View {
     let job: JobModel
     let onToggle: () -> Void
+    let updateDetails: (JobModel) -> Void
     
     @State private var showAlert = false
     @State private var alertMessage = ""
@@ -18,13 +19,21 @@ struct JobCardView: View {
         job.lastVist ?? []
     }
     
+    init(job: JobModel, onToggle: @escaping () -> Void, updateDetails: @escaping (JobModel) -> Void, showAlert: Bool = false, alertMessage: String = "") {
+        self.job = job
+        self.onToggle = onToggle
+        self.updateDetails = updateDetails
+        self.showAlert = showAlert
+        self.alertMessage = alertMessage
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             
             // Header
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(job.companyName)
+                    Text(job.siteName)
                         .font(ApplicationFont.bold(size: 14).value)
                         .foregroundColor(.white)
                     
@@ -35,10 +44,16 @@ struct JobCardView: View {
                     HStack {
                         Text("Site ID:")
                             .font(ApplicationFont.bold(size: 12).value)
-                        Text(job.siteId)
+                        Text(job.id ?? "")
                             .font(ApplicationFont.regular(size: 12).value)
                     }
                     .foregroundColor(.white)
+                    if UserDefaultsStore.profileDetail?.userType == 2 && job.jobAssignedDate != nil  {
+                        Text("Assigned To: " + (job.inspectorName ?? ""))
+                            .font(ApplicationFont.regular(size: 12).value)
+                            .foregroundColor(.white)
+                    }
+                    
                 }
                 Spacer()
                 
@@ -61,7 +76,7 @@ struct JobCardView: View {
             
             // Contact Info
             HStack(spacing: 16) {
-                IconLabel(labelTitle: job.contactName, imageName: "user", textColor: .white)
+                IconLabel(labelTitle: "\(job.firstName) \(job.lastName)", imageName: "user", textColor: .white)
                 Button(action: {
                     alertMessage = "Under Construction"
                     showAlert = true
@@ -93,19 +108,33 @@ struct JobCardView: View {
                             .foregroundColor(.white)
                             .contentShape(Rectangle())
                         }
-                        
-                        Button {
-                            alertMessage = "Under Construction"
-                            showAlert = true
-                        } label: {
-                            Text("Update Details")
-                                .font(ApplicationFont.regular(size: 12).value)
-                                .foregroundColor(.white)
-                                .underline()
+                        if (UserDefaultsStore.profileDetail?.userType == 2) {
+                            Button {
+                                updateDetails(job)
+                            } label: {
+                                Text("Update Details")
+                                    .font(ApplicationFont.regular(size: 12).value)
+                                    .foregroundColor(.white)
+                                    .underline()
+                            }
+                            .contentShape(Rectangle())
                         }
-                        .contentShape(Rectangle())
                         
                         Spacer()
+                        
+                        if UserDefaultsStore.profileDetail?.userType == 2 && job.jobAssignedDate == nil  {
+                            Button(action: {
+                                alertMessage = "Under Construction"
+                                showAlert = true
+                            }) {
+                                Image("handover")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 35, height: 35)
+                            }
+                            .foregroundColor(.white)
+                            .contentShape(Rectangle())
+                        }
                         
                         Button(action: {
                             alertMessage = "Under Construction"
@@ -129,13 +158,13 @@ struct JobCardView: View {
                             HStack(spacing: 20) {
                                 IconLabel(labelTitle: lastVisit.inspectorName, imageName: "user", textColor: .white)
                                 IconLabel(labelTitle: lastVisit.visitDate.formatedDateAloneAsString(), imageName: "calander", textColor: .white)
-                                IconLabel(labelTitle: lastVisit.cycleName, imageName: "loop", textColor: .white)
+                                IconLabel(labelTitle: job.inspectionFrequency.frequencyName, imageName: "loop", textColor: .white)
                             }
                             
                             HStack(spacing: 5) {
                                 IconLabel(labelTitle: "\(lastVisit.totalScore)", imageName: "timeline", textColor: .white)
-                                Text(" | ").foregroundColor(.white)
-                                IconLabel(labelTitle: lastVisit.buildTypeName, imageName: "commercial", textColor: .white)
+//                                Text(" | ").foregroundColor(.white)
+//                                IconLabel(labelTitle: lastVisit.buildTypeName, imageName: "commercial", textColor: .white)
                                 Text(" | ").foregroundColor(.white)
                                 IconLabel(labelTitle: lastVisit.totalSpentTime.formattedDuration(), imageName: "clock", textColor: .white)
                                 Text(" | ").foregroundColor(.white)

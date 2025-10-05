@@ -16,7 +16,7 @@ struct HorizontalSelectorView: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .center, spacing: 12) {
-                let groupedArray = Dictionary(grouping: viewModel.items, by: { $0.buildingName })
+                let groupedArray = Dictionary(grouping: viewModel.items, by: { $0.building.buildingName })
                     .sorted { $0.key < $1.key }
                 if groupedArray.count > 0 {
                     Button(action: {
@@ -60,52 +60,5 @@ struct HorizontalSelectorView: View {
             .padding(.horizontal)
             .padding(.vertical, 5)
         }
-    }
-}
-
-@MainActor
-class HorizontalSelectorViewModel: ObservableObject {
-    @Published var items: [JobModel] = [
-        JobModel(
-            id: "Job1",
-            inspectorId: "Inspector1",
-            companyName: "Demo Construction Co.",
-            address: "123 Safety Lane",
-            siteId: "SITE-DEMO-001",
-            contactName: "Chief Johnson",
-            phone: "555-FIRE-001",
-            buildingType: 1,
-            buildingName: "Commercial Buildings",
-            isCompleted: false
-        ),
-        JobModel(
-            id: "Job2",
-            inspectorId: "Inspector1",
-            companyName: "Demo Construction Co.",
-            address: "456 Fire Street",
-            siteId: "SITE-DEMO-002",
-            contactName: "Chief Adams",
-            phone: "555-FIRE-002",
-            buildingType: 2,
-            buildingName: "Residential Buildings",
-            isCompleted: false
-        ),
-        JobModel(
-            id: "Job3",
-            inspectorId: "Inspector1",
-            companyName: "Demo Construction Co.",
-            address: "435 Ponder Street",
-            siteId: "SITE-DEMO-003",
-            contactName: "Sri Nivas",
-            phone: "555-FIRE-003",
-            buildingType: 2,
-            buildingName: "Residential Buildings",
-            isCompleted: false
-        )
-    ]
-    @Published var selectedId: String? = "All"
-    
-    func selectItem(id: String) {
-        selectedId = id
     }
 }
