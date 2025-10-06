@@ -275,13 +275,7 @@ struct CreateOrUpdateSiteView: View {
             return
         }
         
-        var jobModel: JobModel = form.buildJobModelForInspector()
-        
-//        if UserDefaultsStore.profileDetail?.userType == 2 {
-//            jobModel = form.buildJobModel()
-//        } else {
-//            jobModel = form.buildJobModelForInspector()
-//        }
+        let jobModel: JobModel = form.buildJobModelForInspector()
         
         viewModel.addOrUpdateInspection(jobModel) { error in
             if error == nil {

@@ -37,9 +37,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             }
         }
         
-//        FirebaseAppLaunchRepository().fetchAllChecklist { result in
-//            
-//        }
         return true
     }
 }
@@ -59,6 +56,26 @@ struct FPILApp: App {
                 }
             } else {
                 LoginView()
+            }
+        }
+        .onChange(of: isLoggedIn) { newValue in
+            if newValue {
+                fetchData() // ✅ call your Firebase data fetch
+            }
+        }
+    }
+    
+    func fetchData() {
+        let appLaunchRepository = FirebaseAppLaunchRepository()
+        appLaunchRepository.fetchBuildings { result in
+            if case .success(let buildings) = result {
+                UserDefaultsStore.buildings = buildings
+            }
+        }
+        
+        appLaunchRepository.fetchBillingFrequency { result in
+            if case .success(let buildings) = result {
+                UserDefaultsStore.frequency = buildings
             }
         }
     }

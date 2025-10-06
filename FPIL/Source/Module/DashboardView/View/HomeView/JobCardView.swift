@@ -56,21 +56,22 @@ struct JobCardView: View {
                     
                 }
                 Spacer()
-                
-                let days = abs(Calendar.current.dateComponents([.day], from: (job.lastDateToInspection ?? Date()), to: Date()).day!)
-                                
-                if (days < 6) {
-                    Text("Due Soon (\(days) days)")
-                        .font(ApplicationFont.regular(size: 10).value)
-                        .padding(6)
-                        .padding(.horizontal, 6)
-                        .background(Color.warningBG.opacity(0.2))
-                        .foregroundColor(.warningBG)
-                        .clipShape(Capsule())
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.warningBG, lineWidth: 1)
-                        )
+                if let dueDate = job.lastDateToInspection {
+                    let days = abs(Calendar.current.dateComponents([.day], from: dueDate, to: Date()).day!)
+                    
+                    if (days < 6) {
+                        Text("Due Soon (\(days) days)")
+                            .font(ApplicationFont.regular(size: 10).value)
+                            .padding(6)
+                            .padding(.horizontal, 6)
+                            .background(Color.warningBG.opacity(0.2))
+                            .foregroundColor(.warningBG)
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color.warningBG, lineWidth: 1)
+                            )
+                    }
                 }
             }
             
