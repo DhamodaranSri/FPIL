@@ -27,6 +27,7 @@ class UserDefaultsStore {
     private static var fireStationInfo = "fireStationInfo"
     private static var allBuildings = "allBuildings"
     private static var allFrequency = "allFrequency"
+    private static var allInspectors = "allInspectors"
     
     
     static var profileDetail :Profile? {
@@ -86,6 +87,25 @@ class UserDefaultsStore {
         }
     }
 
+    static var inspectorsList :[FireStationInspectorModel]? {
+        get {
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: allInspectors)
+            {
+                let userDetail = try? decoder.decode([FireStationInspectorModel].self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
+        }
+        set {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: allInspectors)
+            }
+        }
+    }
+
     static var frequency :[InspectionFrequency]? {
         get {
             let decoder = JSONDecoder()
@@ -110,6 +130,7 @@ class UserDefaultsStore {
         UserDefaults.standard.removeObject(forKey: fireStationInfo)
         UserDefaults.standard.removeObject(forKey: allBuildings)
         UserDefaults.standard.removeObject(forKey: allFrequency)
+        UserDefaults.standard.removeObject(forKey: allInspectors)
     }
     
     

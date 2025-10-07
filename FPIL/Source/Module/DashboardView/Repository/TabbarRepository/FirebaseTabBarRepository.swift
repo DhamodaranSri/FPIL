@@ -11,11 +11,13 @@ final class FirebaseTabBarRepository: TabBarRepositoryProtocol {
     private let service: FirebaseService<TabBarItem>
     private let fireAuthService: FirebaseAuthService
     private let fireStationService: FirebaseService<OrganisationModel>
+    private let fireStationInspectorService: FirebaseService<FireStationInspectorModel>
     
     init() {
         fireAuthService = FirebaseAuthService()
         service = FirebaseService<TabBarItem>(collectionName: "TabbarList")
         fireStationService = FirebaseService<OrganisationModel>(collectionName: "FirestationsList")
+        fireStationInspectorService = FirebaseService<FireStationInspectorModel>(collectionName: "InspectorsList")
     }
     
     func fetchTabs(forUserType userTypeId: Int, completion: @escaping (Result<[TabBarItem], Error>) -> Void) {
@@ -42,6 +44,16 @@ final class FirebaseTabBarRepository: TabBarRepositoryProtocol {
     func fetchFireStation(stationId: String, completion: @escaping (Result<[OrganisationModel], Error>) -> Void) {
         if NetworkMonitor.shared.isConnected {
             fireStationService.fetchBy(field: "id", value: stationId) { result in
+                completion(result)
+            }
+        } else {
+            completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
+        }
+    }
+    
+    func fetchAllFireStationInspectors(stationId: String, completion: @escaping (Result<[FireStationInspectorModel], Error>) -> Void) {
+        if NetworkMonitor.shared.isConnected {
+            fireStationInspectorService.fetchBy(field: "parentId", value: stationId) { result in
                 completion(result)
             }
         } else {

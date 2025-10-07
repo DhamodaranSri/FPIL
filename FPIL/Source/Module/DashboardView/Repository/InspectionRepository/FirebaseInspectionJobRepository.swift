@@ -15,10 +15,11 @@ final class FirebaseInspectionJobRepository: InspectionJobRepositoryProtocol {
     }
     
     func fetchAllInspectionJobs(
+        forConditions conditions: [(field: String, value: Any)],
         completion: @escaping (Result<[JobModel], any Error>) -> Void
     ) {
         if NetworkMonitor.shared.isConnected {
-            inspectionService.fetchAllData { result in
+            inspectionService.fetchByMultipleWhere(conditions: conditions, orderBy: "") { result in
                 completion(result)
             }
         } else {

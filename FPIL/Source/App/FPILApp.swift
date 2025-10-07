@@ -12,6 +12,7 @@ import FirebaseAuth
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
+    var qrGenerator: QRGenerator = QRGenerator()
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
@@ -80,3 +81,10 @@ struct FPILApp: App {
         }
     }
 }
+
+func appDelegate() -> AppDelegate {
+    guard let delegate = UIApplication.shared.delegate as? AppDelegate else {
+        fatalError("could not get app delegate ")
+    }
+    return delegate
+ }

@@ -23,7 +23,7 @@ struct SmallCardInfoView: View {
                             .font(ApplicationFont.regular(size: 12).value)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 5)
                     .padding(.vertical, 10)
                     .background(RoundedRectangle(cornerRadius: 12).stroke(Color.red, lineWidth: 1))
                     .background(Color.inspectionCellBG)

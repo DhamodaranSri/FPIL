@@ -14,6 +14,7 @@ struct DashboardView: View {
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var path = NavigationPath()
+    @State private var qrCodeImage: UIImage? = nil
     
     var tabBarHeight: CGFloat {
         return 60 // match overlay padding
@@ -64,11 +65,13 @@ struct DashboardView: View {
                     Button("OK", role: .cancel) { }
                 }
                 
+                Spacer()
+                
                 ZStack {
                     if let selectedTab = viewModel.selectedTab {
                         switch selectedTab.name {
                         case "Home":
-                            HomeView(path: $path)
+                            HomeView(path: $path, qrCodeImage: $qrCodeImage)
                                 .background(.applicationBGcolor)
                                 .frame(alignment: .top)
                                 .padding(.bottom, tabBarHeight)
@@ -100,6 +103,7 @@ struct DashboardView: View {
                 }
                 .background(.clear)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationBarBackButtonHidden(true)
             .background(.applicationBGcolor)
             .ignoresSafeArea(edges: .bottom)

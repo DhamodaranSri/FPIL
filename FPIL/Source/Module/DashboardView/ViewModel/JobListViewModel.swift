@@ -83,8 +83,12 @@ class JobListViewModel: ObservableObject {
     }
     
     func fetchAllInspections() {
+        let conditions: [(field: String, value: Any)] = [
+            ("stationId", UserDefaultsStore.fireStationDetail?.id ?? ""),
+            ("isCompleted", false)
+        ]
         isLoading = true
-        inspectionRepository.fetchAllInspectionJobs { [weak self] result in
+        inspectionRepository.fetchAllInspectionJobs(forConditions: conditions) { [weak self] result in
             DispatchQueue.main.async {
                 self?.isLoading = false
                 switch result {
@@ -106,8 +110,7 @@ class JobListViewModel: ObservableObject {
     func fetchInspection(inspectorId: String) {
 
         let conditions: [(field: String, value: Any)] = [
-            ("inspectorId", inspectorId),
-            ("isCompleted", false)
+            ("inspectorId", inspectorId)
         ]
 
         isLoading = true
@@ -134,28 +137,51 @@ class JobListViewModel: ObservableObject {
 
 extension JobListViewModel {
     func addOrUpdateInspection(_ job: JobModel, completion: @escaping (Error?) -> Void) {
+        
+        var includeQRonJob = job
 
         isLoading = true
-        
-        inspectionRepository.createOrupdateInspection(job: job) { [weak self] result in
-            DispatchQueue.main.async {
-                
-                self?.isLoading = false
-                switch result {
-                case .success(let items):
-                    print("Success adding tabs: \(items)")
-                    completion(nil)
-                case .failure(let error):
-                    self?.serviceError = error
-                    completion(error)
-                    print("Error fetching tabs: \(error)")
-                }
-                if (UserDefaultsStore.profileDetail?.userType == 2) {
-                    self?.fetchAllInspections()
-                } else {
-                    self?.fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
+        if let siteId = job.id {
+            let image = QRGenerator().generateQRCode(from: siteId)
+            FirebaseFileManager.shared.uploadImage(image,folder: "SiteQRImages", fileName: siteId) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let url):
+                        includeQRonJob.siteQRCodeImageUrl = url
+                        self.inspectionRepository.createOrupdateInspection(job: includeQRonJob) { [weak self] result in
+                            DispatchQueue.main.async {
+                                
+                                self?.isLoading = false
+                                switch result {
+                                case .success(let items):
+                                    print("Success adding tabs: \(items)")
+                                    completion(nil)
+                                case .failure(let error):
+                                    self?.serviceError = error
+                                    completion(error)
+                                    print("Error fetching tabs: \(error)")
+                                }
+                                if (UserDefaultsStore.profileDetail?.userType == 2) {
+                                    self?.fetchAllInspections()
+                                } else {
+                                    self?.fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
+                                }
+                            }
+                        }
+                        print("Uploaded image URL: \(url)")
+                    case .failure(let error):
+                        self.isLoading = false
+                        self.serviceError = error
+                        completion(error)
+                        print("Upload failed: \(error.localizedDescription)")
+                    }
+                    
                 }
             }
         }
+        
+        
+        
+        
     }
 }

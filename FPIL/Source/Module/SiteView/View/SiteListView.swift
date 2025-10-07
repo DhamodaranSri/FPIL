@@ -14,6 +14,8 @@ struct SiteListView: View {
     @State private var isScannerPresented = false
     @State private var hasCameraPermissionChecked = false
     @State private var cameraDenied = false
+    @State private var qrCodeImage: UIImage?
+    @State private var raiseRequestForJob: JobModel?
     
     var body: some View {
         NavigationStack(path: $path) {
@@ -58,6 +60,20 @@ struct SiteListView: View {
                                             }
                                         } updateDetails: { updateJob in
                                             
+                                        } showQRDetails: { qrImage in
+                                            qrCodeImage = qrImage
+                                            
+                                            if path.count > 0 {
+                                                path.removeLast()
+                                            }
+                                            path.append("showQRImage")
+                                        } assignJob: { updateJob in
+                                        } raiseRequestForJob: { requestForJob in
+                                            raiseRequestForJob = requestForJob
+                                            if path.count > 0 {
+                                                path.removeLast()
+                                            }
+                                            path.append("raiseRequest")
                                         }
                                     }
                                 }
@@ -77,6 +93,24 @@ struct SiteListView: View {
                 .navigationDestination(for: String.self) { value in
                     if value == "createSites" {
                         CreateOrUpdateSiteView(viewModel: viewModel) {
+                            DispatchQueue.main.async {
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                            }
+                        }
+                    } else if value == "showQRImage" {
+                        QRPreviewView(image: $qrCodeImage) {
+                            qrCodeImage = nil
+                            DispatchQueue.main.async {
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                            }
+                        }
+                    } else if value == "raiseRequest" {
+                        RequestView(viewModel: viewModel) {
+                            raiseRequestForJob = nil
                             DispatchQueue.main.async {
                                 if path.count > 0 {
                                     path.removeLast()

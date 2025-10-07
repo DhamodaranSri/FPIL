@@ -37,6 +37,7 @@ struct JobModel: Codable, Identifiable {
     let stationId: String
     var lastDateToInspection: Date?
     var jobAssignedDate: Date?
+    var siteQRCodeImageUrl: String?
     
     // Local only (UI state)
     var isExpanded: Bool?
