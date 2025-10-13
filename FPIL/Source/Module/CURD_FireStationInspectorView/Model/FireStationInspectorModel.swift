@@ -9,7 +9,7 @@ import Foundation
 import FirebaseFirestore
 
 // MARK: - Model
-struct FireStationInspectorModel: Codable, Identifiable {
+struct FireStationInspectorModel: Codable, Identifiable, Hashable {
     var id: String?
     let firstName: String
     let lastName: String

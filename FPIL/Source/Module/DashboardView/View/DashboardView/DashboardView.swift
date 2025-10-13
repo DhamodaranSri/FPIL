@@ -14,6 +14,7 @@ struct DashboardView: View {
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var path = NavigationPath()
+    @State private var qrCodeImage: UIImage? = nil
     
     var tabBarHeight: CGFloat {
         return 60 // match overlay padding
@@ -25,50 +26,20 @@ struct DashboardView: View {
                 CustomNavBar(
                     title: viewModel.selectedTab?.navBarTitle ?? "",
                     showBackButton: false,
-                    actions: viewModel.selectedTab?.name != "Services" ? [
-                        NavBarAction(icon: "plus") {
-                            if viewModel.selectedTab?.name == "Inspectors" {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                                path.append("createFireInspector")
-                            } else if (viewModel.selectedTab?.name == "Sites" || viewModel.selectedTab?.name == "Home") {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                                path.append("createSites")
-                            } else {
-                                alertMessage = "Under Construction"
-                                showAlert = true
-                            }
-                        },
-                        NavBarAction(icon: "profile") {
-                            alertMessage = "Under Construction"
-                            showAlert = true
-                        },
-                        NavBarAction(icon: "logout") {
-                            viewModel.signout()
-                        }
-                    ] : [
-                        NavBarAction(icon: "profile") {
-                            alertMessage = "Under Construction"
-                            showAlert = true
-                        },
-                        NavBarAction(icon: "logout") {
-                            viewModel.signout()
-                        }
-                    ],
+                    actions: getNavBarActions(),
                     backgroundColor: .applicationBGcolor,
                     titleColor: viewModel.selectedTab?.name == "Home" ? .appPrimary : .white
                 ).alert(alertMessage, isPresented: $showAlert) {
                     Button("OK", role: .cancel) { }
                 }
                 
+                Spacer()
+                
                 ZStack {
                     if let selectedTab = viewModel.selectedTab {
                         switch selectedTab.name {
                         case "Home":
-                            HomeView(path: $path)
+                            HomeView(path: $path, qrCodeImage: $qrCodeImage)
                                 .background(.applicationBGcolor)
                                 .frame(alignment: .top)
                                 .padding(.bottom, tabBarHeight)
@@ -100,9 +71,50 @@ struct DashboardView: View {
                 }
                 .background(.clear)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationBarBackButtonHidden(true)
             .background(.applicationBGcolor)
             .ignoresSafeArea(edges: .bottom)
+        }
+    }
+    
+    private func getNavBarActions() -> [NavBarAction] {
+        if viewModel.selectedTab?.name == "Services" || viewModel.selectedTab?.name == "Sites" {
+            return [
+                NavBarAction(icon: "profile") {
+                    alertMessage = "Under Construction"
+                    showAlert = true
+                },
+                NavBarAction(icon: "logout") {
+                    viewModel.signout()
+                }
+            ]
+        } else {
+            return [
+                NavBarAction(icon: "plus") {
+                    if viewModel.selectedTab?.name == "Inspectors" {
+                        if path.count > 0 {
+                            path.removeLast()
+                        }
+                        path.append("createFireInspector")
+                    } else if viewModel.selectedTab?.name == "Home" {
+                        if path.count > 0 {
+                            path.removeLast()
+                        }
+                        path.append("createSites")
+                    } else {
+                        alertMessage = "Under Construction"
+                        showAlert = true
+                    }
+                },
+                NavBarAction(icon: "profile") {
+                    alertMessage = "Under Construction"
+                    showAlert = true
+                },
+                NavBarAction(icon: "logout") {
+                    viewModel.signout()
+                }
+            ]
         }
     }
 }

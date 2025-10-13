@@ -15,10 +15,11 @@ final class FirebaseInspectionJobRepository: InspectionJobRepositoryProtocol {
     }
     
     func fetchAllInspectionJobs(
+        forConditions conditions: [(field: String, value: Any)],
         completion: @escaping (Result<[JobModel], any Error>) -> Void
     ) {
         if NetworkMonitor.shared.isConnected {
-            inspectionService.fetchAllData { result in
+            inspectionService.fetchByMultipleWhere(conditions: conditions, orderBy: "") { result in
                 completion(result)
             }
         } else {
@@ -43,6 +44,16 @@ final class FirebaseInspectionJobRepository: InspectionJobRepositoryProtocol {
         if NetworkMonitor.shared.isConnected {
             inspectionService.save(job) { newDataResult in
                 completion(newDataResult)
+            }
+        } else {
+            completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
+        }
+    }
+
+    func startInspection(jobItem: JobModel, updatedItems: [String: Any], completion: @escaping (Result<Void, any Error>) -> Void) {
+        if NetworkMonitor.shared.isConnected {
+            inspectionService.siteUpdate(jobItem, items: updatedItems) { result in
+                completion(result)
             }
         } else {
             completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))

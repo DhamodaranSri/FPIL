@@ -10,7 +10,12 @@ import Foundation
 // MARK: - ViewModel
 @MainActor
 class JobListViewModel: ObservableObject {
-    @Published var selectedItem: JobModel?
+    @Published var selectedItem: JobModel? {
+        didSet {
+            getCheckListFromSelectedItem()
+        }
+    }
+    @Published var checkList: CheckList? = nil
     @Published var items: [JobModel] = []  // all sites
     @Published var filteredItems: [JobModel] = []
     @Published var serviceError: Error? = nil
@@ -83,8 +88,12 @@ class JobListViewModel: ObservableObject {
     }
     
     func fetchAllInspections() {
+        let conditions: [(field: String, value: Any)] = [
+            ("stationId", UserDefaultsStore.fireStationDetail?.id ?? ""),
+            ("isCompleted", false)
+        ]
         isLoading = true
-        inspectionRepository.fetchAllInspectionJobs { [weak self] result in
+        inspectionRepository.fetchAllInspectionJobs(forConditions: conditions) { [weak self] result in
             DispatchQueue.main.async {
                 self?.isLoading = false
                 switch result {
@@ -106,8 +115,7 @@ class JobListViewModel: ObservableObject {
     func fetchInspection(inspectorId: String) {
 
         let conditions: [(field: String, value: Any)] = [
-            ("inspectorId", inspectorId),
-            ("isCompleted", false)
+            ("inspectorId", inspectorId)
         ]
 
         isLoading = true
@@ -117,6 +125,8 @@ class JobListViewModel: ObservableObject {
                 switch result {
                 case .success(let items):
                     self?.items = items
+                    UserDefaultsStore.jobStartedDate = self?.items.filter({$0.jobStartDate != nil && $0.isCompleted == false }).first?.jobStartDate
+                    UserDefaultsStore.startedJobDetail = self?.items.filter({$0.jobStartDate != nil && $0.isCompleted == false }).first
                 case .failure(let error):
                     self?.serviceError = error
                     print("Error fetching tabs: \(error)")
@@ -130,14 +140,89 @@ class JobListViewModel: ObservableObject {
 
         }
     }
+    
+    func getCheckListFromSelectedItem() {
+        checkList = selectedItem?.building.checkLists.first
+    }
+    
+    func totalSelected() -> Int {
+        checkList?
+            .questions
+            .flatMap { $0.answers }
+            .count { $0.isSelected == true } ?? 0
+    }
+    
+    func totalQuestions() -> Int {
+        checkList?
+            .questions
+            .flatMap { $0.answers }
+            .count ?? 0
+    }
+
+    func totalViolations() -> Int {
+        checkList?
+            .questions
+            .flatMap { $0.answers }
+            .count { $0.isVoilated == true } ?? 0
+    }
+
+    func totalNotesAdded() -> Int {
+        checkList?
+            .questions
+            .flatMap { $0.answers }
+            .count { $0.voilationDescription != nil && ($0.voilationDescription?.count ?? 0) > 0} ?? 0
+    }
 }
 
 extension JobListViewModel {
     func addOrUpdateInspection(_ job: JobModel, completion: @escaping (Error?) -> Void) {
+        
+        var includeQRonJob = job
 
         isLoading = true
-        
-        inspectionRepository.createOrupdateInspection(job: job) { [weak self] result in
+        if let siteId = job.id {
+            let image = QRGenerator().generateQRCode(from: siteId)
+            FirebaseFileManager.shared.uploadImage(image,folder: "\(siteId)/SiteQRImage", fileName: siteId) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let url):
+                        includeQRonJob.siteQRCodeImageUrl = url
+                        self.inspectionRepository.createOrupdateInspection(job: includeQRonJob) { [weak self] result in
+                            DispatchQueue.main.async {
+                                
+                                self?.isLoading = false
+                                switch result {
+                                case .success(let items):
+                                    print("Success adding tabs: \(items)")
+                                    completion(nil)
+                                case .failure(let error):
+                                    self?.serviceError = error
+                                    completion(error)
+                                    print("Error fetching tabs: \(error)")
+                                }
+                                if (UserDefaultsStore.profileDetail?.userType == 2) {
+                                    self?.fetchAllInspections()
+                                } else {
+                                    self?.fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
+                                }
+                            }
+                        }
+                        print("Uploaded image URL: \(url)")
+                    case .failure(let error):
+                        self.isLoading = false
+                        self.serviceError = error
+                        completion(error)
+                        print("Upload failed: \(error.localizedDescription)")
+                    }
+                    
+                }
+            }
+        }
+    }
+    
+    func updateStartOrStopInspectionDate(jobModel: JobModel, updatedItems: [String: Any], completion: @escaping (Error?) -> Void) {
+        isLoading = true
+        inspectionRepository.startInspection(jobItem: jobModel, updatedItems: updatedItems) { [weak self] result in
             DispatchQueue.main.async {
                 
                 self?.isLoading = false

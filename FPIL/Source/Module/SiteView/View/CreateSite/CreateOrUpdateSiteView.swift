@@ -18,15 +18,17 @@ struct CreateOrUpdateSiteView: View {
     @State private var calendarId: Int = 0
     
     @State private var showSearch = false
+    @State private var assignTheJob: Bool? = true
 
     enum AlertType {
         case update
     }
     
-    init(viewModel: JobListViewModel, onClick: (() -> ())? = nil) {
+    init(viewModel: JobListViewModel, onClick: (() -> ())? = nil, assignTheJob: Bool? = true) {
         self.onClick = onClick
         self.viewModel = viewModel
-        _form = StateObject(wrappedValue: SiteFormState(buildings: UserDefaultsStore.buildings ?? [], frequencys: UserDefaultsStore.frequency ?? [], site: viewModel.selectedItem))
+        self.assignTheJob = assignTheJob
+        _form = StateObject(wrappedValue: SiteFormState(buildings: UserDefaultsStore.buildings ?? [], frequencys: UserDefaultsStore.frequency ?? [], site: viewModel.selectedItem, isAssign: assignTheJob ?? false, inspectors: UserDefaultsStore.inspectorsList ?? []))
     }
     
     var body: some View {
@@ -105,7 +107,22 @@ struct CreateOrUpdateSiteView: View {
                             BottomBorderTextField(text: $form.zipCode, placeholder: "Zip Code")
                             BottomBorderTextField(text: $form.contactNumber, placeholder: "Contact Number")
                             BottomBorderTextField(text: $form.alternateContactNumber, placeholder: "Alternate Contact Number")
-                            if UserDefaultsStore.profileDetail?.userType != 2 {
+                            if let isAssign = assignTheJob, (isAssign == true || UserDefaultsStore.profileDetail?.userType == 2) {
+                                if isAssign {
+                                    HStack {
+                                        Text("Assign To: ")
+                                            .font(ApplicationFont.regular(size: 14).value)
+                                            .foregroundStyle(.white)
+                                        Spacer()
+                                        
+                                        CustomPickerOptionalSelection<FireStationInspectorModel>(
+                                            title: "Assign To",
+                                            options: form.inspectors,
+                                            selection: $form.inspector,
+                                            displayKey: \.firstName
+                                        )
+                                    }.padding(.vertical, 10)
+                                }
                                 HStack {
                                     Text("Inspection End Date: ")
                                         .font(ApplicationFont.regular(size: 14).value)
@@ -275,13 +292,7 @@ struct CreateOrUpdateSiteView: View {
             return
         }
         
-        var jobModel: JobModel = form.buildJobModelForInspector()
-        
-//        if UserDefaultsStore.profileDetail?.userType == 2 {
-//            jobModel = form.buildJobModel()
-//        } else {
-//            jobModel = form.buildJobModelForInspector()
-//        }
+        let jobModel: JobModel = form.buildJobModelForInspector()
         
         viewModel.addOrUpdateInspection(jobModel) { error in
             if error == nil {

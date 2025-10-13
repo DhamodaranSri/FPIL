@@ -14,7 +14,7 @@ class SiteFormState: ObservableObject {
     @Published var id: String? = nil
     @Published var siteName = ""
     @Published var inspectorId: String? = UserDefaultsStore.profileDetail?.userType == 2 ? nil : UserDefaultsStore.profileDetail?.id
-    @Published var inspectorName: String? = UserDefaultsStore.profileDetail?.userType == 2 ? nil : (UserDefaultsStore.profileDetail?.firstName ?? "") + " " + (UserDefaultsStore.profileDetail?.lastName ?? "")
+    @Published var inspectorName: String? = UserDefaultsStore.profileDetail?.userType == 2 ? nil : (UserDefaultsStore.profileDetail?.firstName ?? "")
     @Published var firstName = ""
     @Published var lastName = ""
     @Published var address = ""
@@ -42,18 +42,31 @@ class SiteFormState: ObservableObject {
             longitude = coordinate.longitude
         }
     }
+    @Published var inspector: FireStationInspectorModel? = nil
+    
+    var lastDate: Date?
 
     let buildings: [Building]
     let frequencys: [InspectionFrequency]
+    let isAssign: Bool
+    let inspectors: [FireStationInspectorModel]
 
     init(
         buildings: [Building],
         frequencys: [InspectionFrequency],
-        site: JobModel? = nil
+        site: JobModel? = nil,
+        isAssign: Bool = false,
+        inspectors: [FireStationInspectorModel] = []
     ) {
         self.buildings = buildings
         self.frequencys = frequencys
+        self.isAssign = isAssign
+        self.inspectors = inspectors
 
+        inspector = inspectors.first(where: { insModel in
+            insModel.id == site?.inspectorId
+        })
+        
         if let org = site {
             id = org.id
             firstName = org.firstName
@@ -79,6 +92,7 @@ class SiteFormState: ObservableObject {
             isCompletedInspection = org.isCompleted
             jobCreatedDate = org.jobCreatedDate
             lastDateToInspection = org.lastDateToInspection ?? Date()
+            lastDate = org.lastDateToInspection
         }
     }
 
@@ -103,37 +117,15 @@ class SiteFormState: ObservableObject {
         isCompletedInspection = false
         jobAssignedDate = nil
         lastDateToInspection = Date()
-    }
-
-    func buildJobModel() -> JobModel {
-        return JobModel(
-            id: id ?? UUID().uuidString,
-            siteName: siteName,
-            address: address,
-            city: city,
-            street: street,
-            zipCode: zipCode,
-            geoLocationAddress: geoLocationAddress,
-            latitude: latitude,
-            longitude: longitude,
-            firstName: firstName,
-            lastName: lastName,
-            phone: contactNumber,
-            email: email,
-            alternateContactNumber: alternateContactNumber,
-            building: building,
-            inspectionFrequency: inspectionFrequency,
-            isCompleted: isCompletedInspection,
-            jobCreatedDate: jobCreatedDate ?? Date(),
-            stationId: stationId
-        )
+        inspector = nil
     }
 
     func buildJobModelForInspector() -> JobModel {
+        
         return JobModel(
-            id: id ?? UUID().uuidString,
-            inspectorId: inspectorId,
-            inspectorName: inspectorName,
+            id: id ?? "Site-\(getShortUUID())-\((createdById ?? "").getShortID())",
+            inspectorId: inspector?.id ?? inspectorId,
+            inspectorName: inspector?.firstName ?? inspectorName,
             siteName: siteName,
             address: address,
             city: city,
@@ -153,8 +145,8 @@ class SiteFormState: ObservableObject {
             jobCreatedDate: jobCreatedDate ?? Date(),
             createdById: createdById,
             stationId: stationId,
-            lastDateToInspection: lastDateToInspection.endOfDay,
-            jobAssignedDate: jobAssignedDate ?? Date()
+            lastDateToInspection: (UserDefaultsStore.profileDetail?.userType == 2 && !isAssign) ? lastDate?.endOfDay : lastDateToInspection.endOfDay,
+            jobAssignedDate: (UserDefaultsStore.profileDetail?.userType == 2 && jobAssignedDate == nil && !isAssign) ? nil : (jobAssignedDate ?? Date())
         )
     }
 
@@ -174,5 +166,16 @@ class SiteFormState: ObservableObject {
         if let error = Validator.isNotEmpty(siteName, fieldName: "Site Name") { errors.append(error) }
 
         return errors
+    }
+}
+
+
+public func getShortUUID() -> String {
+    String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(8))
+}
+
+extension String {
+    func getShortID() -> String {
+        String(self.replacingOccurrences(of: "-", with: "").prefix(4))
     }
 }

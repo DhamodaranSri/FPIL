@@ -23,6 +23,7 @@ final class DashboardViewModel: ObservableObject {
         fetchTabs(forUserType: UserDefaultsStore.profileDetail?.userType ?? 2)
         if (UserDefaultsStore.profileDetail?.userType ?? 2) == 2 {
             fetchFireStation(stationId: UserDefaultsStore.profileDetail?.parentId ?? "")
+            fetchFireStationInspectors(stationId: UserDefaultsStore.profileDetail?.parentId ?? "")
         }
     }
     
@@ -55,6 +56,23 @@ final class DashboardViewModel: ObservableObject {
                     if station.count > 0 {
                         UserDefaultsStore.fireStationDetail = station.first
                     }
+                case .failure(let error):
+                    self?.serviceError = error
+                }
+            }
+        }
+    }
+
+    func fetchFireStationInspectors(stationId: String) {
+        isLoading = true
+
+        repository.fetchAllFireStationInspectors(stationId: stationId) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                
+                switch result {
+                case .success(let station):
+                    UserDefaultsStore.inspectorsList = station
                 case .failure(let error):
                     self?.serviceError = error
                 }

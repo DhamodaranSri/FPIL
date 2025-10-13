@@ -27,8 +27,48 @@ class UserDefaultsStore {
     private static var fireStationInfo = "fireStationInfo"
     private static var allBuildings = "allBuildings"
     private static var allFrequency = "allFrequency"
+    private static var allInspectors = "allInspectors"
+    private static var jobStartedDateTime = "jobStartedDateTime"
+    private static var startedJob = "startedJob"
     
+    static var jobStartedDate :Date? {
+        get {
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: jobStartedDateTime)
+            {
+                let userDetail = try? decoder.decode(Date.self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
+        }
+        set {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: jobStartedDateTime)
+            }
+        }
+    }
     
+    static var startedJobDetail :JobModel? {
+        get {
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: startedJob)
+            {
+                let userDetail = try? decoder.decode(JobModel.self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
+        }
+        set {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: startedJob)
+            }
+        }
+    }
+
     static var profileDetail :Profile? {
         get {
             let decoder = JSONDecoder()
@@ -86,6 +126,25 @@ class UserDefaultsStore {
         }
     }
 
+    static var inspectorsList :[FireStationInspectorModel]? {
+        get {
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: allInspectors)
+            {
+                let userDetail = try? decoder.decode([FireStationInspectorModel].self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
+        }
+        set {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: allInspectors)
+            }
+        }
+    }
+
     static var frequency :[InspectionFrequency]? {
         get {
             let decoder = JSONDecoder()
@@ -110,6 +169,9 @@ class UserDefaultsStore {
         UserDefaults.standard.removeObject(forKey: fireStationInfo)
         UserDefaults.standard.removeObject(forKey: allBuildings)
         UserDefaults.standard.removeObject(forKey: allFrequency)
+        UserDefaults.standard.removeObject(forKey: allInspectors)
+        UserDefaults.standard.removeObject(forKey: jobStartedDateTime)
+        UserDefaults.standard.removeObject(forKey: startedJob)
     }
     
     
