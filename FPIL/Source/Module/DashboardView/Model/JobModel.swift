@@ -28,7 +28,7 @@ struct JobModel: Codable, Identifiable {
     let phone: String
     let email: String
     let alternateContactNumber: String?
-    let building: Building
+    var building: Building
     let inspectionFrequency: InspectionFrequency
     var isCompleted: Bool
     var lastVist: [LastVisit]?
@@ -38,6 +38,11 @@ struct JobModel: Codable, Identifiable {
     var lastDateToInspection: Date?
     var jobAssignedDate: Date?
     var siteQRCodeImageUrl: String?
+    var jobStartDate: Date?
+    var jobCompletionDate: Date?
+    var isPending: Bool?
+    var reScheduleDate: Date?
+    var sitePlanDocUrl: String?
     
     // Local only (UI state)
     var isExpanded: Bool?
@@ -56,8 +61,8 @@ struct LastVisit: Codable, Identifiable, Hashable {
 
 struct CheckList: Codable, Identifiable, Hashable {
     var id: String? = UUID().uuidString
-    let checkListName: String
-    let questions: [Question]
+    var checkListName: String
+    var questions: [Question]
     var totalAverageScore: Int?
     var totalVoilations: Int?
     var totalImagesAttached: Int?
@@ -72,6 +77,8 @@ struct Question: Codable, Hashable {
 struct Answers: Codable, Hashable {
     let answer: String
     var isSelected: Bool
+    var isVoilated: Bool? = false
+    var voilationDescription: String? = nil
 }
 
 struct InspectionFrequency: Codable, Identifiable, Hashable {
@@ -81,6 +88,30 @@ struct InspectionFrequency: Codable, Identifiable, Hashable {
 
 struct Building: Codable, Identifiable, Hashable {
     var id: String? = UUID().uuidString
-    let buildingName: String
-    let checkLists: [CheckList]
+    var buildingName: String
+    var checkLists: [CheckList]
+}
+
+
+extension Encodable {
+    func toDictionary() -> [String: Any]? {
+        do {
+            let data = try JSONEncoder().encode(self)
+            let json = try JSONSerialization.jsonObject(with: data, options: [])
+            return json as? [String: Any]
+        } catch {
+            print("Encoding error: \(error)")
+            return nil
+        }
+    }
+
+    func toFirestoreData() -> [String: Any]? {
+            do {
+                let data = try Firestore.Encoder().encode(self)
+                return data
+            } catch {
+                print("Firestore encoding error: \(error)")
+                return nil
+            }
+        }
 }

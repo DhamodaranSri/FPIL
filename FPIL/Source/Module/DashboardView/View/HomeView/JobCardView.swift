@@ -14,6 +14,7 @@ struct JobCardView: View {
     let showQRDetails: (UIImage) -> Void
     let assignJob: (JobModel) -> Void
     let raiseRequestForJob: ((JobModel) -> Void)?
+    let startJob: ((JobModel) -> Void)?
     
     @State private var showAlert = false
     @State private var alertMessage = ""
@@ -22,7 +23,7 @@ struct JobCardView: View {
         job.lastVist ?? []
     }
     
-    init(job: JobModel, onToggle: @escaping () -> Void, updateDetails: @escaping (JobModel) -> Void, showQRDetails: @escaping (UIImage) -> Void, assignJob: @escaping (JobModel) -> Void, raiseRequestForJob: ((JobModel) -> Void)? = nil, showAlert: Bool = false, alertMessage: String = "") {
+    init(job: JobModel, onToggle: @escaping () -> Void, updateDetails: @escaping (JobModel) -> Void, showQRDetails: @escaping (UIImage) -> Void, assignJob: @escaping (JobModel) -> Void, raiseRequestForJob: ((JobModel) -> Void)? = nil, startJob: ((JobModel) -> Void)? = nil, showAlert: Bool = false, alertMessage: String = "") {
         self.job = job
         self.onToggle = onToggle
         self.updateDetails = updateDetails
@@ -31,6 +32,7 @@ struct JobCardView: View {
         self.showQRDetails = showQRDetails
         self.assignJob = assignJob
         self.raiseRequestForJob = raiseRequestForJob
+        self.startJob = startJob
     }
     
     var body: some View {
@@ -105,81 +107,113 @@ struct JobCardView: View {
                 }
             }
             
+            HStack(spacing: 20) {
+                if (UserDefaultsStore.profileDetail?.userType != 2) {
+                    Button(action: {
+//                        alertMessage = "Start Inspection is Under In-Progress on development"
+//                        showAlert = true
+                        if UserDefaultsStore.jobStartedDate != nil {
+                            if job.jobStartDate != nil && job.jobCompletionDate == nil && job.isCompleted == false {
+                                startJob?(job)
+                            } else {
+                                alertMessage = "Inspection is In-Progress Already, Can't start New. Please Complete the Exisit"
+                                showAlert = true
+                            }
+                        } else {
+                            startJob?(job)
+                        }
+                        
+                    }) {
+                        if job.jobStartDate != nil && job.jobCompletionDate == nil && job.isCompleted == false {
+                            IconLabel(labelTitle: "Stop", imageName: "stop", textColor: .white)
+                                .font(ApplicationFont.bold(size: 12).value)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.appPrimary, lineWidth: 1)
+                                )
+                        } else if job.jobStartDate == nil && job.jobCompletionDate == nil && job.isCompleted == false {
+                            IconLabel(labelTitle: "Start", imageName: "play", textColor: .white)
+                                .font(ApplicationFont.bold(size: 12).value)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.appPrimary, lineWidth: 1)
+                                )
+                        } else if job.jobStartDate != nil && job.jobCompletionDate != nil && job.isCompleted == true {
+                            IconLabel(labelTitle: "Preview", imageName: "notes", textColor: .white)
+                                .font(ApplicationFont.bold(size: 12).value)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.appPrimary, lineWidth: 1)
+                                )
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .contentShape(Rectangle())
+                }
+                if (UserDefaultsStore.profileDetail?.userType == 2) {
+                    Button {
+                        updateDetails(job)
+                    } label: {
+                        Text("Update Details")
+                            .font(ApplicationFont.regular(size: 12).value)
+                            .foregroundColor(.white)
+                            .underline()
+                    }
+                    .contentShape(Rectangle())
+                }
+                
+                Spacer()
+                
+                if UserDefaultsStore.profileDetail?.userType == 2 && job.jobAssignedDate == nil  {
+                    Button(action: {
+                        assignJob(job)
+                    }) {
+                        Image("handover")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 35, height: 35)
+                    }
+                    .foregroundColor(.white)
+                    .contentShape(Rectangle())
+                }
+
+                /*
+                 // Change Request Flow
+
+                if UserDefaultsStore.profileDetail?.userType != 2 && job.isCompleted == false  {
+                    Button(action: {
+                        raiseRequestForJob?(job)
+                    }) {
+                        Image("request_ic_non")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 30, height: 30)
+                    }
+                    .foregroundColor(.white)
+                    .contentShape(Rectangle())
+                }
+                */
+                
+                Button(action: {
+                    fetchQRCodeImage(for: job)
+                }) {
+                    Image("print")
+                }
+                .foregroundColor(.white)
+                .contentShape(Rectangle())
+            }
+            
             // Expanded Content
-            if job.isExpanded ?? false {
+            if job.isExpanded ?? false, lastVisits.count > 0 {
                 VStack(alignment: .leading, spacing: 12) {
                     
                     // Buttons
-                    HStack(spacing: 20) {
-                        if (UserDefaultsStore.profileDetail?.userType != 2) {
-                            Button(action: {
-                                alertMessage = "Under Construction"
-                                showAlert = true
-                            }) {
-                                IconLabel(labelTitle: "Start", imageName: "play", textColor: .white)
-                                    .font(ApplicationFont.bold(size: 12).value)
-                                    .padding(.vertical, 6)
-                                    .padding(.horizontal, 12)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(Color.appPrimary, lineWidth: 1)
-                                    )
-                            }
-                            .foregroundColor(.white)
-                            .contentShape(Rectangle())
-                        }
-                        if (UserDefaultsStore.profileDetail?.userType == 2) {
-                            Button {
-                                updateDetails(job)
-                            } label: {
-                                Text("Update Details")
-                                    .font(ApplicationFont.regular(size: 12).value)
-                                    .foregroundColor(.white)
-                                    .underline()
-                            }
-                            .contentShape(Rectangle())
-                        }
-                        
-                        Spacer()
-                        
-                        if UserDefaultsStore.profileDetail?.userType == 2 && job.jobAssignedDate == nil  {
-                            Button(action: {
-                                assignJob(job)
-                            }) {
-                                Image("handover")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 35, height: 35)
-                            }
-                            .foregroundColor(.white)
-                            .contentShape(Rectangle())
-                        }
-
-                        /*
-                         // Change Request Flow
-
-                        if UserDefaultsStore.profileDetail?.userType != 2 && job.isCompleted == false  {
-                            Button(action: {
-                                raiseRequestForJob?(job)
-                            }) {
-                                Image("request_ic_non")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 30, height: 30)
-                            }
-                            .foregroundColor(.white)
-                            .contentShape(Rectangle())
-                        }
-                        */
-                        
-                        Button(action: {
-                            fetchQRCodeImage(for: job)
-                        }) {
-                            Image("print")
-                        }
-                        .foregroundColor(.white)
-                        .contentShape(Rectangle())
-                    }
                     
                     if lastVisits.count > 0 {
                         Text("Last Visit Details")

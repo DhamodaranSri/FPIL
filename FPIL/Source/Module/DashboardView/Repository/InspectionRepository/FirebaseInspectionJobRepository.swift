@@ -49,4 +49,14 @@ final class FirebaseInspectionJobRepository: InspectionJobRepositoryProtocol {
             completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
         }
     }
+
+    func startInspection(jobItem: JobModel, updatedItems: [String: Any], completion: @escaping (Result<Void, any Error>) -> Void) {
+        if NetworkMonitor.shared.isConnected {
+            inspectionService.siteUpdate(jobItem, items: updatedItems) { result in
+                completion(result)
+            }
+        } else {
+            completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
+        }
+    }
 }

@@ -18,13 +18,13 @@ struct CreateOrUpdateSiteView: View {
     @State private var calendarId: Int = 0
     
     @State private var showSearch = false
-    @State private var assignTheJob: Bool? = false
+    @State private var assignTheJob: Bool? = true
 
     enum AlertType {
         case update
     }
     
-    init(viewModel: JobListViewModel, onClick: (() -> ())? = nil, assignTheJob: Bool? = false) {
+    init(viewModel: JobListViewModel, onClick: (() -> ())? = nil, assignTheJob: Bool? = true) {
         self.onClick = onClick
         self.viewModel = viewModel
         self.assignTheJob = assignTheJob
@@ -107,7 +107,7 @@ struct CreateOrUpdateSiteView: View {
                             BottomBorderTextField(text: $form.zipCode, placeholder: "Zip Code")
                             BottomBorderTextField(text: $form.contactNumber, placeholder: "Contact Number")
                             BottomBorderTextField(text: $form.alternateContactNumber, placeholder: "Alternate Contact Number")
-                            if let isAssign = assignTheJob, (isAssign == true || UserDefaultsStore.profileDetail?.userType != 2) {
+                            if let isAssign = assignTheJob, (isAssign == true || UserDefaultsStore.profileDetail?.userType == 2) {
                                 if isAssign {
                                     HStack {
                                         Text("Assign To: ")

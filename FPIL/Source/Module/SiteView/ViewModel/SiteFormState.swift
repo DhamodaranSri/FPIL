@@ -63,6 +63,10 @@ class SiteFormState: ObservableObject {
         self.isAssign = isAssign
         self.inspectors = inspectors
 
+        inspector = inspectors.first(where: { insModel in
+            insModel.id == site?.inspectorId
+        })
+        
         if let org = site {
             id = org.id
             firstName = org.firstName

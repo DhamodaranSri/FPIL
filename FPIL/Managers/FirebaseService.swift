@@ -16,6 +16,17 @@ class FirebaseService<T: Codable & Identifiable> where T.ID == String? {
     }
     
     // Create or Update
+    
+    func siteUpdate(_ item: T, items: [String: Any], completion: @escaping (Result<Void, Error>) -> Void) {
+        collectionRef.document(item.id ?? "").updateData(items) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+    
     func save(_ item: T, completion: @escaping (Result<Void, Error>) -> Void) {
         do {
             try collectionRef.document(item.id ?? "").setData(from: item)

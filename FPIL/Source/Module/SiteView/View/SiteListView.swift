@@ -74,6 +74,45 @@ struct SiteListView: View {
                                                 path.removeLast()
                                             }
                                             path.append("raiseRequest")
+                                        } startJob: { startedJob in
+                                            if startedJob.jobStartDate != nil && startedJob.jobCompletionDate == nil && startedJob.isCompleted == false {
+                                                
+                                                var updatedItems: [String: Any] = [
+                                                    "isCompleted": true,
+                                                    "jobCompletionDate": Date()
+                                                ]
+
+                                                if let lastVisit = LastVisit(id: UUID().uuidString, inspectorId: UserDefaultsStore.profileDetail?.id ?? "", inspectorName: (UserDefaultsStore.profileDetail?.firstName ?? "") + " " + (UserDefaultsStore.profileDetail?.lastName ?? ""), visitDate: startedJob.jobStartDate ?? Date(), inspectionFrequency: startedJob.inspectionFrequency, totalScore: 0, totalSpentTime: 0, totalVoilations: 0).toFirestoreData() {
+                                                    updatedItems["lastVist"] = [lastVisit]
+                                                }
+                                                
+                                                viewModel.updateStartOrStopInspectionDate(jobModel: startedJob, updatedItems: updatedItems) { error in
+                                                    if error == nil {
+                                                        UserDefaultsStore.startedJobDetail = nil
+                                                    }
+                                                }
+                                                
+                                            } else if startedJob.jobStartDate != nil && startedJob.jobCompletionDate != nil && startedJob.isCompleted == true {
+                                                viewModel.selectedItem = startedJob
+                                                
+                                                if path.count > 0 {
+                                                    path.removeLast()
+                                                }
+                                                path.append("inspectionChecklistPage")
+                                            } else {
+                                                viewModel.selectedItem = startedJob
+                                                let startDate = Date()
+                                                viewModel.updateStartOrStopInspectionDate(jobModel: startedJob, updatedItems: ["jobStartDate": startDate]) { error in
+                                                    if error == nil {
+                                                        viewModel.selectedItem?.jobStartDate = startDate
+                                                        
+                                                        if path.count > 0 {
+                                                            path.removeLast()
+                                                        }
+                                                        path.append("inspectionChecklistPage")
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -111,6 +150,14 @@ struct SiteListView: View {
                     } else if value == "raiseRequest" {
                         RequestView(viewModel: viewModel) {
                             raiseRequestForJob = nil
+                            DispatchQueue.main.async {
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                            }
+                        }
+                    } else if value == "inspectionChecklistPage" {
+                        InspectionChecklistView(viewModel: viewModel) {
                             DispatchQueue.main.async {
                                 if path.count > 0 {
                                     path.removeLast()
