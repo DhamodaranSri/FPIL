@@ -171,4 +171,14 @@ final class FirebaseFileManager {
             print("Download progress: \(percent)%")
         }
     }
+    
+    func deleteImageFromFirebase(urlString: String, completion: @escaping (Error?) -> Void) {
+        let storage = Storage.storage()
+        let httpsReference = storage.reference(forURL: urlString)
+        
+        httpsReference.delete { error in
+            completion(error)
+        }
+    }
+
 }

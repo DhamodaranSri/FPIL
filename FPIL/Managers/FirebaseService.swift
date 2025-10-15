@@ -134,7 +134,7 @@ class FirebaseService<T: Codable & Identifiable> where T.ID == String? {
         }
         
         if orderBy.isEmpty == false {
-            query = query.order(by: orderBy)
+            query = query.order(by: orderBy, descending: true)
         }
 
         query

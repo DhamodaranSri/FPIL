@@ -55,7 +55,7 @@ struct LastVisit: Codable, Identifiable, Hashable {
     let visitDate: Date
     let inspectionFrequency: InspectionFrequency
     let totalScore: Int
-    let totalSpentTime: Int
+    let totalSpentTime: TimeInterval
     let totalVoilations: Int
 }
 
@@ -79,6 +79,7 @@ struct Answers: Codable, Hashable {
     var isSelected: Bool
     var isVoilated: Bool? = false
     var voilationDescription: String? = nil
+    var photoUrl: String? = nil
 }
 
 struct InspectionFrequency: Codable, Identifiable, Hashable {

@@ -16,7 +16,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
-        if Auth.auth().currentUser != nil {
+        if Auth.auth().currentUser != nil && UserDefaultsStore.profileDetail != nil {
             isLoggedIn = true
             // User is signed in
         } else {
@@ -24,6 +24,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             isLoggedIn = false
         }
         UIRefreshControl.appearance().tintColor = .gray
+        UITextView.appearance().backgroundColor = .clear
         
         let appLaunchRepository = FirebaseAppLaunchRepository()
         appLaunchRepository.fetchBuildings { result in

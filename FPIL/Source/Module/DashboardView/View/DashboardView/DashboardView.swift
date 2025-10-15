@@ -22,59 +22,88 @@ struct DashboardView: View {
     
     var body: some View {
         NavigationStack(path: $path) {
-            VStack(spacing: 0) {
-                CustomNavBar(
-                    title: viewModel.selectedTab?.navBarTitle ?? "",
-                    showBackButton: false,
-                    actions: getNavBarActions(),
-                    backgroundColor: .applicationBGcolor,
-                    titleColor: viewModel.selectedTab?.name == "Home" ? .appPrimary : .white
-                ).alert(alertMessage, isPresented: $showAlert) {
-                    Button("OK", role: .cancel) { }
+            ZStack {
+                VStack(spacing: 0) {
+                    CustomNavBar(
+                        title: viewModel.selectedTab?.navBarTitle ?? "",
+                        showBackButton: false,
+                        actions: getNavBarActions(),
+                        backgroundColor: .applicationBGcolor,
+                        titleColor: viewModel.selectedTab?.name == "Home" ? .appPrimary : .white
+                    ).alert(alertMessage, isPresented: $showAlert) {
+                        Button("OK", role: .cancel) { }
+                    }
+                    
+                    Spacer()
+                    
+                    ZStack {
+                        if let selectedTab = viewModel.selectedTab {
+                            switch selectedTab.name {
+                            case "Home":
+                                HomeView(path: $path, qrCodeImage: $qrCodeImage)
+                                    .background(.applicationBGcolor)
+                                    .frame(alignment: .top)
+                                    .padding(.bottom, tabBarHeight)
+                            case "Inspectors":
+                                InspectorsListView(viewModel: InspectorsListViewModel(), path: $path)
+                                    .background(.applicationBGcolor)
+                                    .frame(alignment: .top)
+                                    .padding(.bottom, tabBarHeight)
+                            case "Sites":
+                                SiteListView(path: $path, viewModel: jobListViewModel)
+                                    .background(.applicationBGcolor)
+                                    .frame(alignment: .top)
+                                    .padding(.bottom, tabBarHeight)
+                            default:
+                                
+                                Text("Coming soon!").foregroundColor(.white)
+                            }
+                            
+                            BottomTabBar(
+                                currentTab: $viewModel.selectedTab,
+                                tabs: viewModel.tabs,
+                                backgroundColor: .applicationBGcolor
+                            )
+                        } else if viewModel.isLoading {
+                            ProgressView("Loading...")
+                        } else {
+                            Text("No Tabs Available")
+                        }
+                    }
+                    .background(.clear)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .navigationBarBackButtonHidden(true)
+                .background(.applicationBGcolor)
+                .ignoresSafeArea(edges: .bottom)
+                
+                if viewModel.isLoading {
+                    LoadingView()
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: viewModel.isLoading)
                 }
                 
-                Spacer()
-                
-                ZStack {
-                    if let selectedTab = viewModel.selectedTab {
-                        switch selectedTab.name {
-                        case "Home":
-                            HomeView(path: $path, qrCodeImage: $qrCodeImage)
-                                .background(.applicationBGcolor)
-                                .frame(alignment: .top)
-                                .padding(.bottom, tabBarHeight)
-                        case "Inspectors":
-                            InspectorsListView(viewModel: InspectorsListViewModel(), path: $path)
-                                .background(.applicationBGcolor)
-                                .frame(alignment: .top)
-                                .padding(.bottom, tabBarHeight)
-                        case "Sites":
-                            SiteListView(path: $path, viewModel: jobListViewModel)
-                                .background(.applicationBGcolor)
-                                .frame(alignment: .top)
-                                .padding(.bottom, tabBarHeight)
-                        default:
-                            
-                            Text("Coming soon!").foregroundColor(.white)
-                        }
+                Group {
+                    if let error = viewModel.serviceError {
+                        let nsError = error as NSError
+                        let title = nsError.code == 92001 ? "No Internet Connection" : "Error"
+                        let message = nsError.code == 92001
+                        ? "Please check your WiFi or cellular data."
+                        : nsError.localizedDescription
                         
-                        BottomTabBar(
-                            currentTab: $viewModel.selectedTab,
-                            tabs: viewModel.tabs,
-                            backgroundColor: .applicationBGcolor
+                        CustomAlertView(
+                            title: title,
+                            message: message,
+                            primaryButtonTitle: "OK",
+                            primaryAction: {
+                                viewModel.serviceError = nil
+                            },
+                            secondaryButtonTitle: nil,
+                            secondaryAction: nil
                         )
-                    } else if viewModel.isLoading {
-                        ProgressView("Loading...")
-                    } else {
-                        Text("No Tabs Available")
                     }
                 }
-                .background(.clear)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .navigationBarBackButtonHidden(true)
-            .background(.applicationBGcolor)
-            .ignoresSafeArea(edges: .bottom)
         }
     }
     

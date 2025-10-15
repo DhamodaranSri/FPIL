@@ -12,6 +12,7 @@ struct InspectionChecklistView: View {
     var onClick: (() -> ())? = nil
     @State private var expandedSections: Set<String> = []
     @State private var selectedPhotoAnswerID: String?
+    @FocusState private var focusedItemID: String?
     
     init(viewModel: JobListViewModel, onClick: (() -> ())? = nil) {
         self.onClick = onClick
@@ -212,7 +213,8 @@ struct InspectionChecklistView: View {
                             
                             if var selectedItem = viewModel.selectedItem {
                                // let duration = completedDate.timeIntervalSince(selectedItem.jobStartDate ?? Date())
-                                if let lastVisit = LastVisit(id: UUID().uuidString, inspectorId: UserDefaultsStore.profileDetail?.id ?? "", inspectorName: (UserDefaultsStore.profileDetail?.firstName ?? "") + " " + (UserDefaultsStore.profileDetail?.lastName ?? ""), visitDate: selectedItem.jobStartDate ?? Date(), inspectionFrequency: selectedItem.inspectionFrequency, totalScore: Int(progress * 100), totalSpentTime: 0, totalVoilations: viewModel.totalViolations()).toFirestoreData() {
+                                let elapsed = completedDate.timeIntervalSince(selectedItem.jobStartDate ?? Date())
+                                if let lastVisit = LastVisit(id: UUID().uuidString, inspectorId: UserDefaultsStore.profileDetail?.id ?? "", inspectorName: (UserDefaultsStore.profileDetail?.firstName ?? "") + " " + (UserDefaultsStore.profileDetail?.lastName ?? ""), visitDate: selectedItem.jobStartDate ?? Date(), inspectionFrequency: selectedItem.inspectionFrequency, totalScore: Int(progress * 100), totalSpentTime: elapsed, totalVoilations: viewModel.totalViolations()).toFirestoreData() {
                                     updatedItems["lastVist"] = [lastVisit]
                                 }
                                 
@@ -227,6 +229,7 @@ struct InspectionChecklistView: View {
                                 viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
                                     DispatchQueue.main.async {
                                         if error == nil {
+                                            UserDefaultsStore.jobStartedDate = nil
                                             UserDefaultsStore.startedJobDetail = nil
                                             viewModel.selectedItem = nil
                                             onClick?()
@@ -248,6 +251,33 @@ struct InspectionChecklistView: View {
                 .background(.applicationBGcolor)
                 .onAppear() {
                 }
+            
+            if viewModel.isLoading {
+                LoadingView()
+                    .transition(.opacity)
+                    .animation(.easeInOut, value: viewModel.isLoading)
+            }
+            
+            Group {
+                if let error = viewModel.serviceError {
+                    let nsError = error as NSError
+                    let title = nsError.code == 92001 ? "No Internet Connection" : "Error"
+                    let message = nsError.code == 92001
+                    ? "Please check your WiFi or cellular data."
+                    : nsError.localizedDescription
+                    
+                    CustomAlertView(
+                        title: title,
+                        message: message,
+                        primaryButtonTitle: "OK",
+                        primaryAction: {
+                            viewModel.serviceError = nil
+                        },
+                        secondaryButtonTitle: nil,
+                        secondaryAction: nil
+                    )
+                }
+            }
         }
     }
     
@@ -326,12 +356,31 @@ struct InspectionChecklistView: View {
                                             toggleVolationSelection(questionId: section.question, answerIndex: answerIndex, isVolation: false)
                                         }
                                         Spacer()
-                                        Button{
-                                            
-                                        } label:{
-                                            Image(systemName: "camera")
-                                                .foregroundColor(.white)
-                                        }
+                                        CameraCaptureView(
+                                            existingPhotoURL: answer.photoUrl,
+                                            onUploadComplete: { image in
+                                                viewModel.uploadInspectionPhotoToFirebase(image: image, job: viewModel.selectedItem) { error, url in
+                                                    if error == nil, let url {
+                                                        updatePhotos(questionId: section.question, answerIndex: answerIndex, photoUrl: url)
+                                                    }
+                                                }
+                                            },
+                                            removeUploadedPhoto: {
+                                                if let url = answer.photoUrl {
+                                                    viewModel.deleteUploadedImage(url: url) { error, isDeleteComplete in
+                                                        if isDeleteComplete {
+                                                            updatePhotos(questionId: section.question, answerIndex: answerIndex, photoUrl: "")
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        )
+//                                        Button{
+//                                            
+//                                        } label:{
+//                                            Image(systemName: "camera")
+//                                                .foregroundColor(.white)
+//                                        }
                                     }
                                     Text("Notes / Violations:")
                                         .font(ApplicationFont.regular(size: 10).value)
@@ -351,6 +400,9 @@ struct InspectionChecklistView: View {
                                                 }
                                             )
                                         )
+                                        .focused($focusedItemID, equals: answer.answer)
+                                        .scrollContentBackground(.hidden)
+                                        .background(.white)
                                         .frame(height: 50)
                                         .font(.system(size: 13))
                                         .textInputAutocapitalization(.never)
@@ -378,6 +430,20 @@ struct InspectionChecklistView: View {
                 )
             }
         }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    focusedItemID = nil
+//                                                    hideKeyboard()
+                }
+                .tint(.blue)
+            }
+        }
+    }
+
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
     private func toggleAnswerSelection(questionId: String, answerIndex: Int) {
@@ -405,6 +471,16 @@ struct InspectionChecklistView: View {
         
         if let questionIndex = checkList.questions.firstIndex(where: { $0.question == questionId }) {
             checkList.questions[questionIndex].answers[answerIndex].voilationDescription = description
+            viewModel.checkList = checkList // reassign to trigger update
+            UserDefaultsStore.startedJobDetail?.building.checkLists[0] = checkList
+        }
+    }
+    
+    private func updatePhotos(questionId: String, answerIndex: Int, photoUrl: String) {
+        guard var checkList = viewModel.checkList else { return }
+        
+        if let questionIndex = checkList.questions.firstIndex(where: { $0.question == questionId }) {
+            checkList.questions[questionIndex].answers[answerIndex].photoUrl = photoUrl.isEmpty ? nil : photoUrl
             viewModel.checkList = checkList // reassign to trigger update
             UserDefaultsStore.startedJobDetail?.building.checkLists[0] = checkList
         }

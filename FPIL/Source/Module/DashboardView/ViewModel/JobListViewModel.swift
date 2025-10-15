@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 // MARK: - ViewModel
 @MainActor
@@ -119,14 +120,16 @@ class JobListViewModel: ObservableObject {
         ]
 
         isLoading = true
-        inspectionRepository.fetchInspectionJobs(forConditions: conditions) { [weak self] result in
+        inspectionRepository.fetchInspectionJobs(forConditions: conditions, orderBy: "jobAssignedDate") { [weak self] result in
             DispatchQueue.main.async {
                 self?.isLoading = false
                 switch result {
                 case .success(let items):
                     self?.items = items
                     UserDefaultsStore.jobStartedDate = self?.items.filter({$0.jobStartDate != nil && $0.isCompleted == false }).first?.jobStartDate
-                    UserDefaultsStore.startedJobDetail = self?.items.filter({$0.jobStartDate != nil && $0.isCompleted == false }).first
+                    if UserDefaultsStore.startedJobDetail == nil {
+                        UserDefaultsStore.startedJobDetail = self?.items.filter({$0.jobStartDate != nil && $0.isCompleted == false }).first
+                    }
                 case .failure(let error):
                     self?.serviceError = error
                     print("Error fetching tabs: \(error)")
@@ -142,7 +145,11 @@ class JobListViewModel: ObservableObject {
     }
     
     func getCheckListFromSelectedItem() {
-        checkList = selectedItem?.building.checkLists.first
+        if UserDefaultsStore.startedJobDetail != nil {
+            checkList = UserDefaultsStore.startedJobDetail?.building.checkLists.first
+        } else {
+            checkList = selectedItem?.building.checkLists.first
+        }
     }
     
     func totalSelected() -> Int {
@@ -175,48 +182,105 @@ class JobListViewModel: ObservableObject {
 }
 
 extension JobListViewModel {
-    func addOrUpdateInspection(_ job: JobModel, completion: @escaping (Error?) -> Void) {
-        
-        var includeQRonJob = job
-
-        isLoading = true
-        if let siteId = job.id {
-            let image = QRGenerator().generateQRCode(from: siteId)
-            FirebaseFileManager.shared.uploadImage(image,folder: "\(siteId)/SiteQRImage", fileName: siteId) { result in
+    
+    func deleteUploadedImage(url: String, completion: @escaping (Error?, Bool) -> Void) {
+        if NetworkMonitor.shared.isConnected {
+            
+            isLoading = true
+            
+            FirebaseFileManager.shared.deleteImageFromFirebase(urlString: url) { error in
                 DispatchQueue.main.async {
-                    switch result {
-                    case .success(let url):
-                        includeQRonJob.siteQRCodeImageUrl = url
-                        self.inspectionRepository.createOrupdateInspection(job: includeQRonJob) { [weak self] result in
-                            DispatchQueue.main.async {
-                                
-                                self?.isLoading = false
-                                switch result {
-                                case .success(let items):
-                                    print("Success adding tabs: \(items)")
-                                    completion(nil)
-                                case .failure(let error):
-                                    self?.serviceError = error
-                                    completion(error)
-                                    print("Error fetching tabs: \(error)")
-                                }
-                                if (UserDefaultsStore.profileDetail?.userType == 2) {
-                                    self?.fetchAllInspections()
-                                } else {
-                                    self?.fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
-                                }
-                            }
-                        }
-                        print("Uploaded image URL: \(url)")
-                    case .failure(let error):
-                        self.isLoading = false
+                    self.isLoading = false
+                    if error == nil {
+                        completion(nil, true)
+                    } else {
                         self.serviceError = error
-                        completion(error)
-                        print("Upload failed: \(error.localizedDescription)")
+                        completion(error, false)
                     }
-                    
                 }
             }
+        } else {
+            completion(NSError(domain: "Internet Connection Error", code: 92001), false)
+        }
+    }
+    
+    func uploadInspectionPhotoToFirebase(image: UIImage, job: JobModel?, completion: @escaping (Error?, String?) -> Void) {
+        
+        if NetworkMonitor.shared.isConnected {
+            guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
+            
+            isLoading = true
+            
+            if let siteId = job?.id, let compressedImage = UIImage(data: imageData) {
+                
+                FirebaseFileManager.shared.uploadImage(compressedImage,folder: "\(siteId)/inspection_photos", fileName: (UUID().uuidString)) { result in
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        switch result {
+                        case .success(let url):
+                            completion(nil, url)
+                            print("Uploaded image URL: \(url)")
+                        case .failure(let error):
+                            self.serviceError = error
+                            completion(error, nil)
+                            print("Upload failed: \(error.localizedDescription)")
+                        }
+                        
+                    }
+                }
+                
+            }
+        } else {
+            completion(NSError(domain: "Internet Connection Error", code: 92001), nil)
+        }
+    }
+    
+    func addOrUpdateInspection(_ job: JobModel, completion: @escaping (Error?) -> Void) {
+        
+        if NetworkMonitor.shared.isConnected {
+            var includeQRonJob = job
+
+            isLoading = true
+            if let siteId = job.id {
+                let image = QRGenerator().generateQRCode(from: siteId)
+                FirebaseFileManager.shared.uploadImage(image,folder: "\(siteId)/SiteQRImage", fileName: siteId) { result in
+                    DispatchQueue.main.async {
+                        switch result {
+                        case .success(let url):
+                            includeQRonJob.siteQRCodeImageUrl = url
+                            self.inspectionRepository.createOrupdateInspection(job: includeQRonJob) { [weak self] result in
+                                DispatchQueue.main.async {
+                                    
+                                    self?.isLoading = false
+                                    switch result {
+                                    case .success(let items):
+                                        print("Success adding tabs: \(items)")
+                                        completion(nil)
+                                    case .failure(let error):
+                                        self?.serviceError = error
+                                        completion(error)
+                                        print("Error fetching tabs: \(error)")
+                                    }
+                                    if (UserDefaultsStore.profileDetail?.userType == 2) {
+                                        self?.fetchAllInspections()
+                                    } else {
+                                        self?.fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
+                                    }
+                                }
+                            }
+                            print("Uploaded image URL: \(url)")
+                        case .failure(let error):
+                            self.isLoading = false
+                            self.serviceError = error
+                            completion(error)
+                            print("Upload failed: \(error.localizedDescription)")
+                        }
+                        
+                    }
+                }
+            }
+        } else {
+            completion(NSError(domain: "Internet Connection Error", code: 92001))
         }
     }
     

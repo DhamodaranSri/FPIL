@@ -116,8 +116,12 @@ struct JobCardView: View {
                             if job.jobStartDate != nil && job.jobCompletionDate == nil && job.isCompleted == false {
                                 startJob?(job)
                             } else {
-                                alertMessage = "Inspection is In-Progress Already, Can't start New. Please Complete the Exisit"
-                                showAlert = true
+                                if job.isCompleted == true {
+                                    startJob?(job)
+                                } else {
+                                    alertMessage = "Inspection is In-Progress Already, Can't start New. Please Complete the Exisit"
+                                    showAlert = true
+                                }
                             }
                         } else {
                             startJob?(job)
@@ -125,7 +129,7 @@ struct JobCardView: View {
                         
                     }) {
                         if job.jobStartDate != nil && job.jobCompletionDate == nil && job.isCompleted == false {
-                            IconLabel(labelTitle: "Stop", imageName: "stop", textColor: .white)
+                            IconLabel(labelTitle: "Inspecting", imageName: "started", textColor: .white)
                                 .font(ApplicationFont.bold(size: 12).value)
                                 .padding(.vertical, 6)
                                 .padding(.horizontal, 12)

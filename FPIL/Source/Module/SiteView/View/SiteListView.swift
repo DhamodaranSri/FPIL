@@ -38,10 +38,11 @@ struct SiteListView: View {
                     
                     let all = viewModel.items.count
 //                    let today = viewModel.items.filter { $0.jobAssignedDate?.convertDateAloneFromFullDateFormat() == Date().convertDateAloneFromFullDateFormat() }.count
-                    let inprogress = viewModel.items.filter { ($0.lastVist?.count ?? 0) > 0 && $0.isCompleted == true }.count
+                    let inprogress = viewModel.items.filter { $0.jobStartDate != nil && $0.jobCompletionDate == nil && $0.isCompleted == false  }.count
                     let completed = viewModel.items.filter { $0.isCompleted == true }.count
+                    let assignedToday = viewModel.items.filter { $0.jobAssignedDate?.formatedDateAloneAsString() == Date().formatedDateAloneAsString() }.count
                     
-                    let dic: Dictionary<String, Any> = ["All Sites": all, "Today": "0", "InProgress": inprogress, "Completed": completed]
+                    let dic: Dictionary<String, Any> = ["All Sites": all, "Today": assignedToday, "InProgress": inprogress, "Completed": completed]
                     let allKeys: [String] = ["All Sites", "Today", "InProgress", "Completed"]
                     SmallCardInfoView(cardInfo: dic, keys: allKeys)
                         .frame(maxWidth: .infinity)
@@ -76,7 +77,7 @@ struct SiteListView: View {
                                             path.append("raiseRequest")
                                         } startJob: { startedJob in
                                             if startedJob.jobStartDate != nil && startedJob.jobCompletionDate == nil && startedJob.isCompleted == false {
-                                                
+                                                /*
                                                 var updatedItems: [String: Any] = [
                                                     "isCompleted": true,
                                                     "jobCompletionDate": Date()
@@ -91,6 +92,14 @@ struct SiteListView: View {
                                                         UserDefaultsStore.startedJobDetail = nil
                                                     }
                                                 }
+                                                */
+                                                
+                                                viewModel.selectedItem = startedJob
+                                                
+                                                if path.count > 0 {
+                                                    path.removeLast()
+                                                }
+                                                path.append("inspectionChecklistPage")
                                                 
                                             } else if startedJob.jobStartDate != nil && startedJob.jobCompletionDate != nil && startedJob.isCompleted == true {
                                                 viewModel.selectedItem = startedJob

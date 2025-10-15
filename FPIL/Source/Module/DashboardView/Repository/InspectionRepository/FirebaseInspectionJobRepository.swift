@@ -29,10 +29,11 @@ final class FirebaseInspectionJobRepository: InspectionJobRepositoryProtocol {
 
     func fetchInspectionJobs(
         forConditions conditions: [(field: String, value: Any)],
+        orderBy: String,
         completion: @escaping (Result<[JobModel], any Error>) -> Void
     ) {
         if NetworkMonitor.shared.isConnected {
-            inspectionService.fetchByMultipleWhere(conditions: conditions, orderBy: "") { result in
+            inspectionService.fetchByMultipleWhere(conditions: conditions, orderBy: orderBy) { result in
                 completion(result)
             }
         } else {
