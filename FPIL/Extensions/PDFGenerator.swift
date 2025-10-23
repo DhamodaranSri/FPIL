@@ -117,97 +117,99 @@ struct PDFGenerator {
             
             // MARK: - Checklist Section Header
             
+            // Page setup
+            let contentWidth = pageWidth - 2 * margin
+
+            // --- Remarks Header ---
             let remarksHeader = "Review Comments"
-            remarksHeader.draw(at: CGPoint(x: margin, y: yPosition), withAttributes: [.font: subHeaderFont])
-            yPosition += 20
-            
+            remarksHeader.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: CGFloat.greatestFiniteMagnitude),
+                               withAttributes: [.font: subHeaderFont])
+            yPosition += subHeaderFont.lineHeight + 5
+
+            // --- Remarks Text ---
             let remarks = siteInfo.reviewNotes ?? "-"
-            remarks.draw(at: CGPoint(x: margin, y: yPosition), withAttributes: [.font: titleFont])
-            yPosition += 30
-            
+            remarks.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: CGFloat.greatestFiniteMagnitude),
+                         withAttributes: [.font: titleFont])
+            yPosition += titleFont.lineHeight * CGFloat(remarks.components(separatedBy: "\n").count) + 10
+
+            // --- Checklist Header ---
             let checklistHeader = "Inspection Checklist"
-            checklistHeader.draw(at: CGPoint(x: margin, y: yPosition), withAttributes: [.font: subHeaderFont])
-            
-            yPosition += 30
-            
-            // MARK: - Checklist Items
+            checklistHeader.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: CGFloat.greatestFiniteMagnitude),
+                                 withAttributes: [.font: subHeaderFont])
+            yPosition += subHeaderFont.lineHeight + 10
+
+            // --- Checklist Items ---
             for (index, item) in checklistItems.questions.enumerated() {
                 if yPosition > pageHeight - 100 {
                     context.beginPage()
                     yPosition = margin
                 }
-                
+
+                // Question
                 let itemTitle = "\(index + 1). \(item.question)"
-                itemTitle.draw(at: CGPoint(x: margin, y: yPosition), withAttributes: [.font: subTitleFont])
-                yPosition += 18
-                
+                itemTitle.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: CGFloat.greatestFiniteMagnitude),
+                               withAttributes: [.font: subTitleFont])
+                yPosition += subTitleFont.lineHeight * CGFloat(itemTitle.components(separatedBy: "\n").count) + 5
+
+                // Answers
                 for (subIndex, subItem) in item.answers.enumerated() {
                     let statusLine = "\(subItem.answer)"
-                    
-                    // --- Fonts ---
-                    let uiTitleFont = titleFont // make sure this is a UIFont, not SwiftUI Font
-                    
-                    let textAttributes: [NSAttributedString.Key: Any] = [.font: uiTitleFont]
-                    let textSize = statusLine.size(withAttributes: textAttributes)
                     let lineHeight: CGFloat = 30
-                    
-                    // --- Checkbox ---
                     let checkboxSize: CGFloat = 16
+                    
+                    // Checkbox
                     let checkboxRect = CGRect(
                         x: margin + 15,
-                        y: yPosition + (lineHeight - checkboxSize) / 2, // vertically centered
+                        y: yPosition + (lineHeight - checkboxSize)/2,
                         width: checkboxSize,
                         height: checkboxSize
                     )
                     
-                    // Choose checkbox image based on selection
-                    let checkboxImageName: String
-                    if subItem.isSelected {
-                        checkboxImageName = "check_done"  // ✅ Use your actual asset name
-                    } else {
-                        checkboxImageName = "check"
-                    }
-                    
+                    let checkboxImageName = subItem.isSelected ? "check_done" : "check"
                     if let checkboxImage = UIImage(named: checkboxImageName) {
                         checkboxImage.draw(in: checkboxRect)
                     }
-                    
-                    // --- Text next to checkbox ---
+
+                    // Text next to checkbox
                     let textX = checkboxRect.maxX + 10
-                    let textRect = CGRect(
-                        x: textX,
-                        y: yPosition,
-                        width: textSize.width + 10,
-                        height: lineHeight
-                    )
-                    
-                    let textColor: UIColor = subItem.isVoilated == true
-                    ? .warningBG
-                    : (subItem.isSelected ? .pdfAnsweredText : .black)
-                    
+                    let textRect = CGRect(x: textX, y: yPosition, width: contentWidth - (textX - margin), height: CGFloat.greatestFiniteMagnitude)
+                    let textColor: UIColor = subItem.isVoilated ?? false ? .warningBG : (subItem.isSelected ? .pdfAnsweredText : .black)
                     let textDrawAttributes: [NSAttributedString.Key: Any] = [
-                        .font: uiTitleFont,
+                        .font: titleFont,
                         .foregroundColor: textColor
                     ]
+                    statusLine.draw(in: textRect, withAttributes: textDrawAttributes)
                     
-                    statusLine.draw(in: textRect.insetBy(dx: 5, dy: (lineHeight - uiTitleFont.lineHeight) / 2),
-                                    withAttributes: textDrawAttributes)
-                    
-                    yPosition += lineHeight
-                    
+                    // Compute height of the text for proper yPosition increment
+                    let textHeight = statusLine.boundingRect(
+                        with: CGSize(width: textRect.width, height: CGFloat.greatestFiniteMagnitude),
+                        options: [.usesLineFragmentOrigin, .usesFontLeading],
+                        attributes: textDrawAttributes,
+                        context: nil
+                    ).height
+                    yPosition += max(lineHeight, textHeight) + 5
+
+                    // Violation Description
                     if let description = subItem.voilationDescription {
-                        
                         let singleLine = description
-                            .components(separatedBy: .newlines) // split by newlines
-                            .filter { !$0.isEmpty }             // remove empty lines
+                            .components(separatedBy: .newlines)
+                            .filter { !$0.isEmpty }
                             .joined(separator: " ")
-                        
                         let voilationDesctiption = "Voilations: \(singleLine)"
-                        voilationDesctiption.draw(at: CGPoint(x: margin + 20, y: yPosition), withAttributes: [.font: subValueFont])
-                        yPosition += 18
+                        let descriptionRect = CGRect(x: margin + 20, y: yPosition, width: contentWidth - 20, height: CGFloat.greatestFiniteMagnitude)
+                        voilationDesctiption.draw(in: descriptionRect, withAttributes: [.font: subValueFont])
+                        
+                        let descriptionHeight = voilationDesctiption.boundingRect(
+                            with: CGSize(width: descriptionRect.width, height: CGFloat.greatestFiniteMagnitude),
+                            options: [.usesLineFragmentOrigin, .usesFontLeading],
+                            attributes: [.font: subValueFont],
+                            context: nil
+                        ).height
+                        yPosition += descriptionHeight + 5
                     }
                 }
             }
+
         }
         
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(siteInfo.id ?? fileName)

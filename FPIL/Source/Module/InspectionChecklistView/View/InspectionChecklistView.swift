@@ -342,9 +342,11 @@ struct InspectionChecklistView: View {
             updatedItems["reviewNotes"] = reviewNotes
         }
         
+        viewModel.selectedItem?.status = status
+        
         if let selectedItem = viewModel.selectedItem {
             
-            if let pdfURL = PDFGenerator.generateInspectionPDF(siteInfo: viewModel.selectedItem, checklistItems: viewModel.checkList) {
+            if let pdfURL = PDFGenerator.generateInspectionPDF(siteInfo: selectedItem, checklistItems: viewModel.checkList) {
                 
                 
                 viewModel.uploadReviewReport(url: pdfURL) { error, url in
