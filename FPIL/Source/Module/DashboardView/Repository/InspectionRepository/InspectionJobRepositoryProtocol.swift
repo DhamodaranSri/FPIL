@@ -17,4 +17,8 @@ protocol InspectionJobRepositoryProtocol {
         completion: @escaping (Result<[JobModel], any Error>) -> Void
     )
     func startInspection(jobItem: JobModel, updatedItems: [String: Any], completion: @escaping (Result<Void, any Error>) -> Void)
+    func fetchAllInspectionJobsForInspector(
+        forConditions inspectorId: String,
+        completion: @escaping (Result<[JobModel], any Error>) -> Void
+    )
 }

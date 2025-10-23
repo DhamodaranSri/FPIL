@@ -10,7 +10,6 @@ import SwiftUI
 
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
-    @StateObject private var jobListViewModel = JobListViewModel()
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var path = NavigationPath()
@@ -50,7 +49,12 @@ struct DashboardView: View {
                                     .frame(alignment: .top)
                                     .padding(.bottom, tabBarHeight)
                             case "Sites":
-                                SiteListView(path: $path, viewModel: jobListViewModel)
+                                SiteListView(path: $path, viewModel: JobListViewModel())
+                                    .background(.applicationBGcolor)
+                                    .frame(alignment: .top)
+                                    .padding(.bottom, tabBarHeight)
+                            case "History", "Review":
+                                InspectionHistoryListView(path: $path, viewModel: JobListViewModel(isHistoryLoaded: true))
                                     .background(.applicationBGcolor)
                                     .frame(alignment: .top)
                                     .padding(.bottom, tabBarHeight)
@@ -108,7 +112,7 @@ struct DashboardView: View {
     }
     
     private func getNavBarActions() -> [NavBarAction] {
-        if viewModel.selectedTab?.name == "Services" || viewModel.selectedTab?.name == "Sites" {
+        if viewModel.selectedTab?.name == "Services" || viewModel.selectedTab?.name == "Sites" || viewModel.selectedTab?.name == "History" || viewModel.selectedTab?.name == "Review" {
             return [
                 NavBarAction(icon: "profile") {
                     alertMessage = "Under Construction"

@@ -40,6 +40,19 @@ final class FirebaseInspectionJobRepository: InspectionJobRepositoryProtocol {
             completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
         }
     }
+    
+    func fetchAllInspectionJobsForInspector(
+        forConditions inspectorId: String,
+        completion: @escaping (Result<[JobModel], any Error>) -> Void
+    ) {
+        if NetworkMonitor.shared.isConnected {
+            inspectionService.fetchByMultipleWhereAndMultipleFilterForSiteInspector(inspectorId: inspectorId, orderBy: "jobAssignedDate") { result in
+                completion(result)
+            }
+        } else {
+            completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
+        }
+    }
 
     func createOrupdateInspection(job: JobModel, completion: @escaping (Result<Void, any Error>) -> Void) {
         if NetworkMonitor.shared.isConnected {

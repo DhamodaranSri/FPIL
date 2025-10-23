@@ -163,6 +163,27 @@ struct InspectionChecklistView: View {
                         if let questions = viewModel.checkList?.questions {
                             answerList(for: questions)
                         }
+                        
+                        if (UserDefaultsStore.profileDetail?.userType == 2), (viewModel.selectedItem?.isCompleted ?? false) == true, viewModel.selectedItem?.status == nil {
+                            VStack (alignment: .leading) {
+                                Text("Review Notes:")
+                                    .font(ApplicationFont.bold(size: 12).value)
+                                    .foregroundColor(.white)
+                                    TextEditor(
+                                        text: Binding(
+                                            get: { viewModel.selectedItem?.reviewNotes ?? "" },
+                                            set: { viewModel.selectedItem?.reviewNotes = $0 }
+                                        )
+                                    )
+                                    .focused($focusedItemID, equals: "Review Notes")
+                                    .scrollContentBackground(.hidden)
+                                    .background(.white)
+                                    .frame(height: 70)
+                                    .font(ApplicationFont.regular(size: 12).value)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled()
+                            }
+                        }
                     }
                     .padding()
                     .background(Color.black.opacity(0.8))
@@ -245,6 +266,38 @@ struct InspectionChecklistView: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
                     .background(.appPrimary.opacity(0.2))
+                } else {
+                    if (UserDefaultsStore.profileDetail?.userType == 2), (viewModel.selectedItem?.isCompleted ?? false) == true, viewModel.selectedItem?.status == nil {
+                        HStack(alignment: .top) {
+                            Button("Approve") {
+                                planReview(status: 1)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 40)
+                            .background(.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            Button("Decline") {
+                                planReview(status: 2)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 40)
+                            .background(.red)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            
+                            Button("Revision") {
+                                planReview(status: 3)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 40)
+                            .background(.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }.frame(maxWidth: .infinity)
+                        .padding(.bottom, 20)
+                        .padding(.horizontal, 10)
+                    }
                 }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 .navigationBarBackButtonHidden()
@@ -277,6 +330,43 @@ struct InspectionChecklistView: View {
                         secondaryAction: nil
                     )
                 }
+            }
+        }
+    }
+    
+    private func planReview(status: Int) {
+        var updatedItems: [String: Any] = [
+            "status": status
+        ]
+        if let reviewNotes = viewModel.selectedItem?.reviewNotes, !reviewNotes.isEmpty {
+            updatedItems["reviewNotes"] = reviewNotes
+        }
+        
+        if let selectedItem = viewModel.selectedItem {
+            
+            if let pdfURL = PDFGenerator.generateInspectionPDF(siteInfo: viewModel.selectedItem, checklistItems: viewModel.checkList) {
+                
+                
+                viewModel.uploadReviewReport(url: pdfURL) { error, url in
+                    if error == nil, let url {
+                        updatedItems["reportPdfUrl"] = url
+                        viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
+                            DispatchQueue.main.async {
+                                if error == nil {
+                                    viewModel.selectedItem = nil
+                                    onClick?()
+                                }
+                            }
+                        }
+                    }
+                    
+                }
+                
+                // Option 1: Share or Preview PDF
+//                let activityVC = UIActivityViewController(activityItems: [pdfURL], applicationActivities: nil)
+//                if let rootVC = UIApplication.shared.windows.first?.rootViewController {
+//                    rootVC.present(activityVC, animated: true)
+//                }
             }
         }
     }

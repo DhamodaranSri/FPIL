@@ -33,24 +33,33 @@ class JobListViewModel: ObservableObject {
     }
 
     private let inspectionRepository: InspectionJobRepositoryProtocol
+    private var isHistoryLoaded: Bool = false
     
-    init(inspectionRepository: InspectionJobRepositoryProtocol = FirebaseInspectionJobRepository()) {
+    init(inspectionRepository: InspectionJobRepositoryProtocol = FirebaseInspectionJobRepository(), isHistoryLoaded: Bool = false) {
         self.inspectionRepository = inspectionRepository
-        if (UserDefaultsStore.profileDetail?.userType == 2) {
+        self.isHistoryLoaded = isHistoryLoaded
+        if isHistoryLoaded {
             fetchAllInspections()
         } else {
-            fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
+            if (UserDefaultsStore.profileDetail?.userType == 2) {
+                fetchAllInspections()
+            } else {
+                fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
+            }
         }
-        
     }
 
     func refreshOrganisations() async {
         // Simulate async refresh (API call etc.)
         try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 sec delay
-        if (UserDefaultsStore.profileDetail?.userType == 2) {
+        if isHistoryLoaded {
             fetchAllInspections()
         } else {
-            fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
+            if (UserDefaultsStore.profileDetail?.userType == 2) {
+                fetchAllInspections()
+            } else {
+                fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
+            }
         }
     }
 
@@ -89,10 +98,26 @@ class JobListViewModel: ObservableObject {
     }
     
     func fetchAllInspections() {
-        let conditions: [(field: String, value: Any)] = [
-            ("stationId", UserDefaultsStore.fireStationDetail?.id ?? ""),
-            ("isCompleted", false)
-        ]
+        var conditions: [(field: String, value: Any)] = []
+        if isHistoryLoaded {
+            if (UserDefaultsStore.profileDetail?.userType == 2) {
+                conditions = [
+                    ("stationId", UserDefaultsStore.fireStationDetail?.id ?? ""),
+                    ("isCompleted", true)
+                ]
+            } else {
+                conditions = [
+                    ("inspectorId", UserDefaultsStore.profileDetail?.id ?? ""),
+                    ("isCompleted", true)
+                ]
+            }
+        } else {
+            conditions = [
+                ("stationId", UserDefaultsStore.fireStationDetail?.id ?? ""),
+                ("isCompleted", false)
+            ]
+        }
+
         isLoading = true
         inspectionRepository.fetchAllInspectionJobs(forConditions: conditions) { [weak self] result in
             DispatchQueue.main.async {
@@ -104,10 +129,14 @@ class JobListViewModel: ObservableObject {
                     self?.serviceError = error
                     print("Error fetching tabs: \(error)")
                 }
-                if (UserDefaultsStore.profileDetail?.userType == 2) {
-                    self?.tabFilterItems()
-                } else {
+                if let history = self?.isHistoryLoaded, history {
                     self?.filterItems()
+                } else {
+                    if (UserDefaultsStore.profileDetail?.userType == 2) {
+                        self?.tabFilterItems()
+                    } else {
+                        self?.filterItems()
+                    }
                 }
             }
         }
@@ -120,6 +149,28 @@ class JobListViewModel: ObservableObject {
         ]
 
         isLoading = true
+        inspectionRepository.fetchAllInspectionJobsForInspector(forConditions: inspectorId) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                switch result {
+                case .success(let items):
+                    self?.items = items
+                    UserDefaultsStore.jobStartedDate = self?.items.filter({$0.jobStartDate != nil && $0.isCompleted == false }).first?.jobStartDate
+                    if UserDefaultsStore.startedJobDetail == nil {
+                        UserDefaultsStore.startedJobDetail = self?.items.filter({$0.jobStartDate != nil && $0.isCompleted == false }).first
+                    }
+                case .failure(let error):
+                    self?.serviceError = error
+                    print("Error fetching tabs: \(error)")
+                }
+                if (UserDefaultsStore.profileDetail?.userType == 2) {
+                    self?.tabFilterItems()
+                } else {
+                    self?.filterItems()
+                }
+            }
+        }
+        /*
         inspectionRepository.fetchInspectionJobs(forConditions: conditions, orderBy: "jobAssignedDate") { [weak self] result in
             DispatchQueue.main.async {
                 self?.isLoading = false
@@ -142,6 +193,7 @@ class JobListViewModel: ObservableObject {
             }
 
         }
+        */
     }
     
     func getCheckListFromSelectedItem() {
@@ -182,6 +234,30 @@ class JobListViewModel: ObservableObject {
 }
 
 extension JobListViewModel {
+    
+    func uploadReviewReport(url: URL, completion: @escaping (Error?, String?) -> Void) {
+        if NetworkMonitor.shared.isConnected {
+            
+            isLoading = true
+                        
+            FirebaseFileManager.shared.uploadFile(at: url, folder: "\(selectedItem?.id ?? "Inspection Reports")/review_report/") { result in
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    switch result {
+                    case .success(let url):
+                        completion(nil, url)
+                        print("Uploaded image URL: \(url)")
+                    case .failure(let error):
+                        self.serviceError = error
+                        completion(error, nil)
+                        print("Upload failed: \(error.localizedDescription)")
+                    }
+                }
+            }
+        } else {
+            completion(NSError(domain: "Internet Connection Error", code: 92001), nil)
+        }
+    }
     
     func deleteUploadedImage(url: String, completion: @escaping (Error?, Bool) -> Void) {
         if NetworkMonitor.shared.isConnected {

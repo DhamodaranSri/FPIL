@@ -19,6 +19,15 @@ enum ApplicationFont {
             return .custom("SegoeUIThis-Bold", size: size)
         }
     }
+
+    var uiValue: UIFont {
+        switch self {
+        case .regular(let size):
+            return UIFont(name: "SegoeUIThis", size: size) ?? .systemFont(ofSize: size)
+        case .bold(let size):
+            return UIFont(name: "SegoeUIThis-Bold", size: size) ?? .boldSystemFont(ofSize: size)
+        }
+    }
 }
 
 class UserDefaultsStore {

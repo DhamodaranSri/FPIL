@@ -43,6 +43,9 @@ struct JobModel: Codable, Identifiable {
     var isPending: Bool?
     var reScheduleDate: Date?
     var sitePlanDocUrl: String?
+    var status: Int? = nil
+    var reviewNotes: String? = nil
+    var reportPdfUrl: String? = nil
     
     // Local only (UI state)
     var isExpanded: Bool?

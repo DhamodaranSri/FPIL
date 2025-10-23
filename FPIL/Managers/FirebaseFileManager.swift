@@ -64,7 +64,7 @@ final class FirebaseFileManager {
     // MARK: - Upload Generic File (PDF, DOCX, etc.)
     func uploadFile(at fileURL: URL,
                     folder: String = "files",
-                    saveToFirestore: Bool = true,
+                    saveToFirestore: Bool = false,
                     completion: @escaping (Result<String, Error>) -> Void) {
         
         let fileName = fileURL.lastPathComponent
