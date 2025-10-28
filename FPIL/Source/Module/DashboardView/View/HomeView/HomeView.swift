@@ -47,7 +47,10 @@ struct HomeView: View {
                         })
                     }
                 }
-            }.navigationDestination(for: String.self) { value in
+            }.onAppear{
+                ClientListViewModel()
+            }
+            .navigationDestination(for: String.self) { value in
                 if value == "updateSites" {
                     CreateOrUpdateSiteView(viewModel: viewModel) {
                         DispatchQueue.main.async {
@@ -57,7 +60,14 @@ struct HomeView: View {
                         }
                     }
                 } else if value == "createSites" {
-                    CreateOrUpdateSiteView(viewModel: viewModel) {
+//                    CreateOrUpdateSiteView(viewModel: viewModel) {
+//                        DispatchQueue.main.async {
+//                            if path.count > 0 {
+//                                path.removeLast()
+//                            }
+//                        }
+//                    }
+                    CreateInspection(viewModel: viewModel) {
                         DispatchQueue.main.async {
                             if path.count > 0 {
                                 path.removeLast()

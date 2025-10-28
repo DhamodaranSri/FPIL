@@ -134,7 +134,55 @@ class FirebaseService<T: Codable & Identifiable> where T.ID == String? {
         }
         
         if orderBy.isEmpty == false {
-            query = query.order(by: orderBy)
+            query = query.order(by: orderBy, descending: true)
+        }
+
+        query
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                guard let documents = snapshot?.documents else {
+                    completion(.success([]))
+                    return
+                }
+                do {
+                    let items = try documents.compactMap { try $0.data(as: T.self) }
+                    completion(.success(items))
+                } catch {
+                    completion(.failure(error))
+                }
+            }
+    }
+    
+    func fetchByMultipleWhereAndMultipleFilterForSiteInspector(inspectorId: String, orderBy: String, completion: @escaping (Result<[T], Error>) -> Void) {
+
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // 🗓 Start of current month (e.g., 01-Oct-2025 00:00:00)
+        let startOfCurrentMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+        
+        // Firestore query
+        
+        let filter = Filter.orFilter([
+            Filter.andFilter([
+                Filter.whereField("inspectorId", isEqualTo: inspectorId),
+                Filter.whereField("jobAssignedDate", isGreaterOrEqualTo: startOfCurrentMonth)
+            ]),
+            Filter.andFilter([
+                Filter.whereField("inspectorId", isEqualTo: inspectorId),
+                Filter.orFilter([
+                    Filter.whereField("isCompleted", isEqualTo: false)
+                ])
+            ])
+        ])
+
+        var query = collectionRef.whereFilter(filter)
+        
+        if orderBy.isEmpty == false {
+            query = query.order(by: orderBy, descending: true)
         }
 
         query

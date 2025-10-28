@@ -64,7 +64,7 @@ final class FirebaseFileManager {
     // MARK: - Upload Generic File (PDF, DOCX, etc.)
     func uploadFile(at fileURL: URL,
                     folder: String = "files",
-                    saveToFirestore: Bool = true,
+                    saveToFirestore: Bool = false,
                     completion: @escaping (Result<String, Error>) -> Void) {
         
         let fileName = fileURL.lastPathComponent
@@ -171,4 +171,14 @@ final class FirebaseFileManager {
             print("Download progress: \(percent)%")
         }
     }
+    
+    func deleteImageFromFirebase(urlString: String, completion: @escaping (Error?) -> Void) {
+        let storage = Storage.storage()
+        let httpsReference = storage.reference(forURL: urlString)
+        
+        httpsReference.delete { error in
+            completion(error)
+        }
+    }
+
 }

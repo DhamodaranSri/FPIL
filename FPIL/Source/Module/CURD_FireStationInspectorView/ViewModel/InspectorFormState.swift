@@ -64,7 +64,6 @@ class InspectorFormState: ObservableObject {
         address = ""
         contactNumber = ""
         email = ""
-        stationCode = ""
         street = ""
         city = ""
         zipCode = ""

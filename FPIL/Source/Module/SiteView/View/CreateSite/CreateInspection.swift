@@ -1,15 +1,16 @@
 //
-//  CreateOrUpdateSiteView.swift
+//  CreateInspection.swift
 //  FPIL
 //
-//  Created by OrganicFarmers on 03/10/25.
+//  Created by OrganicFarmers on 26/10/25.
 //
 
 import SwiftUI
 import MapKit
 
-struct CreateOrUpdateSiteView: View {
+struct CreateInspection: View {
     @ObservedObject var viewModel: JobListViewModel
+    @State var clientModel: ClientModel? = nil
     @StateObject private var form: SiteFormState
     var onClick: (() -> ())? = nil
     
@@ -24,18 +25,19 @@ struct CreateOrUpdateSiteView: View {
         case update
     }
     
-    init(viewModel: JobListViewModel, onClick: (() -> ())? = nil, assignTheJob: Bool? = true) {
+    init(viewModel: JobListViewModel, clientModel: ClientModel? = nil, onClick: (() -> ())? = nil, assignTheJob: Bool? = true) {
         self.onClick = onClick
         self.viewModel = viewModel
+        self.clientModel = clientModel
         self.assignTheJob = assignTheJob
-        _form = StateObject(wrappedValue: SiteFormState(buildings: UserDefaultsStore.buildings ?? [], frequencys: UserDefaultsStore.frequency ?? [], site: viewModel.selectedItem, isAssign: assignTheJob ?? false, inspectors: UserDefaultsStore.inspectorsList ?? []))
+        _form = StateObject(wrappedValue: SiteFormState(buildings: UserDefaultsStore.buildings ?? [], frequencys: UserDefaultsStore.frequency ?? [], site: viewModel.selectedItem, isAssign: assignTheJob ?? false, inspectors: UserDefaultsStore.inspectorsList ?? [], clients: UserDefaultsStore.allClientDetail ?? []))
     }
     
     var body: some View {
         ZStack {
             VStack {
                 CustomNavBar(
-                    title: viewModel.selectedItem == nil ? "Create Site" : "Update Site Details",
+                    title: "Create Inspection",
                     showBackButton: true,
                     actions: [],
                     backgroundColor: .applicationBGcolor,
@@ -47,18 +49,26 @@ struct CreateOrUpdateSiteView: View {
                 )
                 ScrollView {
                     VStack(alignment: .leading) {
-                        let selectedItem = viewModel.selectedItem?.siteName ?? ""
-                        HeaderCell(titleString: viewModel.selectedItem == nil ? "Register New Site" : selectedItem)
+                        let title = (clientModel != nil && (clientModel?.organizationName?.count ?? 0) > 0) ? " for - \(clientModel?.organizationName ?? "")" : (clientModel != nil && (clientModel?.fullName.count ?? 0) > 0) ? " for - \(clientModel?.fullName)" : ""
+                        HeaderCell(titleString: "Register New Site" + title)
                             .padding(5)
                             .padding(.top, 15)
-                        if viewModel.selectedItem != nil {
-                            Text("Site ID: \(viewModel.selectedItem?.id ?? "0")")
-                                .font(ApplicationFont.regular(size: 10).value)
-                                .foregroundStyle(.white)
-                                .padding(.leading, 5)
-                        }
                         VStack(alignment: .leading) {
                             BottomBorderTextField(text: $form.siteName, placeholder: "Site Name")
+                            if clientModel == nil {
+                                HStack {
+                                    Text("Client: ")
+                                        .font(ApplicationFont.regular(size: 14).value)
+                                        .foregroundStyle(.white)
+                                    Spacer()
+                                    CustomPickerOptionalSelection<ClientModel>(
+                                        title: "Client",
+                                        options: form.clients,
+                                        selection: $form.client,
+                                        displayKey: \.fullName
+                                    )
+                                }.padding(.vertical, 10)
+                            }
                             HStack {
                                 Text("Site Type: ")
                                     .font(ApplicationFont.regular(size: 14).value)
@@ -71,9 +81,6 @@ struct CreateOrUpdateSiteView: View {
                                     displayKey: \.buildingName
                                 )
                             }.padding(.vertical, 10)
-                            BottomBorderTextField(text: $form.firstName, placeholder: "First Name")
-                            BottomBorderTextField(text: $form.lastName, placeholder: "Last Name")
-                            BottomBorderTextField(text: $form.email, placeholder: "Email")
                             Button {
                                 showSearch = true
                             } label: {
@@ -106,61 +113,57 @@ struct CreateOrUpdateSiteView: View {
                             BottomBorderTextField(text: $form.city, placeholder: "City")
                             BottomBorderTextField(text: $form.zipCode, placeholder: "Zip Code")
                             BottomBorderTextField(text: $form.contactNumber, placeholder: "Contact Number")
-                            if let isAssign = assignTheJob, (isAssign == true || UserDefaultsStore.profileDetail?.userType == 2) {
-                                if isAssign {
-                                    HStack {
-                                        Text("Assign To: ")
-                                            .font(ApplicationFont.regular(size: 14).value)
-                                            .foregroundStyle(.white)
-                                        Spacer()
-                                        
-                                        CustomPickerOptionalSelection<FireStationInspectorModel>(
-                                            title: "Assign To",
-                                            options: form.inspectors,
-                                            selection: $form.inspector,
-                                            displayKey: \.firstName
+                            HStack {
+                                Text("Assign To: ")
+                                    .font(ApplicationFont.regular(size: 14).value)
+                                    .foregroundStyle(.white)
+                                Spacer()
+                                
+                                CustomPickerOptionalSelection<FireStationInspectorModel>(
+                                    title: "Assign To",
+                                    options: form.inspectors,
+                                    selection: $form.inspector,
+                                    displayKey: \.firstName
+                                )
+                            }.padding(.vertical, 10)
+                            HStack {
+                                Text("Inspection End Date: ")
+                                    .font(ApplicationFont.regular(size: 14).value)
+                                    .foregroundStyle(.white)
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 0) {
+                                    ZStack {
+                                        DatePicker(
+                                            "",
+                                            selection: Binding (get: {
+                                                form.lastDateToInspection
+                                            }, set: { newValue in
+                                                form.lastDateToInspection = newValue
+                                            }),
+                                            in: Date()...,
+                                            displayedComponents: .date
                                         )
-                                    }.padding(.vertical, 10)
-                                }
-                                HStack {
-                                    Text("Inspection End Date: ")
-                                        .font(ApplicationFont.regular(size: 14).value)
-                                        .foregroundStyle(.white)
-                                    Spacer()
-                                    VStack(alignment: .trailing, spacing: 0) {
-                                        ZStack {
-                                            DatePicker(
-                                                "",
-                                                selection: Binding (get: {
-                                                    form.lastDateToInspection
-                                                }, set: { newValue in
-                                                    form.lastDateToInspection = newValue
-                                                }),
-                                                in: Date()...,
-                                                displayedComponents: .date
-                                            )
-                                                .labelsHidden()
-                                                .datePickerStyle(.compact)
-                                                .id(calendarId)
-                                                .onChange(of: form.lastDateToInspection) { _ in
-                                                  calendarId += 1
-                                                }
-                                                .blendMode(.destinationOver)
-                                            HStack {
-                                                Text(formattedDate(form.lastDateToInspection))
-                                                    .foregroundColor(.appPrimary)   // ✅ custom color
-                                                    .font(ApplicationFont.regular(size: 14).value)
-                                                Image(systemName: "chevron.down")
-                                                    .foregroundColor(.gray)
+                                            .labelsHidden()
+                                            .datePickerStyle(.compact)
+                                            .id(calendarId)
+                                            .onChange(of: form.lastDateToInspection) { _ in
+                                              calendarId += 1
                                             }
+                                            .blendMode(.destinationOver)
+                                        HStack {
+                                            Text(formattedDate(form.lastDateToInspection))
+                                                .foregroundColor(.appPrimary)   // ✅ custom color
+                                                .font(ApplicationFont.regular(size: 14).value)
+                                            Image(systemName: "chevron.down")
+                                                .foregroundColor(.gray)
                                         }
-                                        Rectangle()
-                                            .frame(height: 1)
-                                            .foregroundColor(.red.opacity(0.5))
                                     }
+                                    Rectangle()
+                                        .frame(height: 1)
+                                        .foregroundColor(.red.opacity(0.5))
                                 }
-                                .padding(.vertical, 10)
                             }
+                            .padding(.vertical, 10)
                             HStack {
                                 Text("Inspection Frequency: ")
                                     .font(ApplicationFont.regular(size: 14).value)
@@ -183,45 +186,27 @@ struct CreateOrUpdateSiteView: View {
                 }
                 .padding()
                 
-                if viewModel.selectedItem == nil {
-                    VStack {
-                        Button(action: saveOrganisation) {
-                            Text("Register & Generate QR")
-                                .frame(height: 50)
-                                .frame(maxWidth: .infinity)
-                                .background(Color.appPrimary)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                        }
-                        
-                        Button(action: form.clearForm) {
-                            Text("Clear")
-                                .frame(height: 50)
-                                .frame(maxWidth: .infinity)
-                                .background(Color.gray.opacity(0.2))
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                        }
+                VStack {
+                    Button(action: saveOrganisation) {
+                        Text("Register & Generate QR")
+                            .frame(height: 50)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.appPrimary)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                     }
-                    .padding(.vertical, 10)
-                    .padding(.horizontal)
-                } else {
-                    VStack {
-                        Button(action: {
-                            alertType = .update
-                            showConfirmationAlert = true
-                        }) {
-                            Text("Update & Re-Generate QR")
-                                .frame(height: 50)
-                                .frame(maxWidth: .infinity)
-                                .background(Color.appPrimary)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                        }
+                    
+                    Button(action: form.clearForm) {
+                        Text("Clear")
+                            .frame(height: 50)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.gray.opacity(0.2))
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                     }
-                    .padding(.vertical, 10)
-                    .padding(.horizontal)
                 }
+                .padding(.vertical, 10)
+                .padding(.horizontal)
             }
             .sheet(isPresented: $showSearch) {
                 AppleLocationSearchView(selectedAddress: $form.geoLocationAddress, coordinate: $form.coordinate)
@@ -283,7 +268,7 @@ struct CreateOrUpdateSiteView: View {
     
     private func saveOrganisation() {
 
-        let errors = form.validate()
+        let errors = form.validate(client: clientModel)
         
         guard errors.isEmpty else {
             // Show alert with first error
@@ -291,7 +276,7 @@ struct CreateOrUpdateSiteView: View {
             return
         }
         
-        let jobModel: JobModel = form.buildJobModelForInspector()
+        let jobModel: JobModel = form.buildJobModelFromClient(client: clientModel)
         
         viewModel.addOrUpdateInspection(jobModel) { error in
             if error == nil {

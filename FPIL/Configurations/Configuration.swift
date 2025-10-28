@@ -19,6 +19,15 @@ enum ApplicationFont {
             return .custom("SegoeUIThis-Bold", size: size)
         }
     }
+
+    var uiValue: UIFont {
+        switch self {
+        case .regular(let size):
+            return UIFont(name: "SegoeUIThis", size: size) ?? .systemFont(ofSize: size)
+        case .bold(let size):
+            return UIFont(name: "SegoeUIThis-Bold", size: size) ?? .boldSystemFont(ofSize: size)
+        }
+    }
 }
 
 class UserDefaultsStore {
@@ -30,6 +39,8 @@ class UserDefaultsStore {
     private static var allInspectors = "allInspectors"
     private static var jobStartedDateTime = "jobStartedDateTime"
     private static var startedJob = "startedJob"
+    private static var allClientType = "clientType"
+    private static var allClientList = "clientList"
     
     static var jobStartedDate :Date? {
         get {
@@ -65,6 +76,25 @@ class UserDefaultsStore {
             let encoder = JSONEncoder()
             if let encoded = try? encoder.encode(newValue) {
                 UserDefaults.standard.set(encoded, forKey: startedJob)
+            }
+        }
+    }
+
+    static var allClientDetail :[ClientModel]? {
+        get {
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: allClientList)
+            {
+                let userDetail = try? decoder.decode([ClientModel].self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
+        }
+        set {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: allClientList)
             }
         }
     }
@@ -126,6 +156,25 @@ class UserDefaultsStore {
         }
     }
 
+    static var clientType :[ClientType]? {
+        get {
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: allClientType)
+            {
+                let userDetail = try? decoder.decode([ClientType].self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
+        }
+        set {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: allClientType)
+            }
+        }
+    }
+
     static var inspectorsList :[FireStationInspectorModel]? {
         get {
             let decoder = JSONDecoder()
@@ -172,6 +221,8 @@ class UserDefaultsStore {
         UserDefaults.standard.removeObject(forKey: allInspectors)
         UserDefaults.standard.removeObject(forKey: jobStartedDateTime)
         UserDefaults.standard.removeObject(forKey: startedJob)
+        UserDefaults.standard.removeObject(forKey: allClientType)
+        UserDefaults.standard.removeObject(forKey: allClientList)
     }
     
     

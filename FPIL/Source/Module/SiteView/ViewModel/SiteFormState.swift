@@ -23,7 +23,6 @@ class SiteFormState: ObservableObject {
     @Published var longitude: Double = 0.0
     @Published var clientId: String? = nil
     @Published var contactNumber = ""
-    @Published var alternateContactNumber: String = ""
     @Published var email = ""
     @Published var street = ""
     @Published var city = ""
@@ -43,6 +42,7 @@ class SiteFormState: ObservableObject {
         }
     }
     @Published var inspector: FireStationInspectorModel? = nil
+    @Published var client: ClientModel? = nil
     
     var lastDate: Date?
 
@@ -50,18 +50,21 @@ class SiteFormState: ObservableObject {
     let frequencys: [InspectionFrequency]
     let isAssign: Bool
     let inspectors: [FireStationInspectorModel]
+    let clients: [ClientModel]
 
     init(
         buildings: [Building],
         frequencys: [InspectionFrequency],
         site: JobModel? = nil,
         isAssign: Bool = false,
-        inspectors: [FireStationInspectorModel] = []
+        inspectors: [FireStationInspectorModel] = [],
+        clients: [ClientModel] = []
     ) {
         self.buildings = buildings
         self.frequencys = frequencys
         self.isAssign = isAssign
         self.inspectors = inspectors
+        self.clients = clients
 
         inspector = inspectors.first(where: { insModel in
             insModel.id == site?.inspectorId
@@ -74,7 +77,6 @@ class SiteFormState: ObservableObject {
             address = org.address
             geoLocationAddress = org.geoLocationAddress
             contactNumber = org.phone
-            alternateContactNumber = org.alternateContactNumber ?? ""
             email = org.email
             stationId = stationId
             street = org.street
@@ -102,7 +104,6 @@ class SiteFormState: ObservableObject {
         address = ""
         geoLocationAddress = ""
         contactNumber = ""
-        alternateContactNumber = ""
         email = ""
         street = ""
         city = ""
@@ -138,7 +139,7 @@ class SiteFormState: ObservableObject {
             lastName: lastName,
             phone: contactNumber,
             email: email,
-            alternateContactNumber: alternateContactNumber,
+            alternateContactNumber: "",
             building: building,
             inspectionFrequency: inspectionFrequency,
             isCompleted: isCompletedInspection,
@@ -150,8 +151,47 @@ class SiteFormState: ObservableObject {
         )
     }
 
+    func buildJobModelFromClient(client: ClientModel?) -> JobModel {
+        return JobModel(
+            id: id ?? "Site-\(getShortUUID())-\((createdById ?? "").getShortID())",
+            inspectorId: inspector?.id ?? inspectorId,
+            inspectorName: inspector?.firstName ?? inspectorName,
+            siteName: siteName,
+            address: address,
+            city: city,
+            street: street,
+            zipCode: zipCode,
+            geoLocationAddress: geoLocationAddress,
+            latitude: latitude,
+            longitude: longitude,
+            firstName: firstName,
+            lastName: lastName,
+            phone: contactNumber,
+            email: email,
+            alternateContactNumber: "",
+            building: building,
+            inspectionFrequency: inspectionFrequency,
+            isCompleted: isCompletedInspection,
+            jobCreatedDate: jobCreatedDate ?? Date(),
+            createdById: createdById,
+            stationId: stationId,
+            lastDateToInspection: (UserDefaultsStore.profileDetail?.userType == 2 && !isAssign) ? lastDate?.endOfDay : lastDateToInspection.endOfDay,
+            jobAssignedDate: (UserDefaultsStore.profileDetail?.userType == 2 && jobAssignedDate == nil && !isAssign) ? nil : (jobAssignedDate ?? Date()),
+            client: client
+        )
+    }
 
-    func validate() -> [String] {
+
+    func validate(client: ClientModel? = nil) -> [String] {
+        if let org = client {
+            email = org.email
+            firstName = org.firstName
+            lastName = org.lastName
+        } else if let org = self.client {
+            email = org.email
+            firstName = org.firstName
+            lastName = org.lastName
+        }
         var errors: [String] = []
         if let error = Validator.isNotEmpty(street, fieldName: "Street") { errors.append(error) }
         if let error = Validator.isNotEmpty(address, fieldName: "Address") { errors.append(error) }
@@ -159,7 +199,6 @@ class SiteFormState: ObservableObject {
         if let error = Validator.isNotEmpty(city, fieldName: "City") { errors.append(error) }
         if let error = Validator.isValidZip(zipCode) { errors.append(error) }
         if let error = Validator.isValidPhone(contactNumber, fieldName: "Contact Number") { errors.append(error) }
-        if let error = Validator.isValidPhone(alternateContactNumber, fieldName: "Alternate Contact Number") { errors.append(error) }
         if let error = Validator.isValidEmail(email) { errors.append(error) }
         if let error = Validator.isNotEmpty(firstName, fieldName: "First Name") { errors.append(error) }
         if let error = Validator.isNotEmpty(lastName, fieldName: "Last Name") { errors.append(error) }

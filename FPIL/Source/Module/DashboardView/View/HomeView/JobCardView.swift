@@ -18,12 +18,13 @@ struct JobCardView: View {
     
     @State private var showAlert = false
     @State private var alertMessage = ""
+    var isHistory: Bool = false
     
     var lastVisits: [LastVisit] {
         job.lastVist ?? []
     }
     
-    init(job: JobModel, onToggle: @escaping () -> Void, updateDetails: @escaping (JobModel) -> Void, showQRDetails: @escaping (UIImage) -> Void, assignJob: @escaping (JobModel) -> Void, raiseRequestForJob: ((JobModel) -> Void)? = nil, startJob: ((JobModel) -> Void)? = nil, showAlert: Bool = false, alertMessage: String = "") {
+    init(job: JobModel, isHistory: Bool = false, onToggle: @escaping () -> Void, updateDetails: @escaping (JobModel) -> Void, showQRDetails: @escaping (UIImage) -> Void, assignJob: @escaping (JobModel) -> Void, raiseRequestForJob: ((JobModel) -> Void)? = nil, startJob: ((JobModel) -> Void)? = nil, showAlert: Bool = false, alertMessage: String = "") {
         self.job = job
         self.onToggle = onToggle
         self.updateDetails = updateDetails
@@ -33,6 +34,7 @@ struct JobCardView: View {
         self.assignJob = assignJob
         self.raiseRequestForJob = raiseRequestForJob
         self.startJob = startJob
+        self.isHistory = isHistory
     }
     
     var body: some View {
@@ -57,7 +59,7 @@ struct JobCardView: View {
                     }
                     .foregroundColor(.white)
                     if UserDefaultsStore.profileDetail?.userType == 2 && job.jobAssignedDate != nil  {
-                        Text("Assigned To: " + (job.inspectorName ?? ""))
+                        Text("Assigned To: " + (job.inspectorName ?? "Nil"))
                             .font(ApplicationFont.regular(size: 12).value)
                             .foregroundColor(.white)
                     }
@@ -65,10 +67,10 @@ struct JobCardView: View {
                 }
                 Spacer()
                 if let dueDate = job.lastDateToInspection, job.isCompleted == false {
-                    let days = abs(Calendar.current.dateComponents([.day], from: dueDate, to: Date()).day!)
+                    let days = Calendar.current.dateComponents([.day], from: dueDate, to: Date()).day!
                     
-                    if (days < 6) {
-                        Text("Due Soon (\(days) days)")
+                    if (days > -6 && days <= 0) {
+                        Text("Due Soon (\(abs(days)) days)")
                             .font(ApplicationFont.regular(size: 10).value)
                             .padding(6)
                             .padding(.horizontal, 6)
@@ -79,20 +81,29 @@ struct JobCardView: View {
                                 Capsule()
                                     .stroke(Color.warningBG, lineWidth: 1)
                             )
+                    } else if days > 0 {
+                        Text("Due days expired")
+                            .font(ApplicationFont.regular(size: 10).value)
+                            .padding(6)
+                            .padding(.horizontal, 6)
+                            .background(Color.appPrimary.opacity(0.2))
+                            .foregroundColor(.appPrimary)
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color.appPrimary, lineWidth: 1)
+                            )
                     }
                 }
-                if job.isCompleted {
-                    Text("Completed")
-                        .font(ApplicationFont.regular(size: 10).value)
-                        .padding(6)
-                        .padding(.horizontal, 6)
-                        .background(Color.appPrimary.opacity(0.2))
-                        .foregroundColor(.appPrimary)
-                        .clipShape(Capsule())
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.appPrimary, lineWidth: 1)
-                        )
+                if job.isCompleted && job.status == nil {
+                    let status = UserDefaultsStore.profileDetail?.userType == 2 || isHistory ? "In-Review" : "Completed"
+                    jobStatusView(status: status, color: Color.appPrimary, textColor: Color.appPrimary)
+                } else if job.isCompleted && job.status == 1 {
+                    jobStatusView(status: "Approved", color: .green, textColor: .white)
+                } else if job.isCompleted && job.status == 2 {
+                    jobStatusView(status: "Declined", color: .red, textColor: .white)
+                } else if job.isCompleted && job.status == 3 {
+                    jobStatusView(status: "Revision", color: .blue, textColor: .white)
                 }
             }
             
@@ -116,8 +127,12 @@ struct JobCardView: View {
                             if job.jobStartDate != nil && job.jobCompletionDate == nil && job.isCompleted == false {
                                 startJob?(job)
                             } else {
-                                alertMessage = "Inspection is In-Progress Already, Can't start New. Please Complete the Exisit"
-                                showAlert = true
+                                if job.isCompleted == true {
+                                    startJob?(job)
+                                } else {
+                                    alertMessage = "Inspection is In-Progress Already, Can't start New. Please Complete the Exisit"
+                                    showAlert = true
+                                }
                             }
                         } else {
                             startJob?(job)
@@ -125,7 +140,7 @@ struct JobCardView: View {
                         
                     }) {
                         if job.jobStartDate != nil && job.jobCompletionDate == nil && job.isCompleted == false {
-                            IconLabel(labelTitle: "Stop", imageName: "stop", textColor: .white)
+                            IconLabel(labelTitle: "Inspecting", imageName: "started", textColor: .white)
                                 .font(ApplicationFont.bold(size: 12).value)
                                 .padding(.vertical, 6)
                                 .padding(.horizontal, 12)
@@ -155,8 +170,27 @@ struct JobCardView: View {
                     }
                     .foregroundColor(.white)
                     .contentShape(Rectangle())
+                } else {
+                    Button(action: {
+                        if job.isCompleted == true {
+                            startJob?(job)
+                        }
+                    }) {
+                        if job.jobStartDate != nil && job.jobCompletionDate != nil && job.isCompleted == true {
+                            IconLabel(labelTitle: "Preview", imageName: "notes", textColor: .white)
+                                .font(ApplicationFont.bold(size: 12).value)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.appPrimary, lineWidth: 1)
+                                )
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .contentShape(Rectangle())
                 }
-                if (UserDefaultsStore.profileDetail?.userType == 2) {
+                if (UserDefaultsStore.profileDetail?.userType == 2), !job.isCompleted {
                     Button {
                         updateDetails(job)
                     } label: {
@@ -183,10 +217,10 @@ struct JobCardView: View {
                     .contentShape(Rectangle())
                 }
 
-                /*
+                
                  // Change Request Flow
 
-                if UserDefaultsStore.profileDetail?.userType != 2 && job.isCompleted == false  {
+                if UserDefaultsStore.profileDetail?.userType == 2 && job.status != nil && job.reportPdfUrl != nil  {
                     Button(action: {
                         raiseRequestForJob?(job)
                     }) {
@@ -198,7 +232,7 @@ struct JobCardView: View {
                     .foregroundColor(.white)
                     .contentShape(Rectangle())
                 }
-                */
+                
                 
                 Button(action: {
                     fetchQRCodeImage(for: job)
@@ -231,13 +265,13 @@ struct JobCardView: View {
                             }
                             
                             HStack(spacing: 5) {
-                                IconLabel(labelTitle: "\(lastVisit.totalScore)", imageName: "timeline", textColor: .white)
+                                IconLabel(labelTitle: "Score \(lastVisit.totalScore)", imageName: "timeline", textColor: .white)
 //                                Text(" | ").foregroundColor(.white)
 //                                IconLabel(labelTitle: lastVisit.buildTypeName, imageName: "commercial", textColor: .white)
                                 Text(" | ").foregroundColor(.white)
                                 IconLabel(labelTitle: lastVisit.totalSpentTime.formattedDuration(), imageName: "clock", textColor: .white)
                                 Text(" | ").foregroundColor(.white)
-                                IconLabel(labelTitle: "\(lastVisit.totalVoilations)", imageName: "alert", textColor: .warningBG)
+                                IconLabel(labelTitle: "Voilations \(lastVisit.totalVoilations)", imageName: "alert", textColor: .warningBG)
                             }
                         }
                         .padding(.horizontal, 5)
@@ -261,6 +295,20 @@ struct JobCardView: View {
         .alert(alertMessage, isPresented: $showAlert) {
             Button("OK", role: .cancel) { }
         }
+    }
+    
+    private func jobStatusView(status: String, color: Color, textColor: Color) -> some View {
+        Text(status)
+            .font(ApplicationFont.regular(size: 10).value)
+            .padding(6)
+            .padding(.horizontal, 6)
+            .background(color.opacity(0.2))
+            .foregroundColor(textColor)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(color, lineWidth: 1)
+            )
     }
 
     private func fetchQRCodeImage(for job: JobModel) {

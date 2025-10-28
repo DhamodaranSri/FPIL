@@ -12,6 +12,7 @@ struct InspectionChecklistView: View {
     var onClick: (() -> ())? = nil
     @State private var expandedSections: Set<String> = []
     @State private var selectedPhotoAnswerID: String?
+    @FocusState private var focusedItemID: String?
     
     init(viewModel: JobListViewModel, onClick: (() -> ())? = nil) {
         self.onClick = onClick
@@ -162,6 +163,27 @@ struct InspectionChecklistView: View {
                         if let questions = viewModel.checkList?.questions {
                             answerList(for: questions)
                         }
+                        
+                        if (UserDefaultsStore.profileDetail?.userType == 2), (viewModel.selectedItem?.isCompleted ?? false) == true, viewModel.selectedItem?.status == nil {
+                            VStack (alignment: .leading) {
+                                Text("Review Notes:")
+                                    .font(ApplicationFont.bold(size: 12).value)
+                                    .foregroundColor(.white)
+                                    TextEditor(
+                                        text: Binding(
+                                            get: { viewModel.selectedItem?.reviewNotes ?? "" },
+                                            set: { viewModel.selectedItem?.reviewNotes = $0 }
+                                        )
+                                    )
+                                    .focused($focusedItemID, equals: "Review Notes")
+                                    .scrollContentBackground(.hidden)
+                                    .background(.white)
+                                    .frame(height: 70)
+                                    .font(ApplicationFont.regular(size: 12).value)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled()
+                            }
+                        }
                     }
                     .padding()
                     .background(Color.black.opacity(0.8))
@@ -212,12 +234,15 @@ struct InspectionChecklistView: View {
                             
                             if var selectedItem = viewModel.selectedItem {
                                // let duration = completedDate.timeIntervalSince(selectedItem.jobStartDate ?? Date())
-                                if let lastVisit = LastVisit(id: UUID().uuidString, inspectorId: UserDefaultsStore.profileDetail?.id ?? "", inspectorName: (UserDefaultsStore.profileDetail?.firstName ?? "") + " " + (UserDefaultsStore.profileDetail?.lastName ?? ""), visitDate: selectedItem.jobStartDate ?? Date(), inspectionFrequency: selectedItem.inspectionFrequency, totalScore: Int(progress * 100), totalSpentTime: 0, totalVoilations: viewModel.totalViolations()).toFirestoreData() {
+                                let elapsed = completedDate.timeIntervalSince(selectedItem.jobStartDate ?? Date())
+                                if let lastVisit = LastVisit(id: UUID().uuidString, inspectorId: UserDefaultsStore.profileDetail?.id ?? "", inspectorName: (UserDefaultsStore.profileDetail?.firstName ?? "") + " " + (UserDefaultsStore.profileDetail?.lastName ?? ""), visitDate: selectedItem.jobStartDate ?? Date(), inspectionFrequency: selectedItem.inspectionFrequency, totalScore: Int(progress * 100), totalSpentTime: elapsed, totalVoilations: viewModel.totalViolations()).toFirestoreData() {
                                     updatedItems["lastVist"] = [lastVisit]
                                 }
                                 
                                 if let checkList = viewModel.checkList {
-                                    selectedItem.building.checkLists[0] = checkList
+                                    if let index = selectedItem.building.checkLists.firstIndex(where: { $0.id == checkList.id }) {
+                                        selectedItem.building.checkLists[index] = checkList
+                                    }
                                 }
                                 
                                 if let building = selectedItem.building.toFirestoreData() {
@@ -227,6 +252,7 @@ struct InspectionChecklistView: View {
                                 viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
                                     DispatchQueue.main.async {
                                         if error == nil {
+                                            UserDefaultsStore.jobStartedDate = nil
                                             UserDefaultsStore.startedJobDetail = nil
                                             viewModel.selectedItem = nil
                                             onClick?()
@@ -242,12 +268,110 @@ struct InspectionChecklistView: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
                     .background(.appPrimary.opacity(0.2))
+                } else {
+                    if (UserDefaultsStore.profileDetail?.userType == 2), (viewModel.selectedItem?.isCompleted ?? false) == true, viewModel.selectedItem?.status == nil {
+                        HStack(alignment: .top) {
+                            Button("Approve") {
+                                planReview(status: 1)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 40)
+                            .background(.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            Button("Decline") {
+                                planReview(status: 2)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 40)
+                            .background(.red)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            
+                            Button("Revision") {
+                                planReview(status: 3)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 40)
+                            .background(.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }.frame(maxWidth: .infinity)
+                        .padding(.bottom, 20)
+                        .padding(.horizontal, 10)
+                    }
                 }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 .navigationBarBackButtonHidden()
                 .background(.applicationBGcolor)
                 .onAppear() {
                 }
+            
+            if viewModel.isLoading {
+                LoadingView()
+                    .transition(.opacity)
+                    .animation(.easeInOut, value: viewModel.isLoading)
+            }
+            
+            Group {
+                if let error = viewModel.serviceError {
+                    let nsError = error as NSError
+                    let title = nsError.code == 92001 ? "No Internet Connection" : "Error"
+                    let message = nsError.code == 92001
+                    ? "Please check your WiFi or cellular data."
+                    : nsError.localizedDescription
+                    
+                    CustomAlertView(
+                        title: title,
+                        message: message,
+                        primaryButtonTitle: "OK",
+                        primaryAction: {
+                            viewModel.serviceError = nil
+                        },
+                        secondaryButtonTitle: nil,
+                        secondaryAction: nil
+                    )
+                }
+            }
+        }
+    }
+    
+    private func planReview(status: Int) {
+        var updatedItems: [String: Any] = [
+            "status": status
+        ]
+        if let reviewNotes = viewModel.selectedItem?.reviewNotes, !reviewNotes.isEmpty {
+            updatedItems["reviewNotes"] = reviewNotes
+        }
+        
+        viewModel.selectedItem?.status = status
+        
+        if let selectedItem = viewModel.selectedItem {
+            
+            if let pdfURL = PDFGenerator.generateInspectionPDF(siteInfo: selectedItem, checklistItems: viewModel.checkList) {
+                
+                
+                viewModel.uploadReviewReport(url: pdfURL) { error, url in
+                    if error == nil, let url {
+                        updatedItems["reportPdfUrl"] = url
+                        viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
+                            DispatchQueue.main.async {
+                                if error == nil {
+                                    viewModel.selectedItem = nil
+                                    onClick?()
+                                }
+                            }
+                        }
+                    }
+                    
+                }
+                
+                // Option 1: Share or Preview PDF
+//                let activityVC = UIActivityViewController(activityItems: [pdfURL], applicationActivities: nil)
+//                if let rootVC = UIApplication.shared.windows.first?.rootViewController {
+//                    rootVC.present(activityVC, animated: true)
+//                }
+            }
         }
     }
     
@@ -326,12 +450,31 @@ struct InspectionChecklistView: View {
                                             toggleVolationSelection(questionId: section.question, answerIndex: answerIndex, isVolation: false)
                                         }
                                         Spacer()
-                                        Button{
-                                            
-                                        } label:{
-                                            Image(systemName: "camera")
-                                                .foregroundColor(.white)
-                                        }
+                                        CameraCaptureView(
+                                            existingPhotoURL: answer.photoUrl,
+                                            onUploadComplete: { image in
+                                                viewModel.uploadInspectionPhotoToFirebase(image: image, job: viewModel.selectedItem) { error, url in
+                                                    if error == nil, let url {
+                                                        updatePhotos(questionId: section.question, answerIndex: answerIndex, photoUrl: url)
+                                                    }
+                                                }
+                                            },
+                                            removeUploadedPhoto: {
+                                                if let url = answer.photoUrl {
+                                                    viewModel.deleteUploadedImage(url: url) { error, isDeleteComplete in
+                                                        if isDeleteComplete {
+                                                            updatePhotos(questionId: section.question, answerIndex: answerIndex, photoUrl: "")
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        )
+//                                        Button{
+//                                            
+//                                        } label:{
+//                                            Image(systemName: "camera")
+//                                                .foregroundColor(.white)
+//                                        }
                                     }
                                     Text("Notes / Violations:")
                                         .font(ApplicationFont.regular(size: 10).value)
@@ -351,6 +494,9 @@ struct InspectionChecklistView: View {
                                                 }
                                             )
                                         )
+                                        .focused($focusedItemID, equals: answer.answer)
+                                        .scrollContentBackground(.hidden)
+                                        .background(.white)
                                         .frame(height: 50)
                                         .font(.system(size: 13))
                                         .textInputAutocapitalization(.never)
@@ -378,6 +524,20 @@ struct InspectionChecklistView: View {
                 )
             }
         }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    focusedItemID = nil
+//                                                    hideKeyboard()
+                }
+                .tint(.blue)
+            }
+        }
+    }
+
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
     private func toggleAnswerSelection(questionId: String, answerIndex: Int) {
@@ -386,7 +546,9 @@ struct InspectionChecklistView: View {
         if let questionIndex = checkList.questions.firstIndex(where: { $0.question == questionId }) {
             checkList.questions[questionIndex].answers[answerIndex].isSelected.toggle()
             viewModel.checkList = checkList // reassign to trigger @Published update
-            UserDefaultsStore.startedJobDetail?.building.checkLists[0] = checkList
+            if let index = UserDefaultsStore.startedJobDetail?.building.checkLists.firstIndex(where: { $0.id == checkList.id }) {
+                UserDefaultsStore.startedJobDetail?.building.checkLists[index] = checkList
+            }
         }
     }
 
@@ -396,7 +558,9 @@ struct InspectionChecklistView: View {
         if let questionIndex = checkList.questions.firstIndex(where: { $0.question == questionId }) {
             checkList.questions[questionIndex].answers[answerIndex].isVoilated = isVolation
             viewModel.checkList = checkList // reassign to trigger @Published update
-            UserDefaultsStore.startedJobDetail?.building.checkLists[0] = checkList
+            if let index = UserDefaultsStore.startedJobDetail?.building.checkLists.firstIndex(where: { $0.id == checkList.id }) {
+                UserDefaultsStore.startedJobDetail?.building.checkLists[index] = checkList
+            }
         }
     }
 
@@ -406,7 +570,21 @@ struct InspectionChecklistView: View {
         if let questionIndex = checkList.questions.firstIndex(where: { $0.question == questionId }) {
             checkList.questions[questionIndex].answers[answerIndex].voilationDescription = description
             viewModel.checkList = checkList // reassign to trigger update
-            UserDefaultsStore.startedJobDetail?.building.checkLists[0] = checkList
+            if let index = UserDefaultsStore.startedJobDetail?.building.checkLists.firstIndex(where: { $0.id == checkList.id }) {
+                UserDefaultsStore.startedJobDetail?.building.checkLists[index] = checkList
+            }
+        }
+    }
+    
+    private func updatePhotos(questionId: String, answerIndex: Int, photoUrl: String) {
+        guard var checkList = viewModel.checkList else { return }
+        
+        if let questionIndex = checkList.questions.firstIndex(where: { $0.question == questionId }) {
+            checkList.questions[questionIndex].answers[answerIndex].photoUrl = photoUrl.isEmpty ? nil : photoUrl
+            viewModel.checkList = checkList // reassign to trigger update
+            if let index = UserDefaultsStore.startedJobDetail?.building.checkLists.firstIndex(where: { $0.id == checkList.id }) {
+                UserDefaultsStore.startedJobDetail?.building.checkLists[index] = checkList
+            }
         }
     }
 
