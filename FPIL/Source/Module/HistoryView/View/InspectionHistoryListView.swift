@@ -72,7 +72,7 @@ struct InspectionHistoryListView: View {
                                             return job.status == 3
                                         }
                                     }, id: \.id) { job in
-                                        JobCardView(job: job) {
+                                        JobCardView(job: job, isHistory: true) {
                                             withAnimation {
                                                 viewModel.toggleExpand(for: job)
                                             }

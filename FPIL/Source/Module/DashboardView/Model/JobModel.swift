@@ -10,7 +10,7 @@ import FirebaseFirestore
 
 // MARK: - Model
 // UI Model
-struct JobModel: Codable, Identifiable {
+struct JobModel: Codable, Identifiable, Hashable {
     var id: String?
     var inspectorId: String?
     var inspectorName: String?
@@ -46,6 +46,8 @@ struct JobModel: Codable, Identifiable {
     var status: Int? = nil
     var reviewNotes: String? = nil
     var reportPdfUrl: String? = nil
+    var client:ClientModel? = nil
+    var invoiceDetails: InvoiceDetails? = nil
     
     // Local only (UI state)
     var isExpanded: Bool?
@@ -70,6 +72,7 @@ struct CheckList: Codable, Identifiable, Hashable {
     var totalVoilations: Int?
     var totalImagesAttached: Int?
     var totalNotesAdded: Int?
+    var estimatedInspectionPrice: Double?
 }
 
 struct Question: Codable, Hashable {
@@ -93,7 +96,24 @@ struct InspectionFrequency: Codable, Identifiable, Hashable {
 struct Building: Codable, Identifiable, Hashable {
     var id: String? = UUID().uuidString
     var buildingName: String
-    var checkLists: [CheckList]
+    var checkLists: [CheckList] = []
+
+    enum CodingKeys: String, CodingKey {
+        case id, buildingName, checkLists
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try? container.decode(String.self, forKey: .id)
+        buildingName = try container.decode(String.self, forKey: .buildingName)
+        checkLists = (try? container.decode([CheckList].self, forKey: .checkLists)) ?? []
+    }
+
+    init(id: String? = UUID().uuidString, buildingName: String, checkLists: [CheckList] = []) {
+        self.id = id
+        self.buildingName = buildingName
+        self.checkLists = checkLists
+    }
 }
 
 

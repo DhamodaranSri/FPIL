@@ -240,7 +240,9 @@ struct InspectionChecklistView: View {
                                 }
                                 
                                 if let checkList = viewModel.checkList {
-                                    selectedItem.building.checkLists[0] = checkList
+                                    if let index = selectedItem.building.checkLists.firstIndex(where: { $0.id == checkList.id }) {
+                                        selectedItem.building.checkLists[index] = checkList
+                                    }
                                 }
                                 
                                 if let building = selectedItem.building.toFirestoreData() {
@@ -544,7 +546,9 @@ struct InspectionChecklistView: View {
         if let questionIndex = checkList.questions.firstIndex(where: { $0.question == questionId }) {
             checkList.questions[questionIndex].answers[answerIndex].isSelected.toggle()
             viewModel.checkList = checkList // reassign to trigger @Published update
-            UserDefaultsStore.startedJobDetail?.building.checkLists[0] = checkList
+            if let index = UserDefaultsStore.startedJobDetail?.building.checkLists.firstIndex(where: { $0.id == checkList.id }) {
+                UserDefaultsStore.startedJobDetail?.building.checkLists[index] = checkList
+            }
         }
     }
 
@@ -554,7 +558,9 @@ struct InspectionChecklistView: View {
         if let questionIndex = checkList.questions.firstIndex(where: { $0.question == questionId }) {
             checkList.questions[questionIndex].answers[answerIndex].isVoilated = isVolation
             viewModel.checkList = checkList // reassign to trigger @Published update
-            UserDefaultsStore.startedJobDetail?.building.checkLists[0] = checkList
+            if let index = UserDefaultsStore.startedJobDetail?.building.checkLists.firstIndex(where: { $0.id == checkList.id }) {
+                UserDefaultsStore.startedJobDetail?.building.checkLists[index] = checkList
+            }
         }
     }
 
@@ -564,7 +570,9 @@ struct InspectionChecklistView: View {
         if let questionIndex = checkList.questions.firstIndex(where: { $0.question == questionId }) {
             checkList.questions[questionIndex].answers[answerIndex].voilationDescription = description
             viewModel.checkList = checkList // reassign to trigger update
-            UserDefaultsStore.startedJobDetail?.building.checkLists[0] = checkList
+            if let index = UserDefaultsStore.startedJobDetail?.building.checkLists.firstIndex(where: { $0.id == checkList.id }) {
+                UserDefaultsStore.startedJobDetail?.building.checkLists[index] = checkList
+            }
         }
     }
     
@@ -574,7 +582,9 @@ struct InspectionChecklistView: View {
         if let questionIndex = checkList.questions.firstIndex(where: { $0.question == questionId }) {
             checkList.questions[questionIndex].answers[answerIndex].photoUrl = photoUrl.isEmpty ? nil : photoUrl
             viewModel.checkList = checkList // reassign to trigger update
-            UserDefaultsStore.startedJobDetail?.building.checkLists[0] = checkList
+            if let index = UserDefaultsStore.startedJobDetail?.building.checkLists.firstIndex(where: { $0.id == checkList.id }) {
+                UserDefaultsStore.startedJobDetail?.building.checkLists[index] = checkList
+            }
         }
     }
 

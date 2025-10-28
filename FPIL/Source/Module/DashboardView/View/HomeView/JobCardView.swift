@@ -18,12 +18,13 @@ struct JobCardView: View {
     
     @State private var showAlert = false
     @State private var alertMessage = ""
+    var isHistory: Bool = false
     
     var lastVisits: [LastVisit] {
         job.lastVist ?? []
     }
     
-    init(job: JobModel, onToggle: @escaping () -> Void, updateDetails: @escaping (JobModel) -> Void, showQRDetails: @escaping (UIImage) -> Void, assignJob: @escaping (JobModel) -> Void, raiseRequestForJob: ((JobModel) -> Void)? = nil, startJob: ((JobModel) -> Void)? = nil, showAlert: Bool = false, alertMessage: String = "") {
+    init(job: JobModel, isHistory: Bool = false, onToggle: @escaping () -> Void, updateDetails: @escaping (JobModel) -> Void, showQRDetails: @escaping (UIImage) -> Void, assignJob: @escaping (JobModel) -> Void, raiseRequestForJob: ((JobModel) -> Void)? = nil, startJob: ((JobModel) -> Void)? = nil, showAlert: Bool = false, alertMessage: String = "") {
         self.job = job
         self.onToggle = onToggle
         self.updateDetails = updateDetails
@@ -33,6 +34,7 @@ struct JobCardView: View {
         self.assignJob = assignJob
         self.raiseRequestForJob = raiseRequestForJob
         self.startJob = startJob
+        self.isHistory = isHistory
     }
     
     var body: some View {
@@ -57,7 +59,7 @@ struct JobCardView: View {
                     }
                     .foregroundColor(.white)
                     if UserDefaultsStore.profileDetail?.userType == 2 && job.jobAssignedDate != nil  {
-                        Text("Assigned To: " + (job.inspectorName ?? ""))
+                        Text("Assigned To: " + (job.inspectorName ?? "Nil"))
                             .font(ApplicationFont.regular(size: 12).value)
                             .foregroundColor(.white)
                     }
@@ -65,10 +67,10 @@ struct JobCardView: View {
                 }
                 Spacer()
                 if let dueDate = job.lastDateToInspection, job.isCompleted == false {
-                    let days = abs(Calendar.current.dateComponents([.day], from: dueDate, to: Date()).day!)
+                    let days = Calendar.current.dateComponents([.day], from: dueDate, to: Date()).day!
                     
-                    if (days < 6) {
-                        Text("Due Soon (\(days) days)")
+                    if (days > -6 && days <= 0) {
+                        Text("Due Soon (\(abs(days)) days)")
                             .font(ApplicationFont.regular(size: 10).value)
                             .padding(6)
                             .padding(.horizontal, 6)
@@ -79,10 +81,23 @@ struct JobCardView: View {
                                 Capsule()
                                     .stroke(Color.warningBG, lineWidth: 1)
                             )
+                    } else if days > 0 {
+                        Text("Due days expired")
+                            .font(ApplicationFont.regular(size: 10).value)
+                            .padding(6)
+                            .padding(.horizontal, 6)
+                            .background(Color.appPrimary.opacity(0.2))
+                            .foregroundColor(.appPrimary)
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color.appPrimary, lineWidth: 1)
+                            )
                     }
                 }
                 if job.isCompleted && job.status == nil {
-                    jobStatusView(status: "Completed", color: Color.appPrimary, textColor: Color.appPrimary)
+                    let status = UserDefaultsStore.profileDetail?.userType == 2 || isHistory ? "In-Review" : "Completed"
+                    jobStatusView(status: status, color: Color.appPrimary, textColor: Color.appPrimary)
                 } else if job.isCompleted && job.status == 1 {
                     jobStatusView(status: "Approved", color: .green, textColor: .white)
                 } else if job.isCompleted && job.status == 2 {

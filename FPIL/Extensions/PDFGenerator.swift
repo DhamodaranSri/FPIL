@@ -109,9 +109,9 @@ struct PDFGenerator {
             
             drawLine(label: "Site Name:", value: siteInfo.siteName)
             drawLine(label: "Site Address:", value: siteInfo.address)
-            drawLine(label: "Inspector:", value: siteInfo.firstName + " " + siteInfo.lastName)
+            drawLine(label: "Inspector:", value: siteInfo.inspectorName ?? "No Inspector")
             drawLine(label: "Review Date:", value: Date().convertDateAloneFromFullDateFormat())
-            drawLine(label: "Scroe:", value: "\(checklistItems.totalAverageScore ?? 0)%")
+            drawLine(label: "Score:", value: "\(checklistItems.totalAverageScore ?? 0)%")
             
             yPosition += 20
             

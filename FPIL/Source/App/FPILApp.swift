@@ -39,6 +39,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             }
         }
         
+        appLaunchRepository.fetchClientsType { result in
+            if case .success(let clientsType) = result {
+                UserDefaultsStore.clientType = clientsType
+            }
+        }
+        
         return true
     }
 }
@@ -78,6 +84,12 @@ struct FPILApp: App {
         appLaunchRepository.fetchBillingFrequency { result in
             if case .success(let buildings) = result {
                 UserDefaultsStore.frequency = buildings
+            }
+        }
+        
+        appLaunchRepository.fetchClientsType { result in
+            if case .success(let clientsType) = result {
+                UserDefaultsStore.clientType = clientsType
             }
         }
     }

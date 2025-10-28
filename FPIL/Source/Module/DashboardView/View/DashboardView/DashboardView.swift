@@ -58,8 +58,8 @@ struct DashboardView: View {
                                     .background(.applicationBGcolor)
                                     .frame(alignment: .top)
                                     .padding(.bottom, tabBarHeight)
+                            case "Clients": ClientListView(viewModel: ClientListViewModel(), path: $path)
                             default:
-                                
                                 Text("Coming soon!").foregroundColor(.white)
                             }
                             
@@ -135,6 +135,11 @@ struct DashboardView: View {
                             path.removeLast()
                         }
                         path.append("createSites")
+                    } else if viewModel.selectedTab?.name == "Clients" {
+                        if path.count > 0 {
+                            path.removeLast()
+                        }
+                        path.append("createClients")
                     } else {
                         alertMessage = "Under Construction"
                         showAlert = true
