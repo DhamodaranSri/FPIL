@@ -12,4 +12,5 @@ protocol AppLaunchRepositoryProtocol {
     func fetchEmployeeDesignation(completion: @escaping (Result<[FireStationEmployeeJobDesignations], Error>) -> Void)
     func fetchBuildings(completion: @escaping (Result<[Building], Error>) -> Void)
     func fetchClientsType(completion: @escaping (Result<[ClientType], Error>) -> Void)
+    func fetchServicePerformed(completion: @escaping (Result<[ServicePerformed], Error>) -> Void)
 }

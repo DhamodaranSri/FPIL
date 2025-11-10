@@ -10,12 +10,14 @@ import SwiftUI
 struct ClientListView: View {
     @ObservedObject var viewModel: ClientListViewModel
     @Binding var path:NavigationPath
+    @State private var selectedPdfURL: URL?
+    var jobViewModel: JobListViewModel = JobListViewModel()
 
     var body: some View {
         NavigationStack(path: $path) {
             ZStack {
                 VStack {
-                    SearchView(searchText: .constant(""), searchPlaceholder: "Search for Client")
+                    SearchView(searchText: $viewModel.searchText, searchPlaceholder: "Search for Client")
                     Group {
                         if viewModel.filteredItems.isEmpty {
                             NoDataView(message: "No Clients Available")
@@ -30,6 +32,12 @@ struct ClientListView: View {
                                                 path.removeLast()
                                             }
                                             path.append(isButton ? "createInspection" : "createClients")
+                                        } onTapCell: { client in
+                                            viewModel.selectedItem = client
+                                            if path.count > 0 {
+                                                path.removeLast()
+                                            }
+                                            path.append("ClientDetails")
                                         }
                                     }
                                 }
@@ -42,10 +50,18 @@ struct ClientListView: View {
                         }
                     }
                 }
+                .onAppear {
+//                    Task {
+//                        await viewModel.refreshClientsList()
+//                    }
+                }
                 .navigationDestination(for: String.self) { value in
                     if value == "createClients" {
                         CreateOrUpdateClientView(viewModel: viewModel) {
                             viewModel.selectedItem = nil
+                            Task {
+                                await viewModel.refreshClientsList()
+                            }
                             DispatchQueue.main.async {
                                 if path.count > 0 {
                                     path.removeLast()
@@ -53,8 +69,11 @@ struct ClientListView: View {
                             }
                         }
                     } else if value == "createInspection" {
-                        InvoiceGenerationView() {
+                        InvoiceGenerationView(viewModel: InvoiceViewModel(items: UserDefaultsStore.servicesPerfomerdTypes ?? [], client: viewModel.selectedItem)) {
                             viewModel.selectedItem = nil
+                            Task {
+                                await viewModel.refreshClientsList()
+                            }
                             DispatchQueue.main.async {
                                 if path.count > 0 {
                                     path.removeLast()
@@ -63,6 +82,46 @@ struct ClientListView: View {
                         }
 //                        CreateInspection(viewModel: JobListViewModel(), clientModel: viewModel.selectedItem) {
 //                            viewModel.selectedItem = nil
+//                            DispatchQueue.main.async {
+//                                if path.count > 0 {
+//                                    path.removeLast()
+//                                }
+//                            }
+//                        }
+                    } else if value == "ClientDetails" {
+                        ClientDetailView(viewModel: ClientDetailViewModel(selectedItem: viewModel.selectedItem), path: $path) {
+                            viewModel.selectedItem = nil
+                            Task {
+                                await viewModel.refreshClientsList()
+                            }
+                            DispatchQueue.main.async {
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                            }
+                        } selectedPdfURL: { url in
+                            selectedPdfURL = url
+                        } selectedJob: { job in
+                            jobViewModel.selectedItem = job
+                        }
+                    } else if value == "PDFViewer" {
+                        PDFViewer(url: $selectedPdfURL) {
+                            selectedPdfURL = nil
+                            DispatchQueue.main.async {
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                            }
+                        }
+                    } else if value == "inspectionChecklistPage" {
+                        InspectionDetailsPage(viewModel: jobViewModel) {
+                            DispatchQueue.main.async {
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                            }
+                        }
+//                        InspectionChecklistView(viewModel: jobViewModel, isReadable: true) {
 //                            DispatchQueue.main.async {
 //                                if path.count > 0 {
 //                                    path.removeLast()

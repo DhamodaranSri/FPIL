@@ -311,54 +311,107 @@ extension JobListViewModel {
         }
     }
     
-    func addOrUpdateInspection(_ job: JobModel, completion: @escaping (Error?) -> Void) {
+    func addOrUpdateInspection(_ job: JobModel, isInvoiceGenerate: Bool, completion: @escaping (Error?) -> Void) {
+//        guard NetworkMonitor.shared.isConnected else {
+//            completion(NSError(domain: "Internet Connection Error", code: 92001))
+//            return
+//        }
         
-        if NetworkMonitor.shared.isConnected {
-            var includeQRonJob = job
-
-            isLoading = true
-            if let siteId = job.id {
-                let image = QRGenerator().generateQRCode(from: siteId)
-                FirebaseFileManager.shared.uploadImage(image,folder: "\(siteId)/SiteQRImage", fileName: siteId) { result in
-                    DispatchQueue.main.async {
-                        switch result {
-                        case .success(let url):
-                            includeQRonJob.siteQRCodeImageUrl = url
-                            self.inspectionRepository.createOrupdateInspection(job: includeQRonJob) { [weak self] result in
-                                DispatchQueue.main.async {
-                                    
-                                    self?.isLoading = false
-                                    switch result {
-                                    case .success(let items):
-                                        print("Success adding tabs: \(items)")
-                                        completion(nil)
-                                    case .failure(let error):
-                                        self?.serviceError = error
-                                        completion(error)
-                                        print("Error fetching tabs: \(error)")
-                                    }
-                                    if (UserDefaultsStore.profileDetail?.userType == 2) {
-                                        self?.fetchAllInspections()
-                                    } else {
-                                        self?.fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
-                                    }
-                                }
-                            }
-                            print("Uploaded image URL: \(url)")
-                        case .failure(let error):
-                            self.isLoading = false
-                            self.serviceError = error
-                            completion(error)
-                            print("Upload failed: \(error.localizedDescription)")
+        guard let siteId = job.id else {
+            completion(NSError(domain: "Missing siteId", code: 92002))
+            return
+        }
+        
+        isLoading = true
+        var updatedJob = job
+        
+        // Step 1: Generate and upload QR
+        let qrImage = QRGenerator().generateQRCode(from: siteId)
+        FirebaseFileManager.shared.uploadImage(qrImage, folder: "\(siteId)/SiteQRImage", fileName: siteId) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                switch result {
+                case .success(let url):
+                    updatedJob.siteQRCodeImageUrl = url
+                    print("Uploaded QR image URL: \(url)")
+                    
+                    // Step 2: Generate invoice if needed, then update inspection
+                    if isInvoiceGenerate {
+                        if job.invoiceDetails == nil {
+                            self.generateInvoiceAndUpdateInspection(for: updatedJob, completion: completion)
+                        } else {
+                            self.updateInspectionAndRefresh(for: updatedJob, completion: completion)
                         }
-                        
+                    } else {
+                        self.updateInspectionAndRefresh(for: updatedJob, completion: completion)
                     }
+                    
+                case .failure(let error):
+                    self.isLoading = false
+                    self.serviceError = error
+                    completion(error)
+                    print("QR Upload failed: \(error.localizedDescription)")
                 }
             }
-        } else {
-            completion(NSError(domain: "Internet Connection Error", code: 92001))
         }
     }
+
+    // MARK: - Private helpers
+    private func generateInvoiceAndUpdateInspection(for job: JobModel, completion: @escaping (Error?) -> Void) {
+        let invoiceVM = InvoiceViewModel(
+            items: UserDefaultsStore.servicesPerfomerdTypes ?? [],
+            client: job.client,
+            jobModel: job
+        )
+        
+        invoiceVM.generateInvoice(building: job.building) { [weak self] invoice, error  in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                if let error = error {
+                    self.isLoading = false
+                    self.serviceError = error
+                    completion(error)
+                    return
+                }
+                var jobModel = job
+                if jobModel.invoiceDetails == nil {
+                    jobModel.invoiceDetails = [invoice]
+                } else {
+                    jobModel.invoiceDetails?.append(invoice)
+                }
+                self.updateInspectionAndRefresh(for: jobModel, completion: completion)
+            }
+        }
+    }
+
+    private func updateInspectionAndRefresh(for job: JobModel, completion: @escaping (Error?) -> Void) {
+        inspectionRepository.createOrupdateInspection(job: job) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.isLoading = false
+                
+                switch result {
+                case .success(let items):
+                    print("Inspection updated successfully: \(items)")
+                    completion(nil)
+                case .failure(let error):
+                    self.serviceError = error
+                    completion(error)
+                    print("Error updating inspection: \(error)")
+                }
+                
+                // Refresh inspections based on user type
+                if UserDefaultsStore.profileDetail?.userType == 2 {
+                    self.fetchAllInspections()
+                } else {
+                    self.fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
+                }
+            }
+        }
+    }
+
     
     func updateStartOrStopInspectionDate(jobModel: JobModel, updatedItems: [String: Any], completion: @escaping (Error?) -> Void) {
         isLoading = true

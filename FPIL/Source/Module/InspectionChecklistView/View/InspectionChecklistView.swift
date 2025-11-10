@@ -13,26 +13,32 @@ struct InspectionChecklistView: View {
     @State private var expandedSections: Set<String> = []
     @State private var selectedPhotoAnswerID: String?
     @FocusState private var focusedItemID: String?
+    var isReadable: Bool = false
+    var isNavigationNeeded: Bool = true
     
-    init(viewModel: JobListViewModel, onClick: (() -> ())? = nil) {
+    init(viewModel: JobListViewModel, isReadable: Bool = false, isNavigationNeeded: Bool = true, onClick: (() -> ())? = nil) {
         self.onClick = onClick
         self.viewModel = viewModel
+        self.isReadable = isReadable
+        self.isNavigationNeeded = isNavigationNeeded
     }
     
     var body: some View {
         ZStack {
             VStack {
-                CustomNavBar(
-                    title: "Inspection Checklist",
-                    showBackButton: true,
-                    actions: [],
-                    backgroundColor: .applicationBGcolor,
-                    titleColor: .appPrimary,
-                    backAction: {
-                        viewModel.selectedItem = nil
-                        onClick?()
-                    }
-                )
+                if isNavigationNeeded {
+                    CustomNavBar(
+                        title: "Inspection Checklist",
+                        showBackButton: true,
+                        actions: [],
+                        backgroundColor: .applicationBGcolor,
+                        titleColor: .appPrimary,
+                        backAction: {
+                            viewModel.selectedItem = nil
+                            onClick?()
+                        }
+                    )
+                }
                 let progress = viewModel.totalQuestions() == 0 ? 0 : Double(viewModel.totalSelected()) / Double(viewModel.totalQuestions())
                 VStack {
                     HStack{
@@ -193,7 +199,7 @@ struct InspectionChecklistView: View {
                 }.padding(.horizontal, 15)
                     .padding(.bottom, 10)
                     
-                if (viewModel.selectedItem?.isCompleted ?? false) == false {
+                if (viewModel.selectedItem?.isCompleted ?? false) == false && isReadable == false {
                     HStack {
                         VStack (alignment: .leading){
                             HStack (alignment: .center) {
@@ -504,7 +510,7 @@ struct InspectionChecklistView: View {
 //                                    }
                                 }
                             }
-                            .disabled(viewModel.selectedItem?.isCompleted ?? false)
+                            .disabled(isReadable || viewModel.selectedItem?.isCompleted ?? false)
                             .padding(.bottom, 5)
                         }
                     }

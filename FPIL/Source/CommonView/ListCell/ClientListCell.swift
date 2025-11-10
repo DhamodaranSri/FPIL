@@ -11,6 +11,7 @@ struct ClientListCell: View {
     
     let client: ClientModel
     let onToggle: ((_ client: ClientModel, _ isButtonTapped: Bool) -> Void)
+    let onTapCell: ((_ client: ClientModel) -> Void)
     
     @State private var showAlert = false
     @State private var alertMessage = ""
@@ -36,10 +37,10 @@ struct ClientListCell: View {
                         Spacer()
                         let totalAmountDue = client.invoiceDetails?
                             .filter { $0.isPaid == false }
-                            .compactMap { $0.amountDue }
+                            .compactMap { $0.totalAmountDue }
                             .reduce(0, +) ?? 0
                         if client.invoiceDetails?.count ?? 0 > 0, totalAmountDue > 0.0 {
-                            Text(totalAmountDue == 0.0 ? "Paid" : "Due Amount: \(totalAmountDue)")
+                            Text(totalAmountDue == 0.0 ? "Paid" : "Due Amount: \(String(format: "$%.2f", totalAmountDue))")
                                 .font(ApplicationFont.regular(size: 10).value)
                                 .padding(6)
                                 .padding(.horizontal, 6)
@@ -76,24 +77,33 @@ struct ClientListCell: View {
                         }
                     }
                     
-                    Button(action: {
-//                        onToggle(client, true)
-                        alertMessage = "Under Construction"
-                        showAlert = true
-                    }) {
-                        if client.invoiceDetails?.count ?? 0 == 0 {
-                            IconLabel(labelTitle: "Share Quotation", imageName: "notes", textColor: .white)
-                                .font(ApplicationFont.bold(size: 12).value)
-                                .padding(.vertical, 6)
-                                .padding(.horizontal, 12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .stroke(Color.appPrimary, lineWidth: 1)
-                                )
+                    HStack {
+                        Button(action: {
+                            onToggle(client, true)
+                        }) {
+                            if client.invoiceDetails?.count ?? 0 == 0 {
+                                IconLabel(labelTitle: "Share Quotation", imageName: "notes", textColor: .white)
+                                    .font(ApplicationFont.bold(size: 12).value)
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.appPrimary, lineWidth: 1)
+                                    )
+                            }
                         }
+                        .foregroundColor(.white)
+                        .contentShape(Rectangle())
+                        Spacer()
+                        Button(action: {
+                            onToggle(client, false)
+                        }) {
+                            Image("edit")
+                                .resizable()
+                                .frame(width: 25, height: 25)
+                        }
+                        .foregroundColor(.white)
                     }
-                    .foregroundColor(.white)
-                    .contentShape(Rectangle())
                 }
             }
             
@@ -103,7 +113,7 @@ struct ClientListCell: View {
         .background(Color.inspectionCellBG)
         .cornerRadius(10)
         .onTapGesture {
-            onToggle(client, false)
+            onTapCell(client)
         }
         .contentShape(Rectangle())
         .alert(alertMessage, isPresented: $showAlert) {

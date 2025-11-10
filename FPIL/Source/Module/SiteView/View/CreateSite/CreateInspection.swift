@@ -278,7 +278,7 @@ struct CreateInspection: View {
         
         let jobModel: JobModel = form.buildJobModelFromClient(client: clientModel)
         
-        viewModel.addOrUpdateInspection(jobModel) { error in
+        viewModel.addOrUpdateInspection(jobModel, isInvoiceGenerate: true) { error in
             if error == nil {
                 DispatchQueue.main.async {
                     viewModel.selectedItem = nil

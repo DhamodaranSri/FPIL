@@ -24,4 +24,14 @@ class InvoiceFormState: ObservableObject {
 
     func buildInspector() {
     }
+    
+    func validateForm() -> [String] {
+
+        var errors: [String] = []
+
+        if building == nil {
+            errors.append("Please select a building type")
+        }
+        return errors
+    }
 }

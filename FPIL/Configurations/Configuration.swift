@@ -41,6 +41,7 @@ class UserDefaultsStore {
     private static var startedJob = "startedJob"
     private static var allClientType = "clientType"
     private static var allClientList = "clientList"
+    private static var allServicesPerfomerdList = "allServicesPerfomerdList"
     
     static var jobStartedDate :Date? {
         get {
@@ -174,6 +175,25 @@ class UserDefaultsStore {
             }
         }
     }
+    
+    static var servicesPerfomerdTypes :[ServicePerformed]? {
+        get {
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: allServicesPerfomerdList)
+            {
+                let userDetail = try? decoder.decode([ServicePerformed].self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
+        }
+        set {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: allServicesPerfomerdList)
+            }
+        }
+    }
 
     static var inspectorsList :[FireStationInspectorModel]? {
         get {
@@ -223,6 +243,7 @@ class UserDefaultsStore {
         UserDefaults.standard.removeObject(forKey: startedJob)
         UserDefaults.standard.removeObject(forKey: allClientType)
         UserDefaults.standard.removeObject(forKey: allClientList)
+        UserDefaults.standard.removeObject(forKey: allServicesPerfomerdList)
     }
     
     
