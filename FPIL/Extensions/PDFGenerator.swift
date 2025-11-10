@@ -15,7 +15,7 @@ struct PDFGenerator {
     static func generateInspectionPDF(
         siteInfo: JobModel?,
         checklistItems: CheckList?,
-        fileName: String = "InspectionReport.pdf"
+        fileName: String = "InspectionReport"
     ) -> URL? {
         
         guard let checklistItems else {
@@ -212,7 +212,7 @@ struct PDFGenerator {
 
         }
         
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(siteInfo.id ?? fileName)
+        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(siteInfo.id ?? fileName).pdf")
         do {
             try data.write(to: outputURL)
             print("✅ PDF created at \(outputURL.path)")

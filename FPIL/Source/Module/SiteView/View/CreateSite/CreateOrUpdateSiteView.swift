@@ -293,7 +293,7 @@ struct CreateOrUpdateSiteView: View {
         
         let jobModel: JobModel = form.buildJobModelForInspector()
         
-        viewModel.addOrUpdateInspection(jobModel) { error in
+        viewModel.addOrUpdateInspection(jobModel, isInvoiceGenerate: true) { error in
             if error == nil {
                 DispatchQueue.main.async {
                     viewModel.selectedItem = nil

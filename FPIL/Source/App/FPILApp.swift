@@ -45,6 +45,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             }
         }
         
+        appLaunchRepository.fetchServicePerformed { result in
+            if case .success(let servicePerfomerdTypes) = result {
+                UserDefaultsStore.servicesPerfomerdTypes = servicePerfomerdTypes
+            }
+        }
+        
         return true
     }
 }
@@ -90,6 +96,12 @@ struct FPILApp: App {
         appLaunchRepository.fetchClientsType { result in
             if case .success(let clientsType) = result {
                 UserDefaultsStore.clientType = clientsType
+            }
+        }
+        
+        appLaunchRepository.fetchServicePerformed { result in
+            if case .success(let servicePerfomerdTypes) = result {
+                UserDefaultsStore.servicesPerfomerdTypes = servicePerfomerdTypes
             }
         }
     }

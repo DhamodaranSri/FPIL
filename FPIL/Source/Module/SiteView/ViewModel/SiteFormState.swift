@@ -43,6 +43,7 @@ class SiteFormState: ObservableObject {
     }
     @Published var inspector: FireStationInspectorModel? = nil
     @Published var client: ClientModel? = nil
+    @Published var invoice: [InvoiceDetails]? = nil
     
     var lastDate: Date?
 
@@ -95,6 +96,8 @@ class SiteFormState: ObservableObject {
             jobCreatedDate = org.jobCreatedDate
             lastDateToInspection = org.lastDateToInspection ?? Date()
             lastDate = org.lastDateToInspection
+            client = org.client
+            invoice = org.invoiceDetails
         }
     }
 
@@ -135,6 +138,7 @@ class SiteFormState: ObservableObject {
             geoLocationAddress: geoLocationAddress,
             latitude: latitude,
             longitude: longitude,
+            clientId: client?.id,
             firstName: firstName,
             lastName: lastName,
             phone: contactNumber,
@@ -147,7 +151,9 @@ class SiteFormState: ObservableObject {
             createdById: createdById,
             stationId: stationId,
             lastDateToInspection: (UserDefaultsStore.profileDetail?.userType == 2 && !isAssign) ? lastDate?.endOfDay : lastDateToInspection.endOfDay,
-            jobAssignedDate: (UserDefaultsStore.profileDetail?.userType == 2 && jobAssignedDate == nil && !isAssign) ? nil : (jobAssignedDate ?? Date())
+            jobAssignedDate: (UserDefaultsStore.profileDetail?.userType == 2 && jobAssignedDate == nil && !isAssign) ? nil : (jobAssignedDate ?? Date()),
+            client: client,
+            invoiceDetails: invoice
         )
     }
 
@@ -164,6 +170,7 @@ class SiteFormState: ObservableObject {
             geoLocationAddress: geoLocationAddress,
             latitude: latitude,
             longitude: longitude,
+            clientId: self.client?.id,
             firstName: firstName,
             lastName: lastName,
             phone: contactNumber,
@@ -177,7 +184,8 @@ class SiteFormState: ObservableObject {
             stationId: stationId,
             lastDateToInspection: (UserDefaultsStore.profileDetail?.userType == 2 && !isAssign) ? lastDate?.endOfDay : lastDateToInspection.endOfDay,
             jobAssignedDate: (UserDefaultsStore.profileDetail?.userType == 2 && jobAssignedDate == nil && !isAssign) ? nil : (jobAssignedDate ?? Date()),
-            client: client
+            client: self.client,
+            invoiceDetails: invoice
         )
     }
 

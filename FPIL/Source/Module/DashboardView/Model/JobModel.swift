@@ -47,7 +47,7 @@ struct JobModel: Codable, Identifiable, Hashable {
     var reviewNotes: String? = nil
     var reportPdfUrl: String? = nil
     var client:ClientModel? = nil
-    var invoiceDetails: InvoiceDetails? = nil
+    var invoiceDetails: [InvoiceDetails]? = nil
     
     // Local only (UI state)
     var isExpanded: Bool?
@@ -138,4 +138,11 @@ extension Encodable {
                 return nil
             }
         }
+}
+
+extension JobModel {
+    var totalSpentTime: TimeInterval {
+        lastVist?.compactMap { $0.totalSpentTime > 0 ? $0.totalSpentTime : nil }
+                  .reduce(0, +) ?? 0
+    }
 }

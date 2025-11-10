@@ -30,7 +30,7 @@ struct ClientModel: Codable, Identifiable, Hashable {
     let clientType: ClientType?
     let organizationName: String?
     let notes: String?
-    let invoiceDetails: [InvoiceDetails]?
+    var invoiceDetails: [InvoiceDetails]?
 }
 
 struct ClientType: Codable, Identifiable, Hashable {
@@ -48,11 +48,26 @@ struct InvoiceDetails: Codable, Identifiable, Hashable {
     var id: String? = UUID().uuidString
     var invoiceTitle: String?
     var inspectionsId: String?
+    var clientId: String?
     var generatedOn: Date?
     var dueDate: Date?
     var paidDate: Date?
-    var amountDue: Double?
+    var totalAmountDue: Double?
+    var subtotal: Double?
+    var taxAmount: Double?
+    var taxRate: Double?
     var isPaid: Bool
+    var status: Int? = 1
     var paymentMethod: String?
     var building: Building?
+    var servicePerformed: [ServicePerformed]?
+    var invoicePDFUrl: String?
+}
+
+struct ServicePerformed: Codable, Identifiable, Hashable {
+    var id: String? = UUID().uuidString
+    var serviceName: String?
+    var isDefault: Bool?
+    var price: Double?
+    var isSelected: Bool? = false
 }
