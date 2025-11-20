@@ -15,6 +15,7 @@ class SiteFormState: ObservableObject {
     @Published var siteName = ""
     @Published var inspectorId: String? = UserDefaultsStore.profileDetail?.userType == 2 ? nil : UserDefaultsStore.profileDetail?.id
     @Published var inspectorName: String? = UserDefaultsStore.profileDetail?.userType == 2 ? nil : (UserDefaultsStore.profileDetail?.firstName ?? "")
+    @Published var inspectorContact: String? = UserDefaultsStore.profileDetail?.userType == 2 ? nil : (UserDefaultsStore.profileDetail?.contactNumber ?? "")
     @Published var firstName = ""
     @Published var lastName = ""
     @Published var address = ""
@@ -59,13 +60,20 @@ class SiteFormState: ObservableObject {
         site: JobModel? = nil,
         isAssign: Bool = false,
         inspectors: [FireStationInspectorModel] = [],
-        clients: [ClientModel] = []
+        clients: [ClientModel] = [],
+        selectedClient: ClientModel? = nil,
+        selectedInvoice: InvoiceDetails? = nil
     ) {
         self.buildings = buildings
         self.frequencys = frequencys
         self.isAssign = isAssign
         self.inspectors = inspectors
         self.clients = clients
+        self.client = selectedClient
+        if let selectedInvoice, let selectedBuilding = selectedInvoice.building {
+            self.invoice = [selectedInvoice]
+            self.building = selectedBuilding
+        }
 
         inspector = inspectors.first(where: { insModel in
             insModel.id == site?.inspectorId
@@ -98,6 +106,7 @@ class SiteFormState: ObservableObject {
             lastDate = org.lastDateToInspection
             client = org.client
             invoice = org.invoiceDetails
+            inspectorContact = org.inspectorContact
         }
     }
 
@@ -153,7 +162,41 @@ class SiteFormState: ObservableObject {
             lastDateToInspection: (UserDefaultsStore.profileDetail?.userType == 2 && !isAssign) ? lastDate?.endOfDay : lastDateToInspection.endOfDay,
             jobAssignedDate: (UserDefaultsStore.profileDetail?.userType == 2 && jobAssignedDate == nil && !isAssign) ? nil : (jobAssignedDate ?? Date()),
             client: client,
-            invoiceDetails: invoice
+            invoiceDetails: invoice,
+            inspectorContact: inspector?.contactNumber ?? inspectorContact
+        )
+    }
+    
+    func buildJobModelFromClientWithInvoice(client: ClientModel?, invoice: InvoiceDetails) -> JobModel {
+        return JobModel(
+            id: invoice.inspectionsId,
+            inspectorId: inspector?.id ?? inspectorId,
+            inspectorName: inspector?.firstName ?? inspectorName,
+            siteName: siteName,
+            address: address,
+            city: city,
+            street: street,
+            zipCode: zipCode,
+            geoLocationAddress: geoLocationAddress,
+            latitude: latitude,
+            longitude: longitude,
+            clientId: self.client?.id,
+            firstName: firstName,
+            lastName: lastName,
+            phone: contactNumber,
+            email: email,
+            alternateContactNumber: "",
+            building: building,
+            inspectionFrequency: inspectionFrequency,
+            isCompleted: isCompletedInspection,
+            jobCreatedDate: jobCreatedDate ?? Date(),
+            createdById: createdById,
+            stationId: stationId,
+            lastDateToInspection: (UserDefaultsStore.profileDetail?.userType == 2 && !isAssign) ? lastDate?.endOfDay : lastDateToInspection.endOfDay,
+            jobAssignedDate: (UserDefaultsStore.profileDetail?.userType == 2 && jobAssignedDate == nil && !isAssign) ? nil : (jobAssignedDate ?? Date()),
+            client: self.client,
+            invoiceDetails: [invoice],
+            inspectorContact: inspector?.contactNumber ?? inspectorContact
         )
     }
 
@@ -185,7 +228,8 @@ class SiteFormState: ObservableObject {
             lastDateToInspection: (UserDefaultsStore.profileDetail?.userType == 2 && !isAssign) ? lastDate?.endOfDay : lastDateToInspection.endOfDay,
             jobAssignedDate: (UserDefaultsStore.profileDetail?.userType == 2 && jobAssignedDate == nil && !isAssign) ? nil : (jobAssignedDate ?? Date()),
             client: self.client,
-            invoiceDetails: invoice
+            invoiceDetails: invoice,
+            inspectorContact: inspector?.contactNumber ?? inspectorContact
         )
     }
 

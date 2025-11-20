@@ -62,3 +62,60 @@ struct HorizontalSelectorView: View {
         }
     }
 }
+
+struct HorizontalClientFilterView: View {
+    @ObservedObject var viewModel: ClientListViewModel
+
+    // Same UI style as your JobListView filter
+    var selectedColor: Color = .appPrimary
+    var unselectedColor: Color = .tabbarIconSelected
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: 12) {
+                
+                // MARK: ALL button
+                Button(action: {
+                    viewModel.selectFilter("All")
+                }) {
+                    filterButton(title: "All",
+                                 isSelected: viewModel.selectedFilter == "All")
+                }
+                
+                // MARK: Dynamic categories from clientType
+                ForEach(viewModel.filterCategories, id: \.self) { typeName in
+                    Button(action: {
+                        viewModel.selectFilter(typeName)
+                    }) {
+                        filterButton(
+                            title: typeName,
+                            isSelected: viewModel.selectedFilter == typeName
+                        )
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    // MARK: Filter Button UI
+    @ViewBuilder
+    func filterButton(title: String, isSelected: Bool) -> some View {
+        Text(title)
+            .font(ApplicationFont.regular(size: 14).value)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(isSelected ? selectedColor.opacity(0.3)
+                                     : unselectedColor.opacity(0.1))
+            )
+            .foregroundColor(.white)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(isSelected ? selectedColor
+                                       : unselectedColor,
+                            lineWidth: 1)
+            )
+    }
+}

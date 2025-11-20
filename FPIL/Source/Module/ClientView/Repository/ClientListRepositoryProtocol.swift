@@ -12,5 +12,6 @@ protocol ClientListRepositoryProtocol {
     func fetchAllClientList(stationId: String, completion: @escaping (Result<[ClientModel], Error>) -> Void)
     func createNewClient(client: ClientModel, completion: @escaping (Result<Void, any Error>) -> Void)
     func updateClient(client: ClientModel, completion: @escaping (Result<Void, any Error>) -> Void)
+    func userSignOut(completion: @escaping (Result<Void, any Error>) -> Void)
 
 }

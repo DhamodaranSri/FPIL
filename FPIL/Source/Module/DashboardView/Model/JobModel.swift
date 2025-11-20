@@ -48,6 +48,7 @@ struct JobModel: Codable, Identifiable, Hashable {
     var reportPdfUrl: String? = nil
     var client:ClientModel? = nil
     var invoiceDetails: [InvoiceDetails]? = nil
+    var inspectorContact: String? = nil
     
     // Local only (UI state)
     var isExpanded: Bool?
@@ -130,19 +131,43 @@ extension Encodable {
     }
 
     func toFirestoreData() -> [String: Any]? {
-            do {
-                let data = try Firestore.Encoder().encode(self)
-                return data
-            } catch {
-                print("Firestore encoding error: \(error)")
-                return nil
-            }
+        do {
+            let data = try Firestore.Encoder().encode(self)
+            return data
+        } catch {
+            print("Firestore encoding error: \(error)")
+            return nil
         }
+    }
+
+    func toFirestoreDataFromArray() -> Any? {
+        do {
+            let data = try Firestore.Encoder().encode(self)
+            return data
+        } catch {
+            print("Firestore encoding error: \(error)")
+            return nil
+        }
+    }
 }
 
 extension JobModel {
     var totalSpentTime: TimeInterval {
         lastVist?.compactMap { $0.totalSpentTime > 0 ? $0.totalSpentTime : nil }
                   .reduce(0, +) ?? 0
+    }
+}
+
+extension Array where Element: Encodable {
+    func toFirestoreDataArray() -> [[String: Any]]? {
+        do {
+            let encoder = Firestore.Encoder()
+            return try self.map { element in
+                try encoder.encode(element)
+            }
+        } catch {
+            print("Firestore encoding error: \(error)")
+            return nil
+        }
     }
 }

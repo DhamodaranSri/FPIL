@@ -14,6 +14,9 @@ class ClientListViewModel: ObservableObject {
     @Published var items: [ClientModel] = []
     @Published var selectedItem: ClientModel?
     private let clientListRepository: ClientListRepositoryProtocol
+    @Published var selectedClient: ClientModel? = nil
+    @Published var selectedInvoice: InvoiceDetails? = nil
+    @Published var selectedFilter: String = "All"
     
     @Published var searchText: String = "" {
         didSet {
@@ -25,6 +28,16 @@ class ClientListViewModel: ObservableObject {
     @Published var serviceError: Error? = nil
     @Published var isLoading: Bool = false
     @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
+    
+    var filterCategories: [String] {
+        let grouped = Dictionary(grouping: items, by: { $0.clientType?.clientTypeName ?? "" })   // <-- update key here
+        return grouped.keys.sorted()
+    }
+    
+    func selectFilter(_ filter: String) {
+        selectedFilter = filter
+        filterItems()
+    }
     
     init(clientListRepository: ClientListRepositoryProtocol = FireBaseClientListRepository()) {
         self.clientListRepository = clientListRepository
@@ -60,14 +73,23 @@ class ClientListViewModel: ObservableObject {
     }
 
     private func filterItems() {
-        if searchText.isEmpty {
-            filteredItems = items
-        } else {
-            filteredItems = items.filter { ins in
-                ins.firstName.localizedCaseInsensitiveContains(searchText) ||
-                ins.lastName.localizedCaseInsensitiveContains(searchText)
+        var result = items
+        
+        // Apply horizontal filter
+        if selectedFilter != "All" {
+            result = result.filter { client in
+                client.clientType?.clientTypeName == selectedFilter         // <-- update key here
             }
         }
+        
+        if !searchText.isEmpty {
+            result = result.filter { client in
+                client.firstName.localizedCaseInsensitiveContains(searchText) ||
+                client.lastName.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        filteredItems = result
     }
 }
 

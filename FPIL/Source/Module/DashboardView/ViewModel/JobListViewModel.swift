@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import FirebaseFirestore
 
 // MARK: - ViewModel
 @MainActor
@@ -31,7 +32,7 @@ class JobListViewModel: ObservableObject {
             filterItems()
         }
     }
-
+    
     private let inspectionRepository: InspectionJobRepositoryProtocol
     private var isHistoryLoaded: Bool = false
     
@@ -48,7 +49,7 @@ class JobListViewModel: ObservableObject {
             }
         }
     }
-
+    
     func refreshOrganisations() async {
         // Simulate async refresh (API call etc.)
         try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 sec delay
@@ -62,7 +63,7 @@ class JobListViewModel: ObservableObject {
             }
         }
     }
-
+    
     private func filterItems() {
         if searchText.isEmpty {
             filteredItems = items
@@ -73,7 +74,7 @@ class JobListViewModel: ObservableObject {
             }
         }
     }
-
+    
     func tabFilterItems() {
         if selectedFilter == "All" {
             filteredItems = items
@@ -81,11 +82,11 @@ class JobListViewModel: ObservableObject {
             filteredItems = items.filter { $0.building.buildingName == selectedFilter }
         }
     }
-
+    
     func selectFilter(_ filter: String) {
         selectedFilter = filter
     }
-
+    
     func toggleExpand(for job: JobModel) {
         if let index = items.firstIndex(where: { $0.id == job.id }) {
             items[index].isExpanded = !(items[index].isExpanded ?? false)
@@ -117,7 +118,7 @@ class JobListViewModel: ObservableObject {
                 ("isCompleted", false)
             ]
         }
-
+        
         isLoading = true
         inspectionRepository.fetchAllInspectionJobs(forConditions: conditions) { [weak self] result in
             DispatchQueue.main.async {
@@ -141,13 +142,13 @@ class JobListViewModel: ObservableObject {
             }
         }
     }
-
+    
     func fetchInspection(inspectorId: String) {
-
+        
         let conditions: [(field: String, value: Any)] = [
             ("inspectorId", inspectorId)
         ]
-
+        
         isLoading = true
         inspectionRepository.fetchAllInspectionJobsForInspector(forConditions: inspectorId) { [weak self] result in
             DispatchQueue.main.async {
@@ -196,6 +197,19 @@ class JobListViewModel: ObservableObject {
         */
     }
     
+    func getTotalAmountOnDue() -> Double {
+        selectedItem?.invoiceDetails?
+            .filter { $0.inspectionsId == self.selectedItem?.id && $0.isPaid == false }
+            .compactMap { $0.totalAmountDue }
+            .reduce(0, +) ?? 0
+    }
+    
+    func getUnPaidInspection() -> InvoiceDetails? {
+        selectedItem?.invoiceDetails?
+            .filter { $0.inspectionsId == self.selectedItem?.id && $0.isPaid == false }
+            .first
+    }
+    
     func getCheckListFromSelectedItem() {
         if UserDefaultsStore.startedJobDetail != nil {
             checkList = UserDefaultsStore.startedJobDetail?.building.checkLists.first
@@ -217,14 +231,14 @@ class JobListViewModel: ObservableObject {
             .flatMap { $0.answers }
             .count ?? 0
     }
-
+    
     func totalViolations() -> Int {
         checkList?
             .questions
             .flatMap { $0.answers }
             .count { $0.isVoilated == true } ?? 0
     }
-
+    
     func totalNotesAdded() -> Int {
         checkList?
             .questions
@@ -239,7 +253,7 @@ extension JobListViewModel {
         if NetworkMonitor.shared.isConnected {
             
             isLoading = true
-                        
+            
             FirebaseFileManager.shared.uploadFile(at: url, folder: "\(selectedItem?.id ?? "Inspection Reports")/review_report/") { result in
                 DispatchQueue.main.async {
                     self.isLoading = false
@@ -256,6 +270,81 @@ extension JobListViewModel {
             }
         } else {
             completion(NSError(domain: "Internet Connection Error", code: 92001), nil)
+        }
+    }
+    
+    func deleteFile(selectedInvoice: InvoiceDetails, completion: @escaping (Error?) -> Void) {
+        if NetworkMonitor.shared.isConnected {
+            
+            isLoading = true
+            
+            if let pdfURL = selectedInvoice.invoicePDFUrl, var jobModel = selectedItem {
+                deleteUploadedImage(url: pdfURL) { error, isSuccess in
+                    if error == nil {
+                        let invoiceArray = jobModel.invoiceDetails?.filter({ $0.id != selectedInvoice.id})
+                        jobModel.invoiceDetails = invoiceArray
+                        self.inspectionRepository.createOrupdateInspection(job: jobModel) { [weak self] result in
+                            DispatchQueue.main.async {
+                                guard let self = self else { return }
+                                self.isLoading = false
+                                
+                                switch result {
+                                case .success(let items):
+                                    var updatedItems: [String: Any] = [:]
+                                    if let client = jobModel.client{
+                                        
+                                        self.inspectionRepository.fetchClient(clientId: client.id ?? "") { result in
+                                            switch result {
+                                            case .success(var clientModel):
+                                                let invoiceArray = clientModel.invoiceDetails?.filter({ $0.id != selectedInvoice.id})
+                                                
+                                                if let invoiceData = invoiceArray?.toFirestoreDataArray() {
+                                                    updatedItems["invoiceDetails"] = invoiceData
+                                                }
+                                                
+                                                self.inspectionRepository.updateClient(client: clientModel, updatedItems: updatedItems) { result in
+                                                    switch result {
+                                                    case .success():
+                                                        completion(nil)
+                                                    case .failure(let error):
+                                                        self.serviceError = error
+                                                        completion(error)
+                                                        print("Error updating inspection: \(error)")
+                                                    }
+                                                }
+                                            case .failure(let error):
+                                                self.serviceError = error
+                                                completion(error)
+                                                print("Error fetching client: \(error)")
+                                            }
+                                        }
+                                    } else {
+                                        self.serviceError = NSError(domain: "No Client Found", code: 404)
+                                        completion(NSError(domain: "No Client Found", code: 404))
+                                    }
+                                case .failure(let error):
+                                    self.serviceError = error
+                                    completion(error)
+                                    print("Error updating inspection: \(error)")
+                                }
+                                
+                                // Refresh inspections based on user type
+                                if UserDefaultsStore.profileDetail?.userType == 2 {
+                                    self.fetchAllInspections()
+                                } else {
+                                    self.fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
+                                }
+                            }
+                        }
+                    } else {
+                        self.isLoading = false
+                        self.serviceError = error
+                        completion(error)
+                    }
+                }
+            }
+        }  else {
+            completion(NSError(domain: "Internet Connection Error", code: 92001))
         }
     }
     
@@ -312,10 +401,10 @@ extension JobListViewModel {
     }
     
     func addOrUpdateInspection(_ job: JobModel, isInvoiceGenerate: Bool, completion: @escaping (Error?) -> Void) {
-//        guard NetworkMonitor.shared.isConnected else {
-//            completion(NSError(domain: "Internet Connection Error", code: 92001))
-//            return
-//        }
+        guard NetworkMonitor.shared.isConnected else {
+            completion(NSError(domain: "Internet Connection Error", code: 92001))
+            return
+        }
         
         guard let siteId = job.id else {
             completion(NSError(domain: "Missing siteId", code: 92002))
@@ -338,7 +427,7 @@ extension JobListViewModel {
                     
                     // Step 2: Generate invoice if needed, then update inspection
                     if isInvoiceGenerate {
-                        if job.invoiceDetails == nil {
+                        if job.invoiceDetails == nil || (job.invoiceDetails?.count ?? 0) == 0 {
                             self.generateInvoiceAndUpdateInspection(for: updatedJob, completion: completion)
                         } else {
                             self.updateInspectionAndRefresh(for: updatedJob, completion: completion)
@@ -356,7 +445,72 @@ extension JobListViewModel {
             }
         }
     }
+    
+    func reGenerateInvoiceMarkAsPaid(for invoice: InvoiceDetails, completion: @escaping (InvoiceDetails, Error?) -> Void) {
+        if let job = selectedItem {
+            isLoading = true
+            let invoiceVM = InvoiceViewModel(
+                items: UserDefaultsStore.servicesPerfomerdTypes ?? [],
+                client: job.client,
+                jobModel: job
+            )
+            
+            invoiceVM.reGenetrateInvoice(invoiceDetails: invoice) { invoiceDetails, error in
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    if let error = error {
+                        self.serviceError = error
+                        completion(invoiceDetails, error)
+                        return
+                    }
+                    completion(invoiceDetails, nil)
+                }
+            }
+        }
+        
+    }
+    
+    func reGenerateInvoice(for invoice: InvoiceDetails, client: ClientModel?, completion: @escaping (InvoiceDetails, Error?) -> Void) {
+        isLoading = true
+        let invoiceVM = InvoiceViewModel(
+            items: UserDefaultsStore.servicesPerfomerdTypes ?? [],
+            client: client
+        )
+        
+        invoiceVM.reGenetrateInvoice(invoiceDetails: invoice) { invoiceDetails, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+                if let error = error {
+                    self.serviceError = error
+                    completion(invoiceDetails, error)
+                    return
+                }
+                completion(invoiceDetails, nil)
+            }
+        }
+    }
+    
+    func generateInvoiceForTime(for job: JobModel, timeSpent: TimeInterval, completion: @escaping (ClientModel?, InvoiceDetails? , Error?) -> Void) {
+        isLoading = true
+        let invoiceVM = InvoiceViewModel(
+            items: UserDefaultsStore.servicesPerfomerdTypes ?? [],
+            client: job.client,
+            jobModel: job
+        )
 
+        invoiceVM.generateInvoiceForTime(totalElapsedTime: timeSpent, job: job) { clientModel, invoiceModel, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+                if let error = error {
+                    self.serviceError = error
+                    completion(clientModel, invoiceModel, error)
+                    return
+                }
+                completion(clientModel, invoiceModel, nil)
+            }
+        }
+    }
+    
     // MARK: - Private helpers
     private func generateInvoiceAndUpdateInspection(for job: JobModel, completion: @escaping (Error?) -> Void) {
         let invoiceVM = InvoiceViewModel(
@@ -385,8 +539,8 @@ extension JobListViewModel {
             }
         }
     }
-
-    private func updateInspectionAndRefresh(for job: JobModel, completion: @escaping (Error?) -> Void) {
+    
+    func updateInspectionAndRefresh(for job: JobModel, completion: @escaping (Error?) -> Void) {
         inspectionRepository.createOrupdateInspection(job: job) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self = self else { return }
@@ -411,7 +565,7 @@ extension JobListViewModel {
             }
         }
     }
-
+    
     
     func updateStartOrStopInspectionDate(jobModel: JobModel, updatedItems: [String: Any], completion: @escaping (Error?) -> Void) {
         isLoading = true
@@ -433,6 +587,20 @@ extension JobListViewModel {
                 } else {
                     self?.fetchInspection(inspectorId: UserDefaultsStore.profileDetail?.id ?? "")
                 }
+            }
+        }
+    }
+    
+    func invoiceDetailsUpdate(client: ClientModel, completion: @escaping (Error?) -> Void) {
+        isLoading = true
+        self.inspectionRepository.createOrupdateClient(client: client) { result in
+            self.isLoading = false
+            switch result {
+            case .success():
+                completion(nil)
+            case .failure(let error):
+                self.serviceError = error
+                completion(self.serviceError)
             }
         }
     }

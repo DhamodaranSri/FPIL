@@ -11,6 +11,9 @@ struct InvoiceListCell: View {
     let invoice: InvoiceDetails
     let onToggle: ((_ invoice: InvoiceDetails) -> Void)
     let onPrintInvoice: ((_ invoice: InvoiceDetails) -> Void)
+    let onDeleteInvoice: ((_ invoice: InvoiceDetails) -> Void)
+    let onProceedPaymentInvoice: ((_ invoice: InvoiceDetails, _ status: Int) -> Void)
+    let createInspection: ((_ invoice: InvoiceDetails) -> Void)
     
     @State private var showAlert = false
     @State private var alertMessage = ""
@@ -60,18 +63,63 @@ struct InvoiceListCell: View {
                             .font(ApplicationFont.bold(size: 12).value)
                             .foregroundColor(.white)
                         Spacer()
-                        Button(action: {
-                            onPrintInvoice(invoice)
-                        }) {
-                            Image("print")
+                        HStack (spacing: 10) {
+                            Button(action: {
+                                onPrintInvoice(invoice)
+                            }) {
+                                Image("print")
+                            }
+                            .foregroundColor(.white)
+                            if UserDefaultsStore.profileDetail?.userType == 2 {
+                                Button(action: {
+                                    onDeleteInvoice(invoice)
+                                }) {
+                                    Image("remove")
+                                }
+                                .foregroundColor(.white)
+                            }
                         }
-                        .foregroundColor(.white)
                     }
                     
-                    if invoice.status == 2 && !invoice.isPaid {
+                    if UserDefaultsStore.profileDetail?.userType == 5 && invoice.status == 1 && (invoice.inspectionsId?.count ?? 0) == 0 {
+                        HStack (spacing: 10) {
+                            Button(action: {
+                                onProceedPaymentInvoice(invoice, 2)
+                            }) {
+                                IconLabel(labelTitle: "Accept to Pay", imageName: "payment", textColor: .white)
+                                    .font(ApplicationFont.bold(size: 12).value)
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.appPrimary, lineWidth: 1)
+                                    )
+                            }
+                            .foregroundColor(.white)
+                            .contentShape(Rectangle())
+                            
+                            Button(action: {
+                                onProceedPaymentInvoice(invoice, 3)
+                            }) {
+                                IconLabel(labelTitle: "Not Okay", imageName: "decline", textColor: .white)
+                                    .font(ApplicationFont.bold(size: 12).value)
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.appPrimary, lineWidth: 1)
+                                    )
+                            }
+                            .foregroundColor(.white)
+                            .contentShape(Rectangle())
+                        }
+                    }
+                    
+                    if UserDefaultsStore.profileDetail?.userType == 2 && invoice.status == 2 && !invoice.isPaid {
                         Button(action: {
+                            createInspection(invoice)
                         }) {
-                            IconLabel(labelTitle: "Mark as Paid", imageName: "paid", textColor: .white)
+                            IconLabel(labelTitle: "Create Inspection", imageName: "paid", textColor: .white)
                                 .font(ApplicationFont.bold(size: 12).value)
                                 .padding(.vertical, 6)
                                 .padding(.horizontal, 12)

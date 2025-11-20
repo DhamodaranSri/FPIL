@@ -66,6 +66,7 @@ struct FPILApp: App {
                 switch UserDefaultsStore.profileDetail?.userType {
                 case 1: OrganisationListView(viewModel: OrganisationViewModel())
                 case 2: DashboardView()
+                case 5: InspectionPage()
                 default: DashboardView()
                 }
             } else {

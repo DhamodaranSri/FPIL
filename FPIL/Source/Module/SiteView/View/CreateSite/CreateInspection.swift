@@ -12,6 +12,7 @@ struct CreateInspection: View {
     @ObservedObject var viewModel: JobListViewModel
     @State var clientModel: ClientModel? = nil
     @StateObject private var form: SiteFormState
+    @State var inspectionForInvoice:InvoiceDetails? = nil
     var onClick: (() -> ())? = nil
     
     @State private var showConfirmationAlert = false
@@ -25,12 +26,13 @@ struct CreateInspection: View {
         case update
     }
     
-    init(viewModel: JobListViewModel, clientModel: ClientModel? = nil, onClick: (() -> ())? = nil, assignTheJob: Bool? = true) {
+    init(viewModel: JobListViewModel, clientModel: ClientModel? = nil, inspectionForInvoice:InvoiceDetails? = nil,  onClick: (() -> ())? = nil, assignTheJob: Bool? = true) {
         self.onClick = onClick
         self.viewModel = viewModel
         self.clientModel = clientModel
         self.assignTheJob = assignTheJob
-        _form = StateObject(wrappedValue: SiteFormState(buildings: UserDefaultsStore.buildings ?? [], frequencys: UserDefaultsStore.frequency ?? [], site: viewModel.selectedItem, isAssign: assignTheJob ?? false, inspectors: UserDefaultsStore.inspectorsList ?? [], clients: UserDefaultsStore.allClientDetail ?? []))
+        self.inspectionForInvoice = inspectionForInvoice
+        _form = StateObject(wrappedValue: SiteFormState(buildings: UserDefaultsStore.buildings ?? [], frequencys: UserDefaultsStore.frequency ?? [], site: viewModel.selectedItem, isAssign: assignTheJob ?? false, inspectors: UserDefaultsStore.inspectorsList ?? [], clients: UserDefaultsStore.allClientDetail ?? [], selectedClient: clientModel, selectedInvoice: inspectionForInvoice))
     }
     
     var body: some View {
@@ -79,7 +81,7 @@ struct CreateInspection: View {
                                     options: form.buildings,
                                     selection: $form.building,
                                     displayKey: \.buildingName
-                                )
+                                ).disabled(inspectionForInvoice != nil)
                             }.padding(.vertical, 10)
                             Button {
                                 showSearch = true
@@ -276,9 +278,37 @@ struct CreateInspection: View {
             return
         }
         
-        let jobModel: JobModel = form.buildJobModelFromClient(client: clientModel)
         
-        viewModel.addOrUpdateInspection(jobModel, isInvoiceGenerate: true) { error in
+        
+        if let inspectionForInvoice = inspectionForInvoice, var client = clientModel {
+            
+            viewModel.reGenerateInvoice(for: inspectionForInvoice, client: client) { newInvoice, error in
+                if error == nil {
+                    var jobModel: JobModel
+                    jobModel = form.buildJobModelFromClientWithInvoice(client: client, invoice: newInvoice)
+                    
+                    if let index = client.invoiceDetails?.firstIndex(where: { $0.id == newInvoice.id }) {
+
+                        client.invoiceDetails?[index] = newInvoice
+                    }
+                    
+                    
+                    viewModel.invoiceDetailsUpdate(client: client) { error in
+                        if error == nil {
+                            self.createInspection(jobModel: jobModel, isInvoiceGenerate: false)
+                        }
+                    }
+                }
+            }
+        } else {
+            var jobModel: JobModel
+            jobModel = form.buildJobModelFromClient(client: clientModel)
+            createInspection(jobModel: jobModel)
+        }
+    }
+    
+    private func createInspection(jobModel: JobModel, isInvoiceGenerate: Bool = true) {
+        viewModel.addOrUpdateInspection(jobModel, isInvoiceGenerate: isInvoiceGenerate) { error in
             if error == nil {
                 DispatchQueue.main.async {
                     viewModel.selectedItem = nil

@@ -18,6 +18,7 @@ struct JobCardView: View {
     
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @Environment(\.openURL) private var openURL
     var isHistory: Bool = false
     
     var lastVisits: [LastVisit] {
@@ -111,8 +112,7 @@ struct JobCardView: View {
             HStack(spacing: 16) {
                 IconLabel(labelTitle: "\(job.firstName) \(job.lastName)", imageName: "user", textColor: .white)
                 Button(action: {
-                    alertMessage = "Under Construction"
-                    showAlert = true
+                    PhoneCallManager.shared.call(job.phone, openURL: openURL)
                 }) {
                     IconLabel(labelTitle: job.phone, imageName: "phone", textColor: .white)
                 }

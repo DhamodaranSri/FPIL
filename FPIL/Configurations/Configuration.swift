@@ -42,6 +42,7 @@ class UserDefaultsStore {
     private static var allClientType = "clientType"
     private static var allClientList = "clientList"
     private static var allServicesPerfomerdList = "allServicesPerfomerdList"
+    private static var clientDetailInfo = "clientDetailInfo"
     
     static var jobStartedDate :Date? {
         get {
@@ -134,6 +135,25 @@ class UserDefaultsStore {
             let encoder = JSONEncoder()
             if let encoded = try? encoder.encode(newValue) {
                 UserDefaults.standard.set(encoded, forKey: fireStationInfo)
+            }
+        }
+    }
+    
+    static var clientDetail :ClientModel? {
+        get {
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: clientDetailInfo)
+            {
+                let userDetail = try? decoder.decode(ClientModel.self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
+        }
+        set {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: clientDetailInfo)
             }
         }
     }
@@ -244,6 +264,7 @@ class UserDefaultsStore {
         UserDefaults.standard.removeObject(forKey: allClientType)
         UserDefaults.standard.removeObject(forKey: allClientList)
         UserDefaults.standard.removeObject(forKey: allServicesPerfomerdList)
+        UserDefaults.standard.removeObject(forKey: clientDetailInfo)
     }
     
     

@@ -47,8 +47,10 @@ final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputOb
         let insetRect = view.bounds.insetBy(dx: 40, dy: 120)
         border.path = UIBezierPath(roundedRect: insetRect, cornerRadius: 12).cgPath
         view.layer.addSublayer(border)
-
-        session.startRunning()
+        
+        DispatchQueue.main.async {
+            self.session.startRunning()
+        }
     }
 
     func metadataOutput(_ output: AVCaptureMetadataOutput,

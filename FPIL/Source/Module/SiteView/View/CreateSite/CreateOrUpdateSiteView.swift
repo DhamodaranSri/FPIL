@@ -71,9 +71,13 @@ struct CreateOrUpdateSiteView: View {
                                     displayKey: \.buildingName
                                 )
                             }.padding(.vertical, 10)
+                                .disabled(viewModel.selectedItem != nil)
                             BottomBorderTextField(text: $form.firstName, placeholder: "First Name")
+                                .disabled(viewModel.selectedItem != nil)
                             BottomBorderTextField(text: $form.lastName, placeholder: "Last Name")
+                                .disabled(viewModel.selectedItem != nil)
                             BottomBorderTextField(text: $form.email, placeholder: "Email")
+                                .disabled(viewModel.selectedItem != nil)
                             Button {
                                 showSearch = true
                             } label: {
@@ -98,14 +102,19 @@ struct CreateOrUpdateSiteView: View {
                                     Rectangle()
                                         .frame(height: 1)
                                         .foregroundColor(.red.opacity(0.5)) // bottom border
-                                }
+                                }.disabled(viewModel.selectedItem != nil)
                                 
                             }
                             BottomBorderTextField(text: $form.address, placeholder: "Address")
+                                .disabled(viewModel.selectedItem != nil)
                             BottomBorderTextField(text: $form.street, placeholder: "Street")
+                                .disabled(viewModel.selectedItem != nil)
                             BottomBorderTextField(text: $form.city, placeholder: "City")
+                                .disabled(viewModel.selectedItem != nil)
                             BottomBorderTextField(text: $form.zipCode, placeholder: "Zip Code")
+                                .disabled(viewModel.selectedItem != nil)
                             BottomBorderTextField(text: $form.contactNumber, placeholder: "Contact Number")
+                                .disabled(viewModel.selectedItem != nil)
                             if let isAssign = assignTheJob, (isAssign == true || UserDefaultsStore.profileDetail?.userType == 2) {
                                 if isAssign {
                                     HStack {
@@ -174,6 +183,7 @@ struct CreateOrUpdateSiteView: View {
                                 )
                             }.padding(.vertical, 10)
                                 .padding(.bottom, 20)
+                                .disabled(viewModel.selectedItem != nil)
                         }.padding(5)
                     }.padding(5)
                         .background(RoundedRectangle(cornerRadius: 10).stroke(Color.red, lineWidth: 1))
@@ -185,7 +195,9 @@ struct CreateOrUpdateSiteView: View {
                 
                 if viewModel.selectedItem == nil {
                     VStack {
-                        Button(action: saveOrganisation) {
+                        Button(action: {
+                            saveOrganisation()
+                        }) {
                             Text("Register & Generate QR")
                                 .frame(height: 50)
                                 .frame(maxWidth: .infinity)
@@ -263,7 +275,7 @@ struct CreateOrUpdateSiteView: View {
                     title: Text("Confirm Update"),
                     message: Text("Are you sure you want to update this Site details?"),
                     primaryButton: .destructive(Text("Yes")) {
-                        saveOrganisation()
+                        saveOrganisation(isInvoiceGenerate: false)
                     },
                     secondaryButton: .cancel()
                 )
@@ -281,7 +293,7 @@ struct CreateOrUpdateSiteView: View {
         return formatter.string(from: date)
     }
     
-    private func saveOrganisation() {
+    private func saveOrganisation(isInvoiceGenerate: Bool = true) {
 
         let errors = form.validate()
         
@@ -293,7 +305,7 @@ struct CreateOrUpdateSiteView: View {
         
         let jobModel: JobModel = form.buildJobModelForInspector()
         
-        viewModel.addOrUpdateInspection(jobModel, isInvoiceGenerate: true) { error in
+        viewModel.addOrUpdateInspection(jobModel, isInvoiceGenerate: isInvoiceGenerate) { error in
             if error == nil {
                 DispatchQueue.main.async {
                     viewModel.selectedItem = nil
