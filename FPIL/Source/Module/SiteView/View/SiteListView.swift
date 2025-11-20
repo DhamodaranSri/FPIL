@@ -15,6 +15,8 @@ struct SiteListView: View {
     @State private var cameraDenied = false
     @State private var qrCodeImage: UIImage?
     @State private var raiseRequestForJob: JobModel?
+    @State private var startJob: Bool = false
+    @State private var tempViewModel: JobListViewModel?
     
     var body: some View {
         NavigationStack(path: $path) {
@@ -22,13 +24,32 @@ struct SiteListView: View {
                 VStack {
                     SearchBarWithNormalAndQRView(text: $viewModel.searchText, onQRScan: {
                         checkCameraPermission {
+                            startJob = false
                             isScannerPresented = true
                         }
                     })
                     .sheet(isPresented: $isScannerPresented) {
                         QRScannerRepresentable { result in
                             // assign to search field (trim if needed)
-                            viewModel.searchText = result.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if startJob {
+                                if let selectedJob = viewModel.selectedItem, selectedJob.id == result.trimmingCharacters(in: .whitespacesAndNewlines) {
+                                    let startDate = Date()
+                                    viewModel.updateStartOrStopInspectionDate(jobModel: selectedJob, updatedItems: ["jobStartDate": startDate]) { error in
+                                        if error == nil {
+                                            viewModel.selectedItem?.jobStartDate = startDate
+                                            tempViewModel = viewModel
+                                            if path.count > 0 {
+                                                path.removeLast()
+                                            }
+                                            path.append("inspectionChecklistPage")
+                                        }
+                                    }
+                                } else {
+                                    viewModel.serviceError = NSError(domain: "Site Not Matching", code: 505)
+                                }
+                            } else {
+                                viewModel.searchText = result.trimmingCharacters(in: .whitespacesAndNewlines)
+                            }
                             // you can also trigger a search action here
                             // performSearch(with: searchText)
                         }
@@ -108,18 +129,10 @@ struct SiteListView: View {
                                                 }
                                                 path.append("inspectionChecklistPage")
                                             } else {
+                                                startJob = true
                                                 viewModel.selectedItem = startedJob
-                                                let startDate = Date()
-                                                viewModel.updateStartOrStopInspectionDate(jobModel: startedJob, updatedItems: ["jobStartDate": startDate]) { error in
-                                                    if error == nil {
-                                                        viewModel.selectedItem?.jobStartDate = startDate
-                                                        
-                                                        if path.count > 0 {
-                                                            path.removeLast()
-                                                        }
-                                                        path.append("inspectionChecklistPage")
-                                                    }
-                                                }
+                                                tempViewModel = viewModel
+                                                isScannerPresented = true
                                             }
                                         }
                                     }
@@ -165,10 +178,21 @@ struct SiteListView: View {
                             }
                         }
                     } else if value == "inspectionChecklistPage" {
-                        InspectionChecklistView(viewModel: viewModel) {
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
+                        if let tempViewModel {
+                            InspectionChecklistView(viewModel: tempViewModel) {
+                                self.tempViewModel = nil
+                                DispatchQueue.main.async {
+                                    if path.count > 0 {
+                                        path.removeLast()
+                                    }
+                                }
+                            }
+                        } else {
+                            InspectionChecklistView(viewModel: viewModel) {
+                                DispatchQueue.main.async {
+                                    if path.count > 0 {
+                                        path.removeLast()
+                                    }
                                 }
                             }
                         }

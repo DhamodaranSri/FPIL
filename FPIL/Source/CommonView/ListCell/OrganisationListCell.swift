@@ -13,6 +13,7 @@ struct OrganisationListCell: View {
     
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @Environment(\.openURL) private var openURL
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -61,8 +62,7 @@ struct OrganisationListCell: View {
                     HStack(spacing: 16) {
                         IconLabel(labelTitle: "\(organisation.firestationCheifFirstName) \(organisation.firestationCheifLastName)", imageName: "user", textColor: .white)
                         Button(action: {
-                            alertMessage = "Under Construction"
-                            showAlert = true
+                            PhoneCallManager.shared.call(organisation.firestationCheifContactNumber, openURL: openURL)
                         }) {
                             IconLabel(labelTitle: organisation.firestationCheifContactNumber, imageName: "phone", textColor: .white)
                         }
@@ -77,15 +77,13 @@ struct OrganisationListCell: View {
                     // Contact Info
                     HStack(spacing: 16) {
                         Button(action: {
-                            alertMessage = "Under Construction"
-                            showAlert = true
+                            PhoneCallManager.shared.call(organisation.firestationContactNumber, openURL: openURL)
                         }) {
                             IconLabel(labelTitle: organisation.firestationContactNumber, imageName: "phone", textColor: .white)
                         }
                         
                         Button(action: {
-                            alertMessage = "Under Construction"
-                            showAlert = true
+                            PhoneCallManager.shared.sendEmail(to: organisation.firestationAdminEmail, openURL: openURL)
                         }) {
                             IconLabel(labelTitle: organisation.firestationAdminEmail, imageName: "email", textColor: .white)
                         }

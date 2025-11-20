@@ -108,4 +108,14 @@ final class FireBaseClientListRepository: ClientListRepositoryProtocol {
             completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
         }
     }
+    
+    func userSignOut(completion: @escaping (Result<Void, any Error>) -> Void) {
+        if NetworkMonitor.shared.isConnected {
+            fireAuthService.signOut { result in
+                completion(result)
+            }
+        } else {
+            completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
+        }
+    }
 }

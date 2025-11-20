@@ -119,7 +119,7 @@ struct InvoicePDFGenerator {
                 ("Compliance Score:", jobModel?.lastVist?.first?.totalScore != nil ? "\(jobModel?.lastVist?.first?.totalScore ?? 0)" : "Nil"),
                 ("Violations Found:", jobModel?.lastVist?.first?.totalVoilations != nil ? "\(jobModel?.lastVist?.first?.totalVoilations ?? 0)" : "Nil"),
                 ("Notes:", clientModel.notes),
-                ("Payment Mode:", invoice.paymentMethod ?? "Not Paid"),
+                ("Payment Status:", invoice.isPaid ? "Paid" : "Unpaid"),
                 ("Paid On:", invoice.paidDate?.convertDateAloneFromFullDateFormat() ?? "Not Paid")
             ]
 

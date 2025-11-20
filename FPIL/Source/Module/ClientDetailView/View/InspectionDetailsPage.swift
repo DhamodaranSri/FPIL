@@ -11,6 +11,15 @@ struct InspectionDetailsPage: View {
     @ObservedObject var viewModel: JobListViewModel
     @State private var selectedFilter: InspectionDetailFilter = .checklist
     var onClick: (() -> ())? = nil
+    var selectedPdfURL: ((URL) -> Void)? = nil
+    @Binding var path:NavigationPath
+    
+    init(viewModel: JobListViewModel, path: Binding<NavigationPath>, onClick: (() -> ())? = nil, selectedPdfURL: ((URL) -> Void)? = nil) {
+        self.viewModel = viewModel
+        self._path = path
+        self.onClick = onClick
+        self.selectedPdfURL = selectedPdfURL
+    }
     
     var body: some View {
         ZStack {
@@ -67,10 +76,18 @@ struct InspectionDetailsPage: View {
                                 
                                         } onPrintInvoice: { printInvoice in
                                             if let pdfURL = printInvoice.invoicePDFUrl {
-//                                                selectedPdfURL?(URL(string: pdfURL)!)
-//                                                path.append("PDFViewer")
+                                                selectedPdfURL?(URL(string: pdfURL)!)
+                                                path.append("PDFViewer")
                                             }
-                                        }
+                                        } onDeleteInvoice: { invoice in
+                                            viewModel.deleteFile(selectedInvoice: invoice) { error in
+                                                viewModel.selectedItem = nil
+                                                path.removeLast(1)
+                                                onClick?()
+                                            }
+                                        } onProceedPaymentInvoice: { invoice, status in
+                                            
+                                        } createInspection: { invoice in }
                                     }
                                 }.padding(.horizontal)
                                     .padding(.bottom, 20)

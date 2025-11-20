@@ -14,6 +14,7 @@ struct DashboardView: View {
     @State private var alertMessage = ""
     @State private var path = NavigationPath()
     @State private var qrCodeImage: UIImage? = nil
+    @Environment(\.openURL) private var openURL
     
     var tabBarHeight: CGFloat {
         return 60 // match overlay padding
@@ -59,6 +60,9 @@ struct DashboardView: View {
                                     .frame(alignment: .top)
                                     .padding(.bottom, tabBarHeight)
                             case "Clients": ClientListView(viewModel: ClientListViewModel(), path: $path)
+                            case "AI Assistant": AIAssistantView()
+                                    .frame(alignment: .top)
+                                    .padding(.bottom, tabBarHeight)
                             default:
                                 Text("Coming soon!").foregroundColor(.white)
                             }
@@ -114,10 +118,6 @@ struct DashboardView: View {
     private func getNavBarActions() -> [NavBarAction] {
         if viewModel.selectedTab?.name == "Services" || viewModel.selectedTab?.name == "Sites" || viewModel.selectedTab?.name == "History" || viewModel.selectedTab?.name == "Review" {
             return [
-                NavBarAction(icon: "profile") {
-                    alertMessage = "Under Construction"
-                    showAlert = true
-                },
                 NavBarAction(icon: "logout") {
                     viewModel.signout()
                 }
@@ -144,10 +144,6 @@ struct DashboardView: View {
                         alertMessage = "Under Construction"
                         showAlert = true
                     }
-                },
-                NavBarAction(icon: "profile") {
-                    alertMessage = "Under Construction"
-                    showAlert = true
                 },
                 NavBarAction(icon: "logout") {
                     viewModel.signout()

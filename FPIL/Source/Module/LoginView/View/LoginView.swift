@@ -12,6 +12,7 @@ struct LoginView: View {
     @StateObject private var authVM = AuthViewModel()
     @StateObject private var textFieldValidators = TextFieldValidators()
     @State var passwordString: String = ""
+    @State private var showForgotPassword = false
     
     var body: some View {
         ZStack {
@@ -32,7 +33,23 @@ struct LoginView: View {
                             .scaledToFit()
                             .frame(width: 200, height: 200)
                             .padding(.bottom, 30)
-                        LoginTextFieldViews()
+                        VStack {
+                            LoginTextFieldViews()
+                            HStack {
+                                Spacer()    // Pushes content to the right
+                                Button(action: {
+                                    showForgotPassword = true
+                                }) {
+                                    Text("Forgot Password?")
+                                        .font(ApplicationFont.regular(size: 14).value)
+                                        .foregroundColor(.white)
+                                        .underline()
+                                }
+                            }.padding(.top, 5)
+                                .sheet(isPresented: $showForgotPassword) {
+                                    ForgotPasswordView()
+                                }
+                        }
                         LoginButtonViews()
                     }
                     .padding()

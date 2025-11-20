@@ -11,6 +11,7 @@ struct ClientListView: View {
     @ObservedObject var viewModel: ClientListViewModel
     @Binding var path:NavigationPath
     @State private var selectedPdfURL: URL?
+    @State private var selectedQRImageJob: UIImage?
     var jobViewModel: JobListViewModel = JobListViewModel()
 
     var body: some View {
@@ -23,6 +24,8 @@ struct ClientListView: View {
                             NoDataView(message: "No Clients Available")
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         } else {
+                            HorizontalClientFilterView(viewModel: viewModel)
+                                .frame(height: 40, alignment: .top)
                             ScrollView {
                                 VStack(spacing: 16) {
                                     ForEach(viewModel.filteredItems, id:\.id) { clientModel in
@@ -51,9 +54,9 @@ struct ClientListView: View {
                     }
                 }
                 .onAppear {
-//                    Task {
-//                        await viewModel.refreshClientsList()
-//                    }
+                    Task {
+                        await viewModel.refreshClientsList()
+                    }
                 }
                 .navigationDestination(for: String.self) { value in
                     if value == "createClients" {
@@ -80,14 +83,6 @@ struct ClientListView: View {
                                 }
                             }
                         }
-//                        CreateInspection(viewModel: JobListViewModel(), clientModel: viewModel.selectedItem) {
-//                            viewModel.selectedItem = nil
-//                            DispatchQueue.main.async {
-//                                if path.count > 0 {
-//                                    path.removeLast()
-//                                }
-//                            }
-//                        }
                     } else if value == "ClientDetails" {
                         ClientDetailView(viewModel: ClientDetailViewModel(selectedItem: viewModel.selectedItem), path: $path) {
                             viewModel.selectedItem = nil
@@ -103,6 +98,14 @@ struct ClientListView: View {
                             selectedPdfURL = url
                         } selectedJob: { job in
                             jobViewModel.selectedItem = job
+                        } selectedClient: { client, invoice in
+                            DispatchQueue.main.async {
+                                viewModel.selectedClient = client
+                                viewModel.selectedInvoice = invoice
+                                path.append("createNewInspection")
+                            }
+                        } selectedQRImage: { qrImage in
+                            selectedQRImageJob = qrImage
                         }
                     } else if value == "PDFViewer" {
                         PDFViewer(url: $selectedPdfURL) {
@@ -114,12 +117,14 @@ struct ClientListView: View {
                             }
                         }
                     } else if value == "inspectionChecklistPage" {
-                        InspectionDetailsPage(viewModel: jobViewModel) {
+                        InspectionDetailsPage(viewModel: jobViewModel, path: $path) {
                             DispatchQueue.main.async {
                                 if path.count > 0 {
                                     path.removeLast()
                                 }
                             }
+                        } selectedPdfURL: { url in
+                            selectedPdfURL = url
                         }
 //                        InspectionChecklistView(viewModel: jobViewModel, isReadable: true) {
 //                            DispatchQueue.main.async {
@@ -128,6 +133,25 @@ struct ClientListView: View {
 //                                }
 //                            }
 //                        }
+                    } else if value == "createNewInspection" {
+                        CreateInspection(viewModel: jobViewModel, clientModel: viewModel.selectedClient, inspectionForInvoice: viewModel.selectedInvoice) {
+                            DispatchQueue.main.async {
+                                viewModel.selectedClient = nil
+                                viewModel.selectedInvoice = nil
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                            }
+                        }
+                    } else if value == "QRCodePage" {
+                        QRPreviewView(image: $selectedQRImageJob) {
+                            selectedQRImageJob = nil
+                            DispatchQueue.main.async {
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                            }
+                        }
                     }
                 }
                 

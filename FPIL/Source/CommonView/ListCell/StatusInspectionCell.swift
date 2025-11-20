@@ -10,9 +10,11 @@ import SwiftUI
 struct StatusInspectionCell: View {
     let job: JobModel
     let onToggle: ((_ job: JobModel) -> Void)
+    let qrcode: ((_ qrImage: UIImage) -> Void)
     
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @Environment(\.openURL) private var openURL
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -60,10 +62,28 @@ struct StatusInspectionCell: View {
                                     .stroke(statusColor, lineWidth: 1)
                             )
                     }
-                    
-                    Text(job.geoLocationAddress)
-                        .font(ApplicationFont.regular(size: 12).value)
-                        .foregroundColor(.white)
+                    HStack {
+                        Text(job.geoLocationAddress)
+                            .font(ApplicationFont.regular(size: 12).value)
+                            .foregroundColor(.white)
+                        Spacer()
+                        VStack(alignment: .trailing) {
+                            Button(action: {
+                                fetchQRCodeImage(for: job)
+                            }) {
+                                Image("print")
+                            }
+                            .foregroundColor(.white)
+                            .contentShape(Rectangle())
+                            let totalAmountDue = job.invoiceDetails?
+                                .filter { $0.isPaid == false }
+                                .compactMap { $0.totalAmountDue }
+                                .reduce(0, +) ?? 0
+                            Text(totalAmountDue == 0.0 ? "Paid" : "Due Amount: \(String(format: "$%.2f", totalAmountDue))")
+                                .font(ApplicationFont.regular(size: 10).value)
+                                .foregroundColor(.white)
+                        }
+                    }
                     
                     HStack {
                         Text("Site ID:")
@@ -72,10 +92,25 @@ struct StatusInspectionCell: View {
                             .font(ApplicationFont.regular(size: 12).value)
                     }
                     .foregroundColor(.white)
-                    if UserDefaultsStore.profileDetail?.userType == 2 && job.jobAssignedDate != nil  {
+                    if job.jobAssignedDate != nil  {
                         Text("Inspector: " + (job.inspectorName ?? "Nil"))
                             .font(ApplicationFont.regular(size: 12).value)
                             .foregroundColor(.white)
+                        Button(action: {
+                            PhoneCallManager.shared.call(job.inspectorContact ?? "", openURL: openURL)
+                        }) {
+                            IconLabel(labelTitle: job.inspectorContact ?? "", imageName: "phone", textColor: .white)
+                        }
+                        HStack {
+                            Text("Assigned Date: \(job.jobAssignedDate?.formatedDateAloneAsString() ?? "")")
+                                .font(ApplicationFont.regular(size: 12).value)
+                                .foregroundColor(.white)
+                            Spacer()
+                            Text("Last Date: \(job.lastDateToInspection?.formatedDateAloneAsString() ?? "")")
+                                .font(ApplicationFont.regular(size: 12).value)
+                                .foregroundColor(.white)
+                        }
+                        
                     }
                 }
             }
@@ -91,6 +126,26 @@ struct StatusInspectionCell: View {
         .contentShape(Rectangle())
         .alert(alertMessage, isPresented: $showAlert) {
             Button("OK", role: .cancel) { }
+        }
+    }
+    
+    private func fetchQRCodeImage(for job: JobModel) {
+        guard let qrURL = job.siteQRCodeImageUrl, !qrURL.isEmpty else {
+            alertMessage = "QR Code not available for this job."
+            showAlert = true
+            return
+        }
+        
+        FirebaseFileManager.shared.fetchImage(from: qrURL) { image in
+            DispatchQueue.main.async {
+                if let image = image {
+                    self.qrcode(image)
+                } else {
+                    alertMessage = "Failed to load QR Code."
+                    showAlert = true
+                }
+
+            }
         }
     }
 }

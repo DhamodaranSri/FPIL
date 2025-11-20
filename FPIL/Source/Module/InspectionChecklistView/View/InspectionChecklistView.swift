@@ -255,13 +255,42 @@ struct InspectionChecklistView: View {
                                     updatedItems["building"] = building
                                 }
                                 
-                                viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
-                                    DispatchQueue.main.async {
+                                if elapsed > 5400 {
+                                    viewModel.generateInvoiceForTime(for: selectedItem, timeSpent: elapsed) { clientModel, invoiceDetail, error in
                                         if error == nil {
-                                            UserDefaultsStore.jobStartedDate = nil
-                                            UserDefaultsStore.startedJobDetail = nil
-                                            viewModel.selectedItem = nil
-                                            onClick?()
+                                            if let clientModel, let client = clientModel.toFirestoreData() {
+                                                updatedItems["client"] = client
+                                                selectedItem.client = clientModel
+                                            }
+                                            if let invoiceDetail {
+                                                selectedItem.invoiceDetails?.append(invoiceDetail)
+                                                
+                                                if let updatedData = selectedItem.invoiceDetails?.toFirestoreDataArray() {
+                                                    updatedItems["invoiceDetails"] = updatedData
+                                                }
+                                            }
+                                            
+                                            viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
+                                                DispatchQueue.main.async {
+                                                    if error == nil {
+                                                        UserDefaultsStore.jobStartedDate = nil
+                                                        UserDefaultsStore.startedJobDetail = nil
+                                                        viewModel.selectedItem = nil
+                                                        onClick?()
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
+                                        DispatchQueue.main.async {
+                                            if error == nil {
+                                                UserDefaultsStore.jobStartedDate = nil
+                                                UserDefaultsStore.startedJobDetail = nil
+                                                viewModel.selectedItem = nil
+                                                onClick?()
+                                            }
                                         }
                                     }
                                 }
@@ -276,35 +305,81 @@ struct InspectionChecklistView: View {
                     .background(.appPrimary.opacity(0.2))
                 } else {
                     if (UserDefaultsStore.profileDetail?.userType == 2), (viewModel.selectedItem?.isCompleted ?? false) == true, viewModel.selectedItem?.status == nil {
-                        HStack(alignment: .top) {
-                            Button("Approve") {
-                                planReview(status: 1)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 40)
-                            .background(.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                            Button("Decline") {
-                                planReview(status: 2)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 40)
-                            .background(.red)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                            
-                            Button("Revision") {
-                                planReview(status: 3)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 40)
-                            .background(.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                        }.frame(maxWidth: .infinity)
-                        .padding(.bottom, 20)
-                        .padding(.horizontal, 10)
+                        let totalDueAmount = viewModel.getTotalAmountOnDue()
+                        let unPaidInspection = viewModel.getUnPaidInspection()
+                        if totalDueAmount < 0 {
+                            Text("can't review Customer yet to pay the Due Amount: \(String(format: "$%.2f", totalDueAmount))")
+                                .frame(maxWidth: .infinity)
+                                .lineLimit(2)
+                                .font(ApplicationFont.regular(size: 12).value)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.bottom, 10)
+                            PrimaryButton(sendAction: {
+                                if var unPaidInspection {
+                                    unPaidInspection.isPaid = true
+                                    unPaidInspection.paidDate = Date()
+                                    
+                                    if let index = viewModel.selectedItem?.client?.invoiceDetails?.firstIndex(where: { $0.id == unPaidInspection.id }) {
+                                        viewModel.selectedItem?.client?.invoiceDetails?[index] = unPaidInspection
+                                    }
+                                    
+                                    if let index = viewModel.selectedItem?.invoiceDetails?.firstIndex(where: { $0.id == unPaidInspection.id }) {
+                                        viewModel.selectedItem?.invoiceDetails?[index] = unPaidInspection
+                                    }
+                                    
+                                    viewModel.reGenerateInvoiceMarkAsPaid(for: unPaidInspection) { invoiceDetail, error in
+                                        if error == nil {
+                                            if let index = viewModel.selectedItem?.client?.invoiceDetails?.firstIndex(where: { $0.id == invoiceDetail.id }) {
+                                                viewModel.selectedItem?.client?.invoiceDetails?[index] = invoiceDetail
+                                            }
+                                            
+                                            if let index = viewModel.selectedItem?.invoiceDetails?.firstIndex(where: { $0.id == invoiceDetail.id }) {
+                                                viewModel.selectedItem?.invoiceDetails?[index] = invoiceDetail
+                                            }
+                                            if let jobModel = viewModel.selectedItem {
+                                                viewModel.updateInspectionAndRefresh(for: jobModel) { error in
+                                                    
+                                                }
+                                            }
+                                            
+                                        }
+                                    }
+                                }
+                            }, buttonTitle: "Mark as Paid")
+                            .padding(.bottom, 20)
+                            .padding(.horizontal, 10)
+                        } else {
+                            HStack(alignment: .top) {
+                                Button("Approve") {
+                                    planReview(status: 1)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 40)
+                                .background(.green)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                                Button("Decline") {
+                                    planReview(status: 2)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 40)
+                                .background(.red)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                                
+                                Button("Revision") {
+                                    planReview(status: 3)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 40)
+                                .background(.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                            }.frame(maxWidth: .infinity)
+                            .padding(.bottom, 20)
+                            .padding(.horizontal, 10)
+                        }
                     }
                 }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)

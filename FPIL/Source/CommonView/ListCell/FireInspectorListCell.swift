@@ -14,6 +14,7 @@ struct FireInspectorListCell: View {
     
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @Environment(\.openURL) private var openURL
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -60,15 +61,13 @@ struct FireInspectorListCell: View {
 
                     HStack(spacing: 16) {
                         Button(action: {
-                            alertMessage = "Under Construction"
-                            showAlert = true
+                            PhoneCallManager.shared.call(inspector.contactNumber, openURL: openURL)
                         }) {
                             IconLabel(labelTitle: inspector.contactNumber, imageName: "phone", textColor: .white)
                         }
                         
                         Button(action: {
-                            alertMessage = "Under Construction"
-                            showAlert = true
+                            PhoneCallManager.shared.sendEmail(to: inspector.email, openURL: openURL)
                         }) {
                             IconLabel(labelTitle: inspector.email, imageName: "email", textColor: .white)
                         }

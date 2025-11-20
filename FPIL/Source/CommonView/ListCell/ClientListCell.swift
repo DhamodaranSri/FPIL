@@ -15,6 +15,7 @@ struct ClientListCell: View {
     
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @Environment(\.openURL) private var openURL
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -64,14 +65,12 @@ struct ClientListCell: View {
 
                     HStack(spacing: 16) {
                         Button(action: {
-                            alertMessage = "Under Construction"
-                            showAlert = true
+                            PhoneCallManager.shared.sendEmail(to: client.email, openURL: openURL)
                         }) {
                             IconLabel(labelTitle: client.email, imageName: "email", textColor: .white)
                         }
                         Button(action: {
-                            alertMessage = "Under Construction"
-                            showAlert = true
+                            PhoneCallManager.shared.call(client.contactNumber, openURL: openURL)
                         }) {
                             IconLabel(labelTitle: client.contactNumber, imageName: "phone", textColor: .white)
                         }
@@ -81,7 +80,11 @@ struct ClientListCell: View {
                         Button(action: {
                             onToggle(client, true)
                         }) {
-                            if client.invoiceDetails?.count ?? 0 == 0 {
+                            
+                            if (client.invoiceDetails?
+                                    .filter { ($0.inspectionsId?.count ?? 0) == 0 }
+                                    .count ?? 0) == 0 {
+                                
                                 IconLabel(labelTitle: "Share Quotation", imageName: "notes", textColor: .white)
                                     .font(ApplicationFont.bold(size: 12).value)
                                     .padding(.vertical, 6)

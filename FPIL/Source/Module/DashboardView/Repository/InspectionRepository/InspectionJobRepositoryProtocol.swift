@@ -21,4 +21,7 @@ protocol InspectionJobRepositoryProtocol {
         forConditions inspectorId: String,
         completion: @escaping (Result<[JobModel], any Error>) -> Void
     )
+    func updateClient(client: ClientModel, updatedItems: [String: Any], completion: @escaping (Result<Void, any Error>) -> Void)
+    func fetchClient(clientId: String, completion: @escaping (Result<ClientModel, any Error>) -> Void)
+    func createOrupdateClient(client: ClientModel, completion: @escaping (Result<Void, any Error>) -> Void)
 }
