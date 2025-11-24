@@ -186,6 +186,9 @@ struct SiteListView: View {
                                         path.removeLast()
                                     }
                                 }
+                                Task {
+                                    await viewModel.refreshOrganisations()
+                                }
                             }
                         } else {
                             InspectionChecklistView(viewModel: viewModel) {
@@ -193,6 +196,9 @@ struct SiteListView: View {
                                     if path.count > 0 {
                                         path.removeLast()
                                     }
+                                }
+                                Task {
+                                    await viewModel.refreshOrganisations()
                                 }
                             }
                         }

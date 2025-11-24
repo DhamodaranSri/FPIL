@@ -102,6 +102,9 @@ struct ClientListView: View {
                             DispatchQueue.main.async {
                                 viewModel.selectedClient = client
                                 viewModel.selectedInvoice = invoice
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
                                 path.append("createNewInspection")
                             }
                         } selectedQRImage: { qrImage in

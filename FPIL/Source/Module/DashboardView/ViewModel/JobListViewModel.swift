@@ -470,11 +470,12 @@ extension JobListViewModel {
         
     }
     
-    func reGenerateInvoice(for invoice: InvoiceDetails, client: ClientModel?, completion: @escaping (InvoiceDetails, Error?) -> Void) {
+    func reGenerateInvoice(for invoice: InvoiceDetails, client: ClientModel?, job: JobModel? = nil, completion: @escaping (InvoiceDetails, Error?) -> Void) {
         isLoading = true
         let invoiceVM = InvoiceViewModel(
             items: UserDefaultsStore.servicesPerfomerdTypes ?? [],
-            client: client
+            client: client,
+            jobModel: job
         )
         
         invoiceVM.reGenetrateInvoice(invoiceDetails: invoice) { invoiceDetails, error in
@@ -601,6 +602,35 @@ extension JobListViewModel {
             case .failure(let error):
                 self.serviceError = error
                 completion(self.serviceError)
+            }
+        }
+    }
+    
+    func updateClientWithInvoice(client: ClientModel?, invoice: InvoiceDetails, completion: @escaping (Error?) -> Void) {
+        
+        self.inspectionRepository.fetchClient(clientId: client?.id ?? "") { result in
+            switch result {
+            case .success(var clientModel):
+                let selectedInvoice = clientModel.invoiceDetails?.filter({ $0.id == invoice.id}).first
+                
+                if let index = clientModel.invoiceDetails?.firstIndex(where: { $0.id == invoice.id }) {
+                    clientModel.invoiceDetails?[index] = invoice
+                }
+                
+                self.inspectionRepository.createOrupdateClient(client: clientModel) { result in
+                    switch result {
+                    case .success():
+                        completion(nil)
+                    case .failure(let error):
+                        self.serviceError = error
+                        completion(error)
+                        print("Error updating inspection: \(error)")
+                    }
+                }
+            case .failure(let error):
+                self.serviceError = error
+                completion(error)
+                print("Error fetching client: \(error)")
             }
         }
     }

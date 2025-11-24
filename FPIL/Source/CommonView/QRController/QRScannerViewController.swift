@@ -48,7 +48,7 @@ final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputOb
         border.path = UIBezierPath(roundedRect: insetRect, cornerRadius: 12).cgPath
         view.layer.addSublayer(border)
         
-        DispatchQueue.main.async {
+        DispatchQueue.global(qos: .userInitiated).async {
             self.session.startRunning()
         }
     }

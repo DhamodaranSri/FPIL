@@ -256,32 +256,73 @@ struct InspectionChecklistView: View {
                                 }
                                 
                                 if elapsed > 5400 {
-                                    viewModel.generateInvoiceForTime(for: selectedItem, timeSpent: elapsed) { clientModel, invoiceDetail, error in
-                                        if error == nil {
-                                            if let clientModel, let client = clientModel.toFirestoreData() {
-                                                updatedItems["client"] = client
-                                                selectedItem.client = clientModel
+                                    if let invoice = viewModel.getUnPaidInspection() {
+                                        viewModel.reGenerateInvoice(for: invoice, client: selectedItem.client, job: selectedItem) { invoiceDetail, error in
+                                            if error == nil {
+                                                if let index = selectedItem.client?.invoiceDetails?.firstIndex(where: { $0.id == invoiceDetail.id }) {
+                                                    selectedItem.client?.invoiceDetails?[index] = invoiceDetail
+                                                }
+                                                if let index = selectedItem.invoiceDetails?.firstIndex(where: { $0.id == invoiceDetail.id }) {
+                                                    selectedItem.invoiceDetails?[index] = invoiceDetail
+                                                }
+                                                
+                                                if let updatedData = selectedItem.invoiceDetails?.toFirestoreDataArray() {
+                                                    updatedItems["invoiceDetails"] = updatedData
+                                                }
+                                                
+                                                if let client = selectedItem.client?.toFirestoreData() {
+                                                    updatedItems["client"] = client
+                                                }
+                                                
+                                                viewModel.updateClientWithInvoice(client: selectedItem.client, invoice: invoiceDetail) { error in
+                                                    if error == nil {
+                                                        viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
+                                                            DispatchQueue.main.async {
+                                                                if error == nil {
+                                                                    UserDefaultsStore.jobStartedDate = nil
+                                                                    UserDefaultsStore.startedJobDetail = nil
+                                                                    viewModel.selectedItem = nil
+                                                                    onClick?()
+                                                                }
+                                                            }
+                                                        }
+
+                                                    }
+                                                }
                                             }
-                                            if let invoiceDetail {
+                                        }
+                                    } else {
+                                        viewModel.generateInvoiceForTime(for: selectedItem, timeSpent: elapsed) { clientModel, invoiceDetail, error in
+                                            if error == nil, let invoiceDetail {
+                                                if let clientModel, let client = clientModel.toFirestoreData() {
+                                                    updatedItems["client"] = client
+                                                    selectedItem.client = clientModel
+                                                }
                                                 selectedItem.invoiceDetails?.append(invoiceDetail)
                                                 
                                                 if let updatedData = selectedItem.invoiceDetails?.toFirestoreDataArray() {
                                                     updatedItems["invoiceDetails"] = updatedData
                                                 }
-                                            }
-                                            
-                                            viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
-                                                DispatchQueue.main.async {
+                                                
+                                                viewModel.updateClientWithInvoice(client: selectedItem.client, invoice: invoiceDetail) { error in
                                                     if error == nil {
-                                                        UserDefaultsStore.jobStartedDate = nil
-                                                        UserDefaultsStore.startedJobDetail = nil
-                                                        viewModel.selectedItem = nil
-                                                        onClick?()
+                                                        viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
+                                                            DispatchQueue.main.async {
+                                                                if error == nil {
+                                                                    UserDefaultsStore.jobStartedDate = nil
+                                                                    UserDefaultsStore.startedJobDetail = nil
+                                                                    viewModel.selectedItem = nil
+                                                                    onClick?()
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 }
+                                                
                                             }
                                         }
                                     }
+                                    
                                 } else {
                                     viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
                                         DispatchQueue.main.async {
@@ -307,7 +348,7 @@ struct InspectionChecklistView: View {
                     if (UserDefaultsStore.profileDetail?.userType == 2), (viewModel.selectedItem?.isCompleted ?? false) == true, viewModel.selectedItem?.status == nil {
                         let totalDueAmount = viewModel.getTotalAmountOnDue()
                         let unPaidInspection = viewModel.getUnPaidInspection()
-                        if totalDueAmount < 0 {
+                        if totalDueAmount > 0 {
                             Text("can't review Customer yet to pay the Due Amount: \(String(format: "$%.2f", totalDueAmount))")
                                 .frame(maxWidth: .infinity)
                                 .lineLimit(2)

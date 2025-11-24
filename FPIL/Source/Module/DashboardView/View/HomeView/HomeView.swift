@@ -47,8 +47,6 @@ struct HomeView: View {
                         })
                     }
                 }
-            }.onAppear{
-                ClientListViewModel()
             }
             .navigationDestination(for: String.self) { value in
                 if value == "updateSites" {
