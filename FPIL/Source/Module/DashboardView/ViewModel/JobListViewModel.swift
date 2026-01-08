@@ -415,7 +415,7 @@ extension JobListViewModel {
         var updatedJob = job
         
         // Step 1: Generate and upload QR
-        let qrImage = QRGenerator().generateQRCode(from: siteId)
+        let qrImage = QRGenerator().generatePrintableQR(from: siteId)
         FirebaseFileManager.shared.uploadImage(qrImage, folder: "\(siteId)/SiteQRImage", fileName: siteId) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self = self else { return }

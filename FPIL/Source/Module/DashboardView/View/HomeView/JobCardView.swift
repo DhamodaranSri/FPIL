@@ -343,7 +343,13 @@ struct QRPreviewView: View {
                 CustomNavBar(
                     title: "QR Code",
                     showBackButton: true,
-                    actions: [],
+                    actions: [
+                        NavBarAction(icon: "print") {
+                            if let image {
+                                printImageAsPDF(image)
+                            }
+                        }
+                    ],
                     backgroundColor: .applicationBGcolor,
                     titleColor: .appPrimary,
                     backAction: {
@@ -368,4 +374,27 @@ struct QRPreviewView: View {
             .background(.applicationBGcolor)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+    
+    // MARK: - 📄 PRINT Image
+    func printImageAsPDF(_ image: UIImage) {
+        let pdfData = NSMutableData()
+        let bounds = CGRect(x: 0, y: 0, width: image.size.width, height: image.size.height)
+
+        UIGraphicsBeginPDFContextToData(pdfData, bounds, nil)
+        UIGraphicsBeginPDFPage()
+        image.draw(in: bounds)
+        UIGraphicsEndPDFContext()
+
+        DispatchQueue.main.async {
+            let printController = UIPrintInteractionController.shared
+            let printInfo = UIPrintInfo(dictionary: nil)
+            printInfo.outputType = .general
+            printInfo.jobName = "QR Code Print"
+
+            printController.printInfo = printInfo
+            printController.printingItem = pdfData
+            printController.present(animated: true)
+        }
+    }
+
 }

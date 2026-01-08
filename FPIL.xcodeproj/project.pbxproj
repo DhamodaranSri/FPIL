@@ -11,6 +11,7 @@
 		3C9B6C5BAD4136A1AA164899 /* Pods_FPIL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 69EB1067376B79F93546C062 /* Pods_FPIL.framework */; };
 		7928AF532E93F9B400FDCC11 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 7928AF522E93F9B400FDCC11 /* FirebaseStorage */; };
 		7928AF552E93F9BC00FDCC11 /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 7928AF542E93F9BC00FDCC11 /* FirebaseStorageCombine-Community */; };
+		7961D6252EE1EF1E00B1375E /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 7961D6242EE1EF1E00B1375E /* FirebaseMessaging */; };
 		79A01CC12E4A4D9200215BC0 /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = 79A01CC02E4A4D9200215BC0 /* FirebaseAI */; };
 		79A01CC32E4A4D9200215BC0 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 79A01CC22E4A4D9200215BC0 /* FirebaseAnalytics */; };
 		79A01CC52E4A4D9200215BC0 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 79A01CC42E4A4D9200215BC0 /* FirebaseAnalyticsCore */; };
@@ -94,6 +95,7 @@
 			files = (
 				3C9B6C5BAD4136A1AA164899 /* Pods_FPIL.framework in Frameworks */,
 				79A01CCF2E4A4EAE00215BC0 /* FirebaseFirestoreCombine-Community in Frameworks */,
+				7961D6252EE1EF1E00B1375E /* FirebaseMessaging in Frameworks */,
 				79A01CC72E4A4D9200215BC0 /* FirebaseAnalyticsIdentitySupport in Frameworks */,
 				7928AF552E93F9BC00FDCC11 /* FirebaseStorageCombine-Community in Frameworks */,
 				79A01CC12E4A4D9200215BC0 /* FirebaseAI in Frameworks */,
@@ -567,9 +569,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FPIL/FPIL.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 24;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = SU5Z39MX2P;
 				ENABLE_PREVIEWS = YES;
@@ -607,9 +610,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FPIL/FPIL.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_TEAM = SU5Z39MX2P;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -774,6 +778,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 79A01CBF2E4A4D9200215BC0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseStorageCombine-Community";
+		};
+		7961D6242EE1EF1E00B1375E /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 79A01CBF2E4A4D9200215BC0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 		79A01CC02E4A4D9200215BC0 /* FirebaseAI */ = {
 			isa = XCSwiftPackageProductDependency;

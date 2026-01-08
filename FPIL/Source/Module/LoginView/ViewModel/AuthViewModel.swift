@@ -7,6 +7,9 @@
 
 import Foundation
 import FirebaseAuth
+import FirebaseMessaging
+import FirebaseCore
+import FirebaseFirestore
 
 class AuthViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
@@ -35,6 +38,7 @@ class AuthViewModel: ObservableObject {
                         return
                     }
                     do {
+                        self?.removeDeviceTokenOnLogout()
                         try Auth.auth().signOut()
                     } catch {
                     }
@@ -48,5 +52,19 @@ class AuthViewModel: ObservableObject {
 
             }
         }
+    }
+    
+    func removeDeviceTokenOnLogout() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        guard let token = Messaging.messaging().fcmToken else { return }
+        guard let profileId = UserDefaultsStore.profileDetail?.id else { return }
+
+        let ref = Firestore.firestore()
+            .collection("users")
+            .document(profileId)
+
+        ref.updateData([
+            "deviceTokens": FieldValue.arrayRemove([token])
+        ])
     }
 }

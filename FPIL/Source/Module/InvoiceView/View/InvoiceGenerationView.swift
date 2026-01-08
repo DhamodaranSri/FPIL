@@ -76,9 +76,38 @@ struct InvoiceGenerationView: View {
                                         .font(ApplicationFont.regular(size: 12).value)
                                         .foregroundColor(.white)
                                     Spacer()
-                                    Text(String(format: "$%.2f", section.price ?? 0.00))
-                                        .font(ApplicationFont.bold(size: 13).value)
-                                        .foregroundColor(.white)
+//                                    Text(String(format: "$%.2f", section.price ?? 0.00))
+//                                        .font(ApplicationFont.bold(size: 13).value)
+//                                        .foregroundColor(.white)
+                                    TextField(
+                                        "0.00",
+                                        value: Binding(
+                                            get: { section.price ?? 0.0 },
+                                            set: { newValue in
+                                                viewModel.updatePrice(
+                                                    for: section.id,
+                                                    newPrice: newValue
+                                                )
+                                            }
+                                        ),
+                                        formatter: NumberFormatter.currencyFormatter
+                                    )
+                                    .font(ApplicationFont.bold(size: 13).value)
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .foregroundColor(.black)
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 4)
+                                    .background(Color.white)
+                                    .overlay(
+                                        VStack {
+                                            Spacer()
+                                            Rectangle()
+                                                .frame(height: 1)
+                                                .foregroundColor(.appPrimary)
+                                        }
+                                    )
+                                    .frame(width: 80)
                                 }.frame(maxWidth: .infinity)
                                     .padding(.horizontal, 5)
                                     .padding(.vertical, 10)
@@ -195,3 +224,12 @@ struct InvoiceGenerationView: View {
     }
 }
 
+extension NumberFormatter {
+    static let currencyFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        return formatter
+    }()
+}

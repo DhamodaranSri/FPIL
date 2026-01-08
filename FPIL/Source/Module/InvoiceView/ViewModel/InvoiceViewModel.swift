@@ -36,6 +36,11 @@ class InvoiceViewModel: ObservableObject {
             items[index] = item
         }
     }
+
+    func updatePrice(for itemId: String?, newPrice: Double) {
+        guard let index = items.firstIndex(where: { $0.id == itemId }) else { return }
+        items[index].price = newPrice
+    }
     
     func reGenetrateInvoice(invoiceDetails: InvoiceDetails, completion: @escaping (InvoiceDetails, Error?) -> Void) {
         var details = invoiceDetails

@@ -91,7 +91,11 @@ struct PDFViewer: View {
                 CustomNavBar(
                     title: "Plan Review Report",
                     showBackButton: true,
-                    actions: [],
+                    actions: [
+                        NavBarAction(icon: "print") {
+                            printPDF()
+                        }
+                    ],
                     backgroundColor: .applicationBGcolor,
                     titleColor: .appPrimary,
                     backAction: { onClick?() }
@@ -117,5 +121,36 @@ struct PDFViewer: View {
                 }
             }
         }
+    }
+
+    // MARK: - 📄 PRINT PDF
+    func printPDF() {
+        guard let url else { return }
+
+        // Step 1: Download PDF asynchronously
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let data = data {
+                // Step 2: Save to temporary local file
+                let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("temp.pdf")
+                do {
+                    try data.write(to: tempURL)
+
+                    // Step 3: Print local file (must be on main thread)
+                    DispatchQueue.main.async {
+                        let printController = UIPrintInteractionController.shared
+                        let printInfo = UIPrintInfo(dictionary: nil)
+                        printInfo.outputType = .general
+                        printInfo.jobName = "PDF Print Job"
+                        printController.printInfo = printInfo
+                        printController.printingItem = tempURL
+
+                        printController.present(animated: true)
+                    }
+
+                } catch {
+                    print("Failed to save PDF:", error)
+                }
+            }
+        }.resume()
     }
 }
