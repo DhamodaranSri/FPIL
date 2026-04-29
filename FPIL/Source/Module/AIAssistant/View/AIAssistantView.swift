@@ -9,93 +9,103 @@ import SwiftUI
 
 struct AIAssistantView: View {
     @StateObject private var vm = AIAssistantViewModel()
+    @StateObject private var keyboard = KeyboardObserver()
    // @Binding var isPresented: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Chat bubbles / content area
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(spacing: 12) {
-                        // (Optional) show uploaded screenshot as a hero image
-                        if let hero = vm.heroImage {
-                            Image(uiImage: hero)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(maxHeight: 180)
-                                .cornerRadius(12)
-                                .padding(.horizontal)
-                        }
+        ZStack {
 
-                        // Conversation
-                        ForEach(vm.messages) { msg in
-                            HStack {
-                                if msg.isAssistant { Spacer() }
-                                ChatBubbleView(text: msg.text, isAssistant: msg.isAssistant)
-                                    .id(msg.id)
-                                if !msg.isAssistant { Spacer() }
+            VStack(spacing: 0) {
+                // Chat bubbles / content area
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 12) {
+
+                            if let hero = vm.heroImage {
+                                Image(uiImage: hero)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxHeight: 180)
+                                    .cornerRadius(12)
+                                    .padding(.horizontal)
                             }
-                            .padding(.horizontal)
+
+                            ForEach(vm.messages) { msg in
+                                HStack {
+                                    if msg.isAssistant { Spacer() }
+
+                                    ChatBubbleView(text: msg.text, isAssistant: msg.isAssistant)
+                                        .id(msg.id)
+
+                                    if !msg.isAssistant { Spacer() }
+                                }
+                                .padding(.horizontal)
+                            }
                         }
+                        .padding(.vertical, 16)
                     }
-                    .padding(.vertical, 16)
+                    .background(Color(.systemGray6))
+                    .onChange(of: vm.messages.count) { _ in
+                         if let last = vm.messages.last {
+                             withAnimation {
+                                 proxy.scrollTo(last.id, anchor: .bottom)
+                             }
+                         }
+                     }
                 }
-                .background(Color(.systemGray6))
-                .onChange(of: vm.messages.count) { _ in
-                    // scroll to last
-                    if let last = vm.messages.last {
-                        withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+
+                // Input field
+                HStack(spacing: 12) {
+                    TextField("Ask about violations, codes, or get AI help…", text: $vm.inputText)
+                        .textFieldStyle(PlainTextFieldStyle())
+                        .padding(12)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemGray5)))
+
+                    Button(action: {
+                        Task { await vm.sendMessage() }
+                    }) {
+                        Text("Send")
+                            .bold()
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .background(
+                                LinearGradient(colors: [Color.orange, Color.red],
+                                               startPoint: .leading,
+                                               endPoint: .trailing)
+                            )
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                     }
+                    .disabled(vm.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || vm.isSending)
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal)
+                .background(Color(.systemBackground))
+            }
+            .padding(.bottom, (keyboard.height == 0 ? keyboard.height : keyboard.height-80)) // 👈 Moves above keyboard
+            .animation(.easeOut(duration: 0.25), value: (keyboard.height == 0 ? keyboard.height : keyboard.height-80))
+
+            // 👇 CENTER LOADER
+            if vm.isSending {
+                ZStack {
+                    Color.black.opacity(0.25)
+                        .ignoresSafeArea()
+
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+
+                        Text("AI is thinking...")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(30)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(16)
+                    .shadow(radius: 8)
                 }
             }
-
-            // Quick actions chips
-//            ScrollView(.horizontal, showsIndicators: false) {
-//                HStack(spacing: 12) {
-//                    ForEach(AIAssistantViewModel.quickActions, id: \.self) { action in
-//                        Button(action: { vm.handleQuickAction(action) }) {
-//                            HStack(spacing: 8) {
-//                                Text(action)
-//                            }
-//                            .padding(.horizontal, 14)
-//                            .padding(.vertical, 10)
-//                            .background(RoundedRectangle(cornerRadius: 20).fill(Color(.systemGray5)))
-//                        }
-//                    }
-//                }
-//                .padding(.horizontal)
-//                .padding(.bottom, 8)
-//            }
-
-            // Input field
-            HStack(spacing: 12) {
-                TextField("Ask about violations, codes, or get AI help…", text: $vm.inputText)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .padding(12)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemGray5)))
-                    .disableAutocorrection(true)
-
-                Button(action: {
-                    Task { await vm.sendMessage() }
-                }) {
-                    Text("Send")
-                        .bold()
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 16)
-                        .background(LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-                .disabled(vm.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || vm.isSending)
-            }
-            .padding(.vertical, 10)
-            .padding(.horizontal)
-            .background(Color(.systemBackground))
         }
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(radius: 6)
-        .onAppear { }
     }
 }
 
@@ -133,3 +143,33 @@ fileprivate struct RoundedCorner: Shape {
     }
 }
 
+import Combine
+import SwiftUI
+
+final class KeyboardObserver: ObservableObject {
+    @Published var height: CGFloat = 0
+    private var cancellables = Set<AnyCancellable>()
+
+    init() {
+        let willShow = NotificationCenter.default.publisher(
+            for: UIResponder.keyboardWillShowNotification
+        )
+        .map { $0.keyboardHeight }
+
+        let willHide = NotificationCenter.default.publisher(
+            for: UIResponder.keyboardWillHideNotification
+        )
+        .map { _ in CGFloat(0) }
+
+        willShow
+            .merge(with: willHide)
+            .receive(on: RunLoop.main)
+            .assign(to: &$height)
+    }
+}
+
+extension Notification {
+    var keyboardHeight: CGFloat {
+        (userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect)?.height ?? 0
+    }
+}

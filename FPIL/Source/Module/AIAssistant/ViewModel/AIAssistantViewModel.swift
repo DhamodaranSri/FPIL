@@ -67,14 +67,6 @@ final class AIAssistantViewModel: ObservableObject {
         isSending = true
         defer { isSending = false }
 
-        // Step 1: Check if the user asks off-topic (simple local guard)
-        if !AIAssistantViewModel.isFireDomainQuery(userText) {
-            let reply = "Sorry — I can only answer fire station and fire-safety related questions. If you need general assistance, please contact support."
-            messages.append(AIMessage(text: reply, isAssistant: true))
-            return
-        }
-
-        // Step 2: Ask the chatService to get an assistant reply
         do {
             let responseText = try await chatService.sendFireSafetyQuery(userText)
             messages.append(AIMessage(text: responseText, isAssistant: true))
@@ -105,33 +97,58 @@ final class AIAssistantChatService {
     If a user asks anything outside fire safety (medical, legal unrelated, entertainment, politics etc.), politely reply: 'I can only help with fire station and fire-safety topics. Please contact support for other questions.' \
     Keep answers concise, reference regulations when available, and never invent laws or locations without saying 'I might not be certain — verify with local authority.'
     """
-
-    // This function should call the ChatGPT SDK / OpenAI API
+    
+//    let systemPrompt = """
+//    You are an assistant that ONLY answers questions about California fire stations, fire inspections, fire codes, and fire safety regulations.
+//
+//    If the question is unrelated, respond with:
+//    'Sorry, I can only answer California fire station related questions.'
+//    """
+    
     func sendFireSafetyQuery(_ userText: String) async throws -> String {
-        // 1. (Optional) Call OpenAI moderation endpoint on userText -> if flagged, reject.
-        //    If flagged, return "I cannot assist with that."
 
-        // 2. Build messages: system + user
-        let messages = [
-            ["role": "system", "content": systemPrompt],
-            ["role": "user", "content": userText]
-        ]
+        let apiKey = "AIzaSyA-RxBELTCehyHuE5_5fa07vxiBzbDJsFo"
+
+        guard let url = URL(string:
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\(apiKey)") else {
+            throw URLError(.badURL)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
         
-        return "Have to implement API call here..."
+        let body: [String: Any] = [
+            "contents": [
+                [
+                    "parts": [
+                        ["text": systemPrompt + "\nUser: \(userText)"]
+                    ]
+                ]
+            ]
+        ]
 
-//        // 3. Call ChatGPT SDK with messages and get response.
-//        // PSEUDOCODE: replace with actual SDK call
-//        let apiResponse = try await OpenAIChatClient.shared.chat(messages: messages, temperature: 0.2, maxTokens: 800)
-//
-//        // 4. Post-check: ensure the response is still on-topic (simple check)
-//        if !self.responseIsOnTopic(apiResponse) {
-//            return "I can only help with fire station and fire-safety related questions. If you need other help, please contact support."
-//        }
-//
-//        // 5. Return assistant reply
-//        return apiResponse
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let (data, _) = try await URLSession.shared.data(for: request)
+
+        guard
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let candidates = json["candidates"] as? [[String: Any]],
+            let content = candidates.first?["content"] as? [String: Any],
+            let parts = content["parts"] as? [[String: Any]],
+            let text = parts.first?["text"] as? String
+        else {
+            throw NSError(domain: "GeminiParsing", code: 0)
+        }
+
+        // Optional domain safety check
+        if !self.responseIsOnTopic(text) {
+            return "I can only help with fire station and fire-safety related questions."
+        }
+
+        return text
     }
-
     private func responseIsOnTopic(_ text: String) -> Bool {
         let lower = text.lowercased()
         // Basic heuristic: ensure contains fire-related words or 'fire' at least

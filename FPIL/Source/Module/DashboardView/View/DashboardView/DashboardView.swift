@@ -62,7 +62,7 @@ struct DashboardView: View {
                             case "Clients": ClientListView(viewModel: ClientListViewModel(), path: $path)
                             case "AI Assistant": AIAssistantView()
                                     .frame(alignment: .top)
-                                    .padding(.bottom, tabBarHeight)
+                                    .padding(.bottom, tabBarHeight + 20)
                             default:
                                 Text("Coming soon!").foregroundColor(.white)
                             }
@@ -116,7 +116,7 @@ struct DashboardView: View {
     }
     
     private func getNavBarActions() -> [NavBarAction] {
-        if viewModel.selectedTab?.name == "Services" || viewModel.selectedTab?.name == "Sites" || viewModel.selectedTab?.name == "History" || viewModel.selectedTab?.name == "Review" {
+        if viewModel.selectedTab?.name == "Services" || viewModel.selectedTab?.name == "Sites" || viewModel.selectedTab?.name == "History" || viewModel.selectedTab?.name == "AI Assistant" {
             return [
                 NavBarAction(icon: "logout") {
                     viewModel.signout()
@@ -140,6 +140,11 @@ struct DashboardView: View {
                             path.removeLast()
                         }
                         path.append("createClients")
+                    } else if viewModel.selectedTab?.name == "Review" {
+                        if path.count > 0 {
+                            path.removeLast()
+                        }
+                        path.append("reviewInspections")
                     } else {
                         alertMessage = "Under Construction"
                         showAlert = true
