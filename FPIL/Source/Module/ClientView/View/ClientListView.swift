@@ -12,6 +12,7 @@ struct ClientListView: View {
     @Binding var path:NavigationPath
     @State private var selectedPdfURL: URL?
     @State private var selectedQRImageJob: UIImage?
+    @State var selectedItem: ClientModel?
     var jobViewModel: JobListViewModel = JobListViewModel()
 
     var body: some View {
@@ -30,13 +31,15 @@ struct ClientListView: View {
                                 VStack(spacing: 16) {
                                     ForEach(viewModel.filteredItems, id:\.id) { clientModel in
                                         ClientListCell(client: clientModel) { client, isButton in
-                                            viewModel.selectedItem = client
+                                            selectedItem = client
+                                            viewModel.selectedItem = selectedItem
                                             if path.count > 0 {
                                                 path.removeLast()
                                             }
                                             path.append(isButton ? "createInspection" : "createClients")
                                         } onTapCell: { client in
-                                            viewModel.selectedItem = client
+                                            selectedItem = client
+                                            viewModel.selectedItem = selectedItem
                                             if path.count > 0 {
                                                 path.removeLast()
                                             }
@@ -61,6 +64,7 @@ struct ClientListView: View {
                 .navigationDestination(for: String.self) { value in
                     if value == "createClients" {
                         CreateOrUpdateClientView(viewModel: viewModel) {
+                            selectedItem = nil
                             viewModel.selectedItem = nil
                             Task {
                                 await viewModel.refreshClientsList()
@@ -73,6 +77,7 @@ struct ClientListView: View {
                         }
                     } else if value == "createInspection" {
                         InvoiceGenerationView(viewModel: InvoiceViewModel(items: UserDefaultsStore.servicesPerfomerdTypes ?? [], client: viewModel.selectedItem)) {
+                            selectedItem = nil
                             viewModel.selectedItem = nil
                             Task {
                                 await viewModel.refreshClientsList()
@@ -84,7 +89,8 @@ struct ClientListView: View {
                             }
                         }
                     } else if value == "ClientDetails" {
-                        ClientDetailView(viewModel: ClientDetailViewModel(selectedItem: viewModel.selectedItem), path: $path) {
+                        ClientDetailView(viewModel: ClientDetailViewModel(selectedItem: selectedItem), path: $path) {
+                            selectedItem = nil
                             viewModel.selectedItem = nil
                             Task {
                                 await viewModel.refreshClientsList()

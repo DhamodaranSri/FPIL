@@ -6,6 +6,10 @@
 //
 
 import Foundation
+import FirebaseAuth
+import FirebaseMessaging
+import FirebaseCore
+import FirebaseFirestore
 
 final class FirebaseLoginRepository: LoginRepository {
     private let profileService: FirebaseService<Profile>
@@ -34,6 +38,9 @@ final class FirebaseLoginRepository: LoginRepository {
                         completion(.failure(NSError(domain: "", code: 404, userInfo: [NSLocalizedDescriptionKey: "User not found / Already Deavtivated"])))
                         return
                     }
+                    if let token = Messaging.messaging().fcmToken, case .success(let profileResult) = newProfileResult, profileResult.count > 0 {
+                        self?.saveDeviceTokenToFirestore(token: token, profileId: profileResult.first?.id ?? "")
+                    }
                     completion(newProfileResult)
                 }
             }
@@ -41,6 +48,16 @@ final class FirebaseLoginRepository: LoginRepository {
         } else {
             completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
         }
+    }
+    
+    func saveDeviceTokenToFirestore(token: String, profileId: String) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        
+        let ref = Firestore.firestore().collection("users").document(profileId)
+        
+        ref.setData([
+            "deviceTokens": FieldValue.arrayUnion([token])
+        ], merge: true)
     }
     
 }

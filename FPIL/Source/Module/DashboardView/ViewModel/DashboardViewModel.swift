@@ -25,6 +25,11 @@ final class DashboardViewModel: ObservableObject {
             fetchFireStation(stationId: UserDefaultsStore.profileDetail?.parentId ?? "")
             fetchFireStationInspectors(stationId: UserDefaultsStore.profileDetail?.parentId ?? "")
         }
+        Task {
+            await MainActor.run {
+                ClientListViewModel().fetchClientsList()
+            }
+        }
     }
     
     func fetchTabs(forUserType userTypeId: Int) {

@@ -7,6 +7,9 @@
 
 import Foundation
 import FirebaseAuth
+import FirebaseMessaging
+import FirebaseCore
+import FirebaseFirestore
 
 class FirebaseAuthService {
     
@@ -51,11 +54,26 @@ class FirebaseAuthService {
     /// Sign out user
     func signOut(completion: @escaping (Result<Void, Error>) -> Void) {
         do {
+            removeDeviceTokenOnLogout()
             try Auth.auth().signOut()
             completion(.success(()))
         } catch {
             completion(.failure(error))
         }
+    }
+    
+    func removeDeviceTokenOnLogout() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        guard let token = Messaging.messaging().fcmToken else { return }
+        guard let profileId = UserDefaultsStore.profileDetail?.id else { return }
+
+        let ref = Firestore.firestore()
+            .collection("users")
+            .document(profileId)
+
+        ref.updateData([
+            "deviceTokens": FieldValue.arrayRemove([token])
+        ])
     }
     
     /// Change password for current user

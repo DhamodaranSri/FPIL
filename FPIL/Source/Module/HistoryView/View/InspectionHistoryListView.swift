@@ -155,7 +155,15 @@ struct InspectionHistoryListView: View {
                 .background(.applicationBGcolor)
                 .ignoresSafeArea(edges: .bottom)
                 .navigationDestination(for: String.self) { value in
-                    if value == "showQRImage" {
+                    if value == "reviewInspections" {
+                        DocReviewChecklistView(viewModel: viewModel) {
+                            DispatchQueue.main.async {
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                            }
+                        }
+                    } else if value == "showQRImage" {
                         QRPreviewView(image: $qrCodeImage) {
                             qrCodeImage = nil
                             DispatchQueue.main.async {

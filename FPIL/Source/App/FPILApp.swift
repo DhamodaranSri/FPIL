@@ -9,13 +9,18 @@ import SwiftUI
 import FirebaseCore
 import FirebaseFirestore
 import FirebaseAuth
+import FirebaseMessaging
 
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
     var qrGenerator: QRGenerator = QRGenerator()
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
+        askNotificationPermission()
+        Messaging.messaging().delegate = self
+        UNUserNotificationCenter.current().delegate = self
+        
         if Auth.auth().currentUser != nil && UserDefaultsStore.profileDetail != nil {
             isLoggedIn = true
             // User is signed in
@@ -52,6 +57,45 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         }
         
         return true
+    }
+
+    func saveDeviceTokenToFirestore(token: String) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        Firestore.firestore()
+            .collection("users")
+            .document(uid)
+            .collection("deviceTokens")
+            .document(token)
+            .setData([
+                "createdAt": FieldValue.serverTimestamp()
+            ], merge: true)
+    }
+
+    func askNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+            if granted {
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            }
+        }
+    }
+}
+
+extension AppDelegate: MessagingDelegate {
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        print("FCM Token:", fcmToken ?? "none")
+
+//        if let token = fcmToken {
+//            saveDeviceTokenToFirestore(token: token)
+//        }
+    }
+
+    func application(_ application: UIApplication,
+                     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        
+        Messaging.messaging().apnsToken = deviceToken
     }
 }
 
