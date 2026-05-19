@@ -24,4 +24,11 @@ protocol InspectionJobRepositoryProtocol {
     func updateClient(client: ClientModel, updatedItems: [String: Any], completion: @escaping (Result<Void, any Error>) -> Void)
     func fetchClient(clientId: String, completion: @escaping (Result<ClientModel, any Error>) -> Void)
     func createOrupdateClient(client: ClientModel, completion: @escaping (Result<Void, any Error>) -> Void)
+    func fetchAIGeneratedChecklist(
+        forConditions conditions: [(field: String, value: Any)],
+        orderBy: String,
+        completion: @escaping (Result<[AICheckListModel], any Error>) -> Void
+    )
+    func fetchAIGeneratedAllChecklistIsNotVerified(completion: @escaping (Result<[AICheckListModel], any Error>) -> Void)
+    func updateStatusAIGeneratedChecklist(id: String, updatedItems: [String: Any], completion: @escaping (Result<Void, any Error>) -> Void)
 }

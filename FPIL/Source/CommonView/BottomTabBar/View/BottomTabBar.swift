@@ -14,6 +14,7 @@ struct BottomTabBar: View {
     @Binding var currentTab: TabBarItem?
     var tabs: [TabBarItem]
     var backgroundColor: Color = .applicationBGcolor
+    var onTabSelected: ((TabBarItem) -> Void)? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -37,6 +38,7 @@ struct BottomTabBar: View {
         GeometryReader { _ in
             Button {
                 currentTab = tab
+                onTabSelected?(tab)
             } label: {
                 VStack(spacing: 5) {
                     Image(currentTab?.name == tab.name ? tab.iconName : "\(tab.iconName)_non")

@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 import PDFKit
-import SwiftUICore
+import SwiftUI
 
 struct PDFGenerator {
     

@@ -26,6 +26,16 @@ class FirebaseService<T: Codable & Identifiable> where T.ID == String? {
             }
         }
     }
+
+    func updateCollection(_ id: String, items: [String: Any], completion: @escaping (Result<Void, Error>) -> Void) {
+        collectionRef.document(id).updateData(items) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
     
     func save(_ item: T, completion: @escaping (Result<Void, Error>) -> Void) {
         do {
@@ -154,6 +164,62 @@ class FirebaseService<T: Codable & Identifiable> where T.ID == String? {
                     completion(.failure(error))
                 }
             }
+    }
+    
+    func fetchByMultipleWhere(
+        conditions: [(field: String, value: Any)],
+        optionalFalseField: String? = nil,
+        orderBy: String,
+        completion: @escaping (Result<[T], Error>) -> Void
+    ) {
+
+        var query: Query = collectionRef
+
+        for condition in conditions {
+            query = query.whereField(condition.field, isEqualTo: condition.value)
+        }
+
+        if !orderBy.isEmpty {
+            query = query.order(by: orderBy, descending: true)
+        }
+
+        query.getDocuments { snapshot, error in
+
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+
+            guard let documents = snapshot?.documents else {
+                completion(.success([]))
+                return
+            }
+
+            do {
+
+                let filteredDocuments: [QueryDocumentSnapshot]
+
+                if let field = optionalFalseField {
+
+                    filteredDocuments = documents.filter { document in
+                        document.data()[field] == nil ||
+                        (document.data()[field] as? Bool) == false
+                    }
+
+                } else {
+                    filteredDocuments = documents
+                }
+
+                let items = try filteredDocuments.compactMap {
+                    try $0.data(as: T.self)
+                }
+
+                completion(.success(items))
+
+            } catch {
+                completion(.failure(error))
+            }
+        }
     }
     
     func fetchByMultipleWhereAndMultipleFilterForSiteInspector(inspectorId: String, orderBy: String, completion: @escaping (Result<[T], Error>) -> Void) {

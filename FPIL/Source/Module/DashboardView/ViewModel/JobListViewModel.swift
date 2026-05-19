@@ -32,6 +32,10 @@ class JobListViewModel: ObservableObject {
             filterItems()
         }
     }
+    @Published var aiChecklistArray: [CheckList] = []
+    @Published var jobModelAIGenerated: JobModel?
+    @Published var aiGeneratedSiteChecklist: [AICheckListModel] = []
+    @Published var selectedAiChecklistModel: AICheckListModel?
     
     private let inspectionRepository: InspectionJobRepositoryProtocol
     private var isHistoryLoaded: Bool = false
@@ -631,6 +635,156 @@ extension JobListViewModel {
                 self.serviceError = error
                 completion(error)
                 print("Error fetching client: \(error)")
+            }
+        }
+    }
+
+    func uploadSitePlanReport(url: URL, siteId: String, clientDetails: ClientModel?, projectName: String, completion: @escaping (Error?, String?) -> Void) {
+        if NetworkMonitor.shared.isConnected {
+            
+            isLoading = true
+            
+            FirebaseFileManager.shared.uploadFile(at: url, folder: "\(siteId)/site_plan_report/") { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let url):
+                        let sitePlan = SitePlanAPIRequestModel(request_id: siteId, pdf_url: url)
+                        APIServiceManager.shared.request(servicename: .uploadSiteApproval(model: sitePlan)) { data, json, result, error, statusCode in
+                            
+                            if error == nil {
+                                guard let responseData = data, let sitePlanUploadResponse:SitePlanAPIResponseModel = APIServiceManager.shared.newparser(modelToParse: SitePlanAPIResponseModel.self, result: responseData), (sitePlanUploadResponse.status_url != nil) else {
+                                    self.serviceError = NSError(domain: "Check your Backend team", code: 505)
+                                    completion(NSError(domain: "Check your Backend team", code: 505), nil)
+                                    return
+                                }
+                                self.updateStatusAIGeneratedChecklist(id: siteId, updatedItems: ["client": clientDetails?.toDictionary(), "projectName": projectName]) { error in
+                                    self.isLoading = false
+                                    if error == nil {
+                                        completion(nil, url)
+                                    } else {
+                                        self.serviceError = error
+                                        completion(error, nil)
+                                    }
+                                }
+//                                APIServiceManager.shared.request(servicename: .getStatus(reportId: siteId)) { statusData, statusJsdon, statusResult, statusError, statusCode1 in
+//                                    self.isLoading = false
+//                                    if error == nil {
+//                                        completion(nil, url)
+//                                    } else {
+//                                        self.serviceError = error
+//                                        completion(error, nil)
+//                                    }
+//                                }
+                                
+                            } else {
+                                self.serviceError = error
+                                completion(error, nil)
+                            }
+                        }
+                    case .failure(let error):
+                        self.isLoading = false
+                        self.serviceError = error
+                        completion(error, nil)
+                    }
+                }
+            }
+        } else {
+            completion(NSError(domain: "Internet Connection Error", code: 92001), nil)
+        }
+    }
+
+    func fetchAIGeneratedChecklist(siteId: String) {
+        
+        let conditions: [(field: String, value: Any)] = [
+            ("request_id", siteId)
+        ]
+        
+        isLoading = true
+        inspectionRepository.fetchAIGeneratedChecklist(forConditions: conditions, orderBy: "request_id") { [weak self] result in
+            
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                switch result {
+                case .success(let items):
+                    print("fetching items: \(items.first?.status)")
+                case .failure(let error):
+                    self?.serviceError = error
+                    print("Error fetching tabs: \(error)")
+                }
+                if (UserDefaultsStore.profileDetail?.userType == 2) {
+                    self?.tabFilterItems()
+                } else {
+                    self?.filterItems()
+                }
+            }
+            
+        }
+        /*
+        inspectionRepository.fetchInspectionJobs(forConditions: conditions, orderBy: "jobAssignedDate") { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                switch result {
+                case .success(let items):
+                    self?.items = items
+                    UserDefaultsStore.jobStartedDate = self?.items.filter({$0.jobStartDate != nil && $0.isCompleted == false }).first?.jobStartDate
+                    if UserDefaultsStore.startedJobDetail == nil {
+                        UserDefaultsStore.startedJobDetail = self?.items.filter({$0.jobStartDate != nil && $0.isCompleted == false }).first
+                    }
+                case .failure(let error):
+                    self?.serviceError = error
+                    print("Error fetching tabs: \(error)")
+                }
+                if (UserDefaultsStore.profileDetail?.userType == 2) {
+                    self?.tabFilterItems()
+                } else {
+                    self?.filterItems()
+                }
+            }
+
+        }
+        */
+    }
+    
+    func fetchAIGeneratedAllChecklists() {
+        
+        isLoading = true
+        inspectionRepository.fetchAIGeneratedAllChecklistIsNotVerified { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                switch result {
+                case .success(let items):
+                    self?.aiGeneratedSiteChecklist = items
+                    self?.aiChecklistArray = []
+                    items.forEach { item in
+                        self?.aiChecklistArray.append(CheckList(aiModel: item))
+                    }
+                case .failure(let error):
+                    self?.serviceError = error
+                    print("Error fetching tabs: \(error)")
+                }
+                if (UserDefaultsStore.profileDetail?.userType == 2) {
+                    self?.tabFilterItems()
+                } else {
+                    self?.filterItems()
+                }
+            }
+        }
+    }
+    
+    func updateStatusAIGeneratedChecklist(id: String, updatedItems: [String: Any], completion: @escaping (Error?) -> Void) {
+        DispatchQueue.main.async {
+            self.isLoading = true
+        }
+        inspectionRepository.updateStatusAIGeneratedChecklist(id: id, updatedItems: updatedItems) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                switch result {
+                case .success:
+                    completion(nil)
+                case .failure(let error):
+                    self?.serviceError = error
+                    completion(error)
+                }
             }
         }
     }
