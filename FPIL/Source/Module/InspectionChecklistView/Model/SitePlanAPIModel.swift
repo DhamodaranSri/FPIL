@@ -16,5 +16,6 @@ struct SitePlanAPIResponseModel: Codable {
 
 struct SitePlanAPIRequestModel: Codable, dictify {
     let request_id: String?
+    let userId: String?
     let pdf_url: String?
 }

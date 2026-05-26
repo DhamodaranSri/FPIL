@@ -28,8 +28,9 @@ struct DashboardView: View {
         NavigationStack(path: $path) {
             ZStack {
                 VStack(spacing: 0) {
+                    let name = (UserDefaultsStore.profileDetail?.firstName ?? "") + " " + (UserDefaultsStore.profileDetail?.lastName ?? "")
                     CustomNavBar(
-                        title: viewModel.selectedTab?.navBarTitle ?? "",
+                        title: viewModel.selectedTab?.name == "Home" ? name : viewModel.selectedTab?.navBarTitle ?? "",
                         showBackButton: false,
                         actions: getNavBarActions(),
                         backgroundColor: .applicationBGcolor,

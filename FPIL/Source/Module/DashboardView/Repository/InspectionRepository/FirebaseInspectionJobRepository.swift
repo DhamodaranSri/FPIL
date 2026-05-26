@@ -107,24 +107,13 @@ final class FirebaseInspectionJobRepository: InspectionJobRepositoryProtocol {
             completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
         }
     }
-
-    func fetchAIGeneratedChecklist(
-        forConditions conditions: [(field: String, value: Any)],
-        orderBy: String,
-        completion: @escaping (Result<[AICheckListModel], any Error>) -> Void
-    ) {
-        if NetworkMonitor.shared.isConnected {
-            sitePdfConversionService.fetchByMultipleWhere(conditions: conditions, orderBy: orderBy) { result in
-                completion(result)
-            }
-        } else {
-            completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
-        }
-    }
     
     func fetchAIGeneratedAllChecklistIsNotVerified(completion: @escaping (Result<[AICheckListModel], any Error>) -> Void) {
+        let conditions: [(field: String, value: Any)] = [
+            ("user_id", UserDefaultsStore.profileDetail?.id)
+        ]
         if NetworkMonitor.shared.isConnected {
-            sitePdfConversionService.fetchByMultipleWhere(conditions: [], optionalFalseField: "isVerified", orderBy: "") { result in
+            sitePdfConversionService.fetchByMultipleWhere(conditions: conditions, optionalFalseField: "isVerified", orderBy: "") { result in
                 completion(result)
             }
         } else {

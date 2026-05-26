@@ -6,7 +6,7 @@
 //
 
 import Foundation
-
+@MainActor
 class DocReviewState: ObservableObject {
     
     @Published var client: ClientModel? = nil

@@ -85,6 +85,7 @@ struct AICheckListModel: Codable,Identifiable, Hashable {
     let isVerified: Bool?
     let projectName: String?
     let client: ClientModel?
+    let user_id: String?
 }
 
 struct ComplainceReport: Codable, Hashable {
@@ -143,7 +144,7 @@ extension CheckList {
         let violations = aiModel.compliance_report?.violations ?? []
         
         self.id = aiModel.request_id
-        self.checkListName = aiModel.request_id ?? ""
+        self.checkListName = aiModel.projectName ?? aiModel.request_id ?? ""
         
         self.questions = aiChecklist.map { item in
             

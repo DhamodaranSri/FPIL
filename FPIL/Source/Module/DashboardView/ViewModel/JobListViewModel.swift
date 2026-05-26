@@ -648,11 +648,12 @@ extension JobListViewModel {
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let url):
-                        let sitePlan = SitePlanAPIRequestModel(request_id: siteId, pdf_url: url)
+                        let sitePlan = SitePlanAPIRequestModel(request_id: siteId, userId: UserDefaultsStore.profileDetail?.id, pdf_url: url)
                         APIServiceManager.shared.request(servicename: .uploadSiteApproval(model: sitePlan)) { data, json, result, error, statusCode in
                             
                             if error == nil {
                                 guard let responseData = data, let sitePlanUploadResponse:SitePlanAPIResponseModel = APIServiceManager.shared.newparser(modelToParse: SitePlanAPIResponseModel.self, result: responseData), (sitePlanUploadResponse.status_url != nil) else {
+                                    self.isLoading = false
                                     self.serviceError = NSError(domain: "Check your Backend team", code: 505)
                                     completion(NSError(domain: "Check your Backend team", code: 505), nil)
                                     return
@@ -666,19 +667,13 @@ extension JobListViewModel {
                                         completion(error, nil)
                                     }
                                 }
-//                                APIServiceManager.shared.request(servicename: .getStatus(reportId: siteId)) { statusData, statusJsdon, statusResult, statusError, statusCode1 in
-//                                    self.isLoading = false
-//                                    if error == nil {
-//                                        completion(nil, url)
-//                                    } else {
-//                                        self.serviceError = error
-//                                        completion(error, nil)
-//                                    }
-//                                }
                                 
                             } else {
-                                self.serviceError = error
-                                completion(error, nil)
+                                DispatchQueue.main.async {
+                                    self.isLoading = false
+                                    self.serviceError = error
+                                    completion(error, nil)
+                                }
                             }
                         }
                     case .failure(let error):
@@ -691,58 +686,6 @@ extension JobListViewModel {
         } else {
             completion(NSError(domain: "Internet Connection Error", code: 92001), nil)
         }
-    }
-
-    func fetchAIGeneratedChecklist(siteId: String) {
-        
-        let conditions: [(field: String, value: Any)] = [
-            ("request_id", siteId)
-        ]
-        
-        isLoading = true
-        inspectionRepository.fetchAIGeneratedChecklist(forConditions: conditions, orderBy: "request_id") { [weak self] result in
-            
-            DispatchQueue.main.async {
-                self?.isLoading = false
-                switch result {
-                case .success(let items):
-                    print("fetching items: \(items.first?.status)")
-                case .failure(let error):
-                    self?.serviceError = error
-                    print("Error fetching tabs: \(error)")
-                }
-                if (UserDefaultsStore.profileDetail?.userType == 2) {
-                    self?.tabFilterItems()
-                } else {
-                    self?.filterItems()
-                }
-            }
-            
-        }
-        /*
-        inspectionRepository.fetchInspectionJobs(forConditions: conditions, orderBy: "jobAssignedDate") { [weak self] result in
-            DispatchQueue.main.async {
-                self?.isLoading = false
-                switch result {
-                case .success(let items):
-                    self?.items = items
-                    UserDefaultsStore.jobStartedDate = self?.items.filter({$0.jobStartDate != nil && $0.isCompleted == false }).first?.jobStartDate
-                    if UserDefaultsStore.startedJobDetail == nil {
-                        UserDefaultsStore.startedJobDetail = self?.items.filter({$0.jobStartDate != nil && $0.isCompleted == false }).first
-                    }
-                case .failure(let error):
-                    self?.serviceError = error
-                    print("Error fetching tabs: \(error)")
-                }
-                if (UserDefaultsStore.profileDetail?.userType == 2) {
-                    self?.tabFilterItems()
-                } else {
-                    self?.filterItems()
-                }
-            }
-
-        }
-        */
     }
     
     func fetchAIGeneratedAllChecklists() {

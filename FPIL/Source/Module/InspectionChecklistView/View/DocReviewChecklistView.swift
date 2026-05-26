@@ -32,7 +32,7 @@ struct DocReviewChecklistView: View {
         ZStack {
             VStack {
                 CustomNavBar(
-                    title: "Review Inspection",
+                    title: "AI - Review Inspection",
                     showBackButton: true,
                     actions: [],
                     backgroundColor: .applicationBGcolor,
@@ -56,7 +56,7 @@ struct DocReviewChecklistView: View {
                             )
                             .focused($focusedItemID, equals: "answer.answer")
                             .font(ApplicationFont.bold(size: 14).value)
-                            .multilineTextAlignment(.trailing)
+                            .multilineTextAlignment(.leading)
                             .foregroundColor(.black)
                             .padding(.vertical, 6)
                             .padding(.horizontal, 4)
@@ -108,23 +108,28 @@ struct DocReviewChecklistView: View {
                 .onAppear() {
                 }
                 .sheet(isPresented: $showPicker) {
-                    DocumentPicker { url in
-                        guard let url = url else {
+                    DocumentPicker { result in
+
+                        switch result {
+                        case .success(let url):
+                            siteId = "Site-\(getShortUUID())-\((createdById ?? "").getShortID())-AI"
+                            isLoading = true
+                            self.viewModel.uploadSitePlanReport(url: url, siteId: siteId ?? "", clientDetails: form.client, projectName: projectName) { error, uploadedUrl in
+                                isLoading = false
+                                if error == nil {
+                                    self.viewModel.fetchAIGeneratedAllChecklists()
+                                } else {
+                                    isLoading = false
+                                }
+                            }
+                        case .failure(let error):
+                            isLoading = false
+                            viewModel.serviceError = error
                             return
                         }
-                        siteId = "Site-\(getShortUUID())-\((createdById ?? "").getShortID())-AI"
-                        isLoading = true
-                        self.viewModel.uploadSitePlanReport(url: url, siteId: siteId ?? "", clientDetails: form.client, projectName: projectName) { error, uploadedUrl in
-                            isLoading = false
-                            if error == nil {
-                                self.viewModel.fetchAIGeneratedAllChecklists()
-                            }
-                        }
-                        // TODO: Handle uploading here
-                        print("Picked File URL:", url)
                     }
                 }
-            
+
             if viewModel.isLoading || isLoading {
                 LoadingView()
                     .transition(.opacity)
@@ -174,6 +179,11 @@ struct DocReviewChecklistView: View {
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.red.opacity(0.5), lineWidth: 1))
                 .onTapGesture {
                     
+                    if checklist.aiCheckListStatus?.caseInsensitiveCompare("completed") != .orderedSame {
+                        viewModel.serviceError = NSError(domain: "Checklists can be opened only when the status is Completed.", code: 92002)
+                        return
+                    }
+                    
                     guard let matchedChecklist = viewModel.aiGeneratedSiteChecklist.first(where: {
                         $0.request_id == checklist.id
                     }) else {
@@ -221,132 +231,6 @@ struct DocReviewChecklistView: View {
             jobAssignedDate: Date(),
             client: form.client
         )
-    }
-    
-    private func answerList(for questions: [Question]) -> some View {
-        VStack {
-            ForEach(questions, id: \.question) { section in
-                DisclosureGroup(
-                    isExpanded: Binding(
-                        get: { expandedSections.contains(section.question) },
-                        set: { newValue in
-                            if newValue {
-                                expandedSections.insert(section.question)
-                            } else {
-                                expandedSections.remove(section.question)
-                            }
-                        }
-                    )
-                ) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(section.answers.indices, id: \.self) { answerIndex in
-                            let answer = section.answers[answerIndex]
-                            
-                            VStack(alignment: .leading) {
-                                Rectangle()
-                                    .frame(height: 1)
-                                    .foregroundColor(.red.opacity(0.5))
-                                    .padding(.vertical, 10)
-                                HStack {
-                                    Button {
-                                        //toggleAnswerSelection(questionId: section.question, answerIndex: answerIndex)
-                                    } label: {
-                                        Image(answer.isSelected ? "check_done" : "check")
-                                            .resizable()
-                                            .frame(width: 20, height: 20)
-                                            .foregroundColor(.white)
-                                    }
-                                    Text(answer.answer)
-                                        .font(ApplicationFont.regular(size: 12).value)
-                                        .foregroundColor(.white)
-                                    Spacer()
-                                }.frame(maxWidth: .infinity)
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack {
-                                        Text("is violated?")
-                                            .font(ApplicationFont.regular(size: 10).value)
-                                            .foregroundColor(.white)
-                                        Spacer()
-                                        Text("Add Photos")
-                                            .font(ApplicationFont.regular(size: 10).value)
-                                            .foregroundColor(.white)
-                                    }
-                                    HStack {
-                                        let isSelected = answer.isVoilated ?? false
-                                        RadioButton(
-                                            title: "Yes",
-                                            isSelected: isSelected
-                                        ) {
-                                            //toggleVolationSelection(questionId: section.question, answerIndex: answerIndex, isVolation: true)
-                                        }
-                                        
-                                        RadioButton(
-                                            title: "No",
-                                            isSelected: !isSelected
-                                        ) {
-                                            // toggleVolationSelection(questionId: section.question, answerIndex: answerIndex, isVolation: false)
-                                        }
-                                        Spacer()
-                                        CameraCaptureView(
-                                            existingPhotoURL: answer.photoUrl,
-                                            onUploadComplete: { image in
-                                            },
-                                            removeUploadedPhoto: {
-                                                
-                                            }
-                                        )
-                                    }
-                                    Text("Notes / Violations:")
-                                        .font(ApplicationFont.regular(size: 10).value)
-                                        .foregroundColor(.white)
-                                    TextEditor(
-                                        text: Binding(
-                                            get: {
-                                                answer.voilationDescription ?? ""
-                                            },
-                                            set: { newValue in
-                                                
-                                            }
-                                        )
-                                    )
-                                    //                                        .focused($focusedItemID, equals: answer.answer)
-                                    .scrollContentBackground(.hidden)
-                                    .background(.white)
-                                    .frame(height: 50)
-                                    .font(.system(size: 13))
-                                    .textInputAutocapitalization(.never)
-                                    .autocorrectionDisabled()
-                                }
-                            }
-                            .disabled(true)
-                            .padding(.bottom, 5)
-                        }
-                    }
-                    .padding(.top, 20)
-                } label: {
-                    Text(section.question)
-                        .font(ApplicationFont.bold(size: 12).value)
-                        .foregroundColor(.white)
-                }
-                .tint(Color.white)
-                .padding()
-                .background(Color.black.opacity(0.8))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.red.opacity(0.5), lineWidth: 1)
-                )
-            }
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") {
-                    focusedItemID = nil
-                }
-                .tint(.blue)
-            }
-        }
     }
 }
 
