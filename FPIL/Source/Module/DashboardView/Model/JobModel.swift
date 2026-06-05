@@ -49,6 +49,7 @@ struct JobModel: Codable, Identifiable, Hashable {
     var client:ClientModel? = nil
     var invoiceDetails: [InvoiceDetails]? = nil
     var inspectorContact: String? = nil
+    var isAIGenerated: Bool? = false
     
     // Local only (UI state)
     var isExpanded: Bool?
@@ -74,11 +75,14 @@ struct CheckList: Codable, Identifiable, Hashable {
     var totalImagesAttached: Int?
     var totalNotesAdded: Int?
     var estimatedInspectionPrice: Double?
+    var aiCheckListStatus: String?
 }
 
 struct Question: Codable, Hashable {
     let question: String
     var answers: [Answers]
+    var referenceCode: String? = nil
+    var category: String? = nil
 }
 
 struct Answers: Codable, Hashable {
@@ -87,6 +91,7 @@ struct Answers: Codable, Hashable {
     var isVoilated: Bool? = false
     var voilationDescription: String? = nil
     var photoUrl: String? = nil
+    var status: String? = nil
 }
 
 struct InspectionFrequency: Codable, Identifiable, Hashable {

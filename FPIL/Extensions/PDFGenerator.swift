@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 import PDFKit
-import SwiftUICore
+import SwiftUI
 
 struct PDFGenerator {
     
@@ -18,11 +18,7 @@ struct PDFGenerator {
         fileName: String = "InspectionReport"
     ) -> URL? {
         
-        guard let checklistItems else {
-            return nil
-        }
-        
-        guard let siteInfo else {
+        guard let checklistItems, let siteInfo else {
             return nil
         }
         
@@ -47,63 +43,41 @@ struct PDFGenerator {
             var yPosition = margin
             
             let subHeaderFont = ApplicationFont.bold(size: 20).uiValue
-            let subTitleFont = ApplicationFont.bold(size: 16).uiValue
-            let titleFont = ApplicationFont.regular(size: 14).uiValue
-            let subValueFont = ApplicationFont.regular(size: 12).uiValue
+            let subTitleFont = ApplicationFont.bold(size: 14).uiValue
+            let titleFont = ApplicationFont.regular(size: 12).uiValue
+            let subValueFont = ApplicationFont.regular(size: 11).uiValue
             
+            // --- Document Title Header ---
             let header = "Fire Safety Plan Review Report"
             let headerFont = ApplicationFont.bold(size: 25).uiValue
-            let headerAttributes: [NSAttributedString.Key: Any] = [
-                .font: headerFont
-            ]
-
-            // Measure header width
+            let headerAttributes: [NSAttributedString.Key: Any] = [.font: headerFont]
             let headerSize = header.size(withAttributes: headerAttributes)
-
-            // Calculate centered x position
             let headerX = (pageWidth - headerSize.width) / 2
-            let headerY = yPosition // typically top margin
-
-            // Draw the header centered on the page
-            header.draw(at: CGPoint(x: headerX, y: headerY), withAttributes: headerAttributes)
-
-            // Update y position for next content
-            yPosition += headerSize.height + 20
             
+            header.draw(at: CGPoint(x: headerX, y: yPosition), withAttributes: headerAttributes)
+            yPosition += headerSize.height + 15
+            
+            // --- Status Header ---
             let status = siteInfo.status == 1 ? "Approved" : siteInfo.status == 2 ? "Decline" : "Revision"
-            
             let statusAttributes: [NSAttributedString.Key: Any] = [
                 .font: subHeaderFont,
                 .foregroundColor: siteInfo.status == 1 ? UIColor.green : siteInfo.status == 2 ? UIColor.red : UIColor.blue
             ]
-
-            // Measure header width
             let statusSize = status.size(withAttributes: statusAttributes)
-
-            // Calculate centered x position
             let statusX = (pageWidth - statusSize.width) / 2
-            let statusY = yPosition // typically top margin
-
-            // Draw the header centered on the page
-            status.draw(at: CGPoint(x: statusX, y: statusY), withAttributes: statusAttributes)
-
-            // Update y position for next content
-            yPosition += statusSize.height + 5
             
-            // MARK: - Header
-            let title = "Inspection Report"
-            title.draw(at: CGPoint(x: margin, y: yPosition), withAttributes: [.font: subHeaderFont])
+            status.draw(at: CGPoint(x: statusX, y: yPosition), withAttributes: statusAttributes)
+            yPosition += statusSize.height + 25
             
-            yPosition += 40
+            // --- Inspection Report Sub-Section Label ---
+            let titleText = "Inspection Report"
+            titleText.draw(at: CGPoint(x: margin, y: yPosition), withAttributes: [.font: subHeaderFont])
+            yPosition += subHeaderFont.lineHeight + 15
             
-            // MARK: - Site Information Section
+            // --- Site Information Fields ---
             func drawLine(label: String, value: String) {
-                let labelFont = subTitleFont
-                let valueFont = titleFont
-                
-                label.draw(at: CGPoint(x: margin, y: yPosition), withAttributes: [.font: labelFont])
-                value.draw(at: CGPoint(x: margin + 130, y: yPosition), withAttributes: [.font: valueFont])
-                
+                label.draw(at: CGPoint(x: margin, y: yPosition), withAttributes: [.font: subTitleFont])
+                value.draw(at: CGPoint(x: margin + 130, y: yPosition), withAttributes: [.font: titleFont])
                 yPosition += 22
             }
             
@@ -113,54 +87,91 @@ struct PDFGenerator {
             drawLine(label: "Review Date:", value: Date().convertDateAloneFromFullDateFormat())
             drawLine(label: "Score:", value: "\(checklistItems.totalAverageScore ?? 0)%")
             
-            yPosition += 20
+            yPosition += 15
             
-            // MARK: - Checklist Section Header
+            // Core bounding width constraint configuration
+            let contentWidth = pageWidth - (2 * margin)
             
-            // Page setup
-            let contentWidth = pageWidth - 2 * margin
-
-            // --- Remarks Header ---
+            // --- Dynamic Review Comments Section ---
             let remarksHeader = "Review Comments"
-            remarksHeader.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: CGFloat.greatestFiniteMagnitude),
-                               withAttributes: [.font: subHeaderFont])
-            yPosition += subHeaderFont.lineHeight + 5
-
-            // --- Remarks Text ---
+            remarksHeader.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: 30), withAttributes: [.font: subHeaderFont])
+            yPosition += subHeaderFont.lineHeight + 8
+            
             let remarks = siteInfo.reviewNotes ?? "-"
-            remarks.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: CGFloat.greatestFiniteMagnitude),
-                         withAttributes: [.font: titleFont])
-            yPosition += titleFont.lineHeight * CGFloat(remarks.components(separatedBy: "\n").count) + 10
-
-            // --- Checklist Header ---
+            let remarksAttributes: [NSAttributedString.Key: Any] = [.font: titleFont, .foregroundColor: UIColor.black]
+            
+            // 🚀 FIXED: Dynamic bounding layout size calculation for comments paragraph
+            let remarksBoundingRect = remarks.boundingRect(
+                with: CGSize(width: contentWidth, height: CGFloat.greatestFiniteMagnitude),
+                options: [.usesLineFragmentOrigin, .usesFontLeading],
+                attributes: remarksAttributes,
+                context: nil
+            )
+            remarks.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: remarksBoundingRect.height), withAttributes: remarksAttributes)
+            yPosition += remarksBoundingRect.height + 25
+            
+            // --- Inspection Checklist Header ---
             let checklistHeader = "Inspection Checklist"
-            checklistHeader.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: CGFloat.greatestFiniteMagnitude),
-                                 withAttributes: [.font: subHeaderFont])
-            yPosition += subHeaderFont.lineHeight + 10
-
-            // --- Checklist Items ---
+            checklistHeader.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: 30), withAttributes: [.font: subHeaderFont])
+            yPosition += subHeaderFont.lineHeight + 12
+            
+            // --- Core Checklist Query Loop ---
             for (index, item) in checklistItems.questions.enumerated() {
-                if yPosition > pageHeight - 100 {
+                
+                // Construct text criteria values
+                let itemTitle = "\(index + 1). \(item.question)"
+                let questionAttributes: [NSAttributedString.Key: Any] = [.font: subTitleFont, .foregroundColor: UIColor.black]
+                
+                // 🚀 FIXED: Dynamic bounding layout computation for multi-line questions
+                let questionBoundingRect = itemTitle.boundingRect(
+                    with: CGSize(width: contentWidth, height: CGFloat.greatestFiniteMagnitude),
+                    options: [.usesLineFragmentOrigin, .usesFontLeading],
+                    attributes: questionAttributes,
+                    context: nil
+                )
+                
+                // Page-break prevention verification gate check
+                if yPosition + questionBoundingRect.height + 40 > pageHeight - margin {
                     context.beginPage()
                     yPosition = margin
                 }
-
-                // Question
-                let itemTitle = "\(index + 1). \(item.question)"
-                itemTitle.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: CGFloat.greatestFiniteMagnitude),
-                               withAttributes: [.font: subTitleFont])
-                yPosition += subTitleFont.lineHeight * CGFloat(itemTitle.components(separatedBy: "\n").count) + 5
-
-                // Answers
-                for (subIndex, subItem) in item.answers.enumerated() {
+                
+                itemTitle.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: questionBoundingRect.height), withAttributes: questionAttributes)
+                yPosition += questionBoundingRect.height + 8
+                
+                // --- Sub-Answers Core Layout loop ---
+                for subItem in item.answers {
                     let statusLine = "\(subItem.answer)"
-                    let lineHeight: CGFloat = 30
-                    let checkboxSize: CGFloat = 16
+                    let rowHeight: CGFloat = 20
+                    let checkboxSize: CGFloat = 14
                     
-                    // Checkbox
+                    let textColor: UIColor = (subItem.isVoilated ?? false) ? .warningBG : ((subItem.isSelected) ? .pdfAnsweredText : .black)
+                    let answerAttributes: [NSAttributedString.Key: Any] = [
+                        .font: titleFont,
+                        .foregroundColor: textColor
+                    ]
+                    
+                    let textX = margin + 15 + checkboxSize + 10
+                    let textWidth = contentWidth - (textX - margin)
+                    
+                    // 🚀 FIXED: Dynamic height calculation for multi-line checkbox answer text strings
+                    let answerBoundingRect = statusLine.boundingRect(
+                        with: CGSize(width: textWidth, height: CGFloat.greatestFiniteMagnitude),
+                        options: [.usesLineFragmentOrigin, .usesFontLeading],
+                        attributes: answerAttributes,
+                        context: nil
+                    )
+                    
+                    // Validate page space availability for this line item option row block
+                    if yPosition + max(rowHeight, answerBoundingRect.height) + 15 > pageHeight - margin {
+                        context.beginPage()
+                        yPosition = margin
+                    }
+                    
+                    // Render Context Checkbox Square Frame
                     let checkboxRect = CGRect(
                         x: margin + 15,
-                        y: yPosition + (lineHeight - checkboxSize)/2,
+                        y: yPosition + (max(rowHeight, answerBoundingRect.height) - checkboxSize) / 2,
                         width: checkboxSize,
                         height: checkboxSize
                     )
@@ -169,56 +180,49 @@ struct PDFGenerator {
                     if let checkboxImage = UIImage(named: checkboxImageName) {
                         checkboxImage.draw(in: checkboxRect)
                     }
-
-                    // Text next to checkbox
-                    let textX = checkboxRect.maxX + 10
-                    let textRect = CGRect(x: textX, y: yPosition, width: contentWidth - (textX - margin), height: CGFloat.greatestFiniteMagnitude)
-                    let textColor: UIColor = subItem.isVoilated ?? false ? .warningBG : (subItem.isSelected ? .pdfAnsweredText : .black)
-                    let textDrawAttributes: [NSAttributedString.Key: Any] = [
-                        .font: titleFont,
-                        .foregroundColor: textColor
-                    ]
-                    statusLine.draw(in: textRect, withAttributes: textDrawAttributes)
                     
-                    // Compute height of the text for proper yPosition increment
-                    let textHeight = statusLine.boundingRect(
-                        with: CGSize(width: textRect.width, height: CGFloat.greatestFiniteMagnitude),
-                        options: [.usesLineFragmentOrigin, .usesFontLeading],
-                        attributes: textDrawAttributes,
-                        context: nil
-                    ).height
-                    yPosition += max(lineHeight, textHeight) + 5
-
-                    // Violation Description
-                    if let description = subItem.voilationDescription {
+                    // Render row text string next to checkbox square
+                    statusLine.draw(in: CGRect(x: textX, y: yPosition, width: textWidth, height: answerBoundingRect.height), withAttributes: answerAttributes)
+                    yPosition += answerBoundingRect.height + 6
+                    
+                    // --- Handle Violation Descriptions Append Context ---
+                    if let description = subItem.voilationDescription, !description.isEmpty {
                         let singleLine = description
                             .components(separatedBy: .newlines)
                             .filter { !$0.isEmpty }
                             .joined(separator: " ")
-                        let voilationDesctiption = "Voilations: \(singleLine)"
-                        let descriptionRect = CGRect(x: margin + 20, y: yPosition, width: contentWidth - 20, height: CGFloat.greatestFiniteMagnitude)
-                        voilationDesctiption.draw(in: descriptionRect, withAttributes: [.font: subValueFont])
                         
-                        let descriptionHeight = voilationDesctiption.boundingRect(
-                            with: CGSize(width: descriptionRect.width, height: CGFloat.greatestFiniteMagnitude),
+                        let violationDescription = "Violations: \(singleLine)"
+                        let violationAttributes: [NSAttributedString.Key: Any] = [.font: subValueFont, .foregroundColor: UIColor.red]
+                        
+                        let violationBoundingRect = violationDescription.boundingRect(
+                            with: CGSize(width: contentWidth - 35, height: CGFloat.greatestFiniteMagnitude),
                             options: [.usesLineFragmentOrigin, .usesFontLeading],
-                            attributes: [.font: subValueFont],
+                            attributes: violationAttributes,
                             context: nil
-                        ).height
-                        yPosition += descriptionHeight + 5
+                        )
+                        
+                        if yPosition + violationBoundingRect.height + 10 > pageHeight - margin {
+                            context.beginPage()
+                            yPosition = margin
+                        }
+                        
+                        violationDescription.draw(in: CGRect(x: margin + 35, y: yPosition, width: contentWidth - 35, height: violationBoundingRect.height), withAttributes: violationAttributes)
+                        yPosition += violationBoundingRect.height + 6
                     }
                 }
+                
+                yPosition += 10 // Safe spacing spacer buffer block gap before next structural question begins
             }
-
         }
         
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(siteInfo.id ?? fileName).pdf")
         do {
             try data.write(to: outputURL)
-            print("✅ PDF created at \(outputURL.path)")
+            print("✅ PDF successfully created at \(outputURL.path)")
             return outputURL
         } catch {
-            print("❌ PDF generation failed:", error)
+            print("❌ PDF generation runtime execution failures caught:", error)
             return nil
         }
     }

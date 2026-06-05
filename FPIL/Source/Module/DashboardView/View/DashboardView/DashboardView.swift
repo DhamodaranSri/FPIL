@@ -15,6 +15,10 @@ struct DashboardView: View {
     @State private var path = NavigationPath()
     @State private var qrCodeImage: UIImage? = nil
     @Environment(\.openURL) private var openURL
+    @State var inspectorsListViewModel = InspectorsListViewModel()
+    @State var siteJobListViewModel = JobListViewModel()
+    @State var inspectionJobListViewModel = JobListViewModel(isHistoryLoaded: true)
+    @State var clientListViewModel = ClientListViewModel()
     
     var tabBarHeight: CGFloat {
         return 60 // match overlay padding
@@ -24,8 +28,9 @@ struct DashboardView: View {
         NavigationStack(path: $path) {
             ZStack {
                 VStack(spacing: 0) {
+                    let name = (UserDefaultsStore.profileDetail?.firstName ?? "") + " " + (UserDefaultsStore.profileDetail?.lastName ?? "")
                     CustomNavBar(
-                        title: viewModel.selectedTab?.navBarTitle ?? "",
+                        title: viewModel.selectedTab?.name == "Home" ? name : viewModel.selectedTab?.navBarTitle ?? "",
                         showBackButton: false,
                         actions: getNavBarActions(),
                         backgroundColor: .applicationBGcolor,
@@ -45,21 +50,21 @@ struct DashboardView: View {
                                     .frame(alignment: .top)
                                     .padding(.bottom, tabBarHeight)
                             case "Inspectors":
-                                InspectorsListView(viewModel: InspectorsListViewModel(), path: $path)
+                                InspectorsListView(viewModel: inspectorsListViewModel, path: $path)
                                     .background(.applicationBGcolor)
                                     .frame(alignment: .top)
                                     .padding(.bottom, tabBarHeight)
                             case "Sites":
-                                SiteListView(path: $path, viewModel: JobListViewModel())
+                                SiteListView(path: $path, viewModel: siteJobListViewModel)
                                     .background(.applicationBGcolor)
                                     .frame(alignment: .top)
                                     .padding(.bottom, tabBarHeight)
                             case "History", "Review":
-                                InspectionHistoryListView(path: $path, viewModel: JobListViewModel(isHistoryLoaded: true))
+                                InspectionHistoryListView(path: $path, viewModel: inspectionJobListViewModel)
                                     .background(.applicationBGcolor)
                                     .frame(alignment: .top)
                                     .padding(.bottom, tabBarHeight)
-                            case "Clients": ClientListView(viewModel: ClientListViewModel(), path: $path)
+                            case "Clients": ClientListView(viewModel: clientListViewModel, path: $path)
                             case "AI Assistant": AIAssistantView()
                                     .frame(alignment: .top)
                                     .padding(.bottom, tabBarHeight + 20)
@@ -71,7 +76,18 @@ struct DashboardView: View {
                                 currentTab: $viewModel.selectedTab,
                                 tabs: viewModel.tabs,
                                 backgroundColor: .applicationBGcolor
-                            )
+                            ) { tab in
+                                switch tab.name {
+                                case "Inspectors":
+                                    inspectorsListViewModel = InspectorsListViewModel()
+                                case "Sites":
+                                    siteJobListViewModel = JobListViewModel()
+                                case "History", "Review":
+                                    inspectionJobListViewModel = JobListViewModel(isHistoryLoaded: true)
+                                case "Clients": clientListViewModel = ClientListViewModel()
+                                default: break
+                                }
+                            }
                         } else if viewModel.isLoading {
                             ProgressView("Loading...")
                         } else {

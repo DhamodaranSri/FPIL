@@ -93,12 +93,6 @@ struct InspectionHistoryListView: View {
                                                     path.removeLast()
                                                 }
                                                 path.append("PDFViewer")
-                                                
-//                                                UIApplication.shared.open(URL(string: pdfURL)!)
-//                                                let activityVC = UIActivityViewController(activityItems: [pdfURL], applicationActivities: nil)
-//                                                if let rootVC = UIApplication.shared.windows.first?.rootViewController {
-//                                                    rootVC.present(activityVC, animated: true)
-//                                                }
                                             }
                                         } startJob: { startedJob in
                                             if startedJob.jobStartDate != nil && startedJob.jobCompletionDate != nil && startedJob.isCompleted == true {
@@ -111,35 +105,6 @@ struct InspectionHistoryListView: View {
                                             }
                                         }
                                     }
-                                    
-//                                    ForEach(viewModel.filteredItems, id:\.id) { job in
-//                                        JobCardView(job: job) {
-//                                            withAnimation {
-//                                                viewModel.toggleExpand(for: job)
-//                                            }
-//                                        } updateDetails: { updateJob in
-//                                            
-//                                        } showQRDetails: { qrImage in
-//                                            qrCodeImage = qrImage
-//                                            
-//                                            if path.count > 0 {
-//                                                path.removeLast()
-//                                            }
-//                                            path.append("showQRImage")
-//                                        } assignJob: { updateJob in
-//                                        } raiseRequestForJob: { requestForJob in
-//                                            
-//                                        } startJob: { startedJob in
-//                                            if startedJob.jobStartDate != nil && startedJob.jobCompletionDate != nil && startedJob.isCompleted == true {
-//                                                viewModel.selectedItem = startedJob
-//                                                
-//                                                if path.count > 0 {
-//                                                    path.removeLast()
-//                                                }
-//                                                path.append("inspectionChecklistPage")
-//                                            }
-//                                        }
-//                                    }
                                 }
                                 .padding(.horizontal)
                                 .padding(.bottom, 20)
@@ -156,7 +121,7 @@ struct InspectionHistoryListView: View {
                 .ignoresSafeArea(edges: .bottom)
                 .navigationDestination(for: String.self) { value in
                     if value == "reviewInspections" {
-                        DocReviewChecklistView(viewModel: viewModel) {
+                        DocReviewChecklistView(viewModel: viewModel, path: $path) {
                             DispatchQueue.main.async {
                                 if path.count > 0 {
                                     path.removeLast()
@@ -190,6 +155,14 @@ struct InspectionHistoryListView: View {
                                 }
                             }
                         }
+                    } else if value == "aiChecklistPage" {
+                        AIChecklistDetailView(viewModel: viewModel, checklist: viewModel.checkList) {
+                            DispatchQueue.main.async {
+                                if path.count > 0 {
+                                    path.removeLast()
+                                }
+                            }
+                        }
                     }
                 }
                 .alert(isPresented: $cameraDenied) {
@@ -202,6 +175,11 @@ struct InspectionHistoryListView: View {
                         },
                         secondaryButton: .cancel()
                     )
+                }
+                .onAppear {
+                    Task {
+                        await viewModel.refreshOrganisations()
+                    }
                 }
                 
                 

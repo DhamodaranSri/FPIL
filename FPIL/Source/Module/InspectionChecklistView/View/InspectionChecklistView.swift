@@ -27,22 +27,41 @@ struct InspectionChecklistView: View {
         ZStack {
             VStack {
                 if isNavigationNeeded {
-                    CustomNavBar(
-                        title: "Inspection Checklist",
-                        showBackButton: true,
-                        actions: [],
-                        backgroundColor: .applicationBGcolor,
-                        titleColor: .appPrimary,
-                        backAction: {
-                            viewModel.selectedItem = nil
-                            onClick?()
-                        }
-                    )
+                    if viewModel.selectedItem?.status == 3, self.viewModel.isEditing == false {
+                        CustomNavBar(
+                            title: "Inspection Checklist",
+                            showBackButton: true,
+                            actions: [
+                                NavBarAction(icon: "edit") {
+                                    self.viewModel.isEditing = true
+                                }
+                            ],
+                            backgroundColor: .applicationBGcolor,
+                            titleColor: .appPrimary,
+                            backAction: {
+                                self.viewModel.isEditing = false
+                                viewModel.selectedItem = nil
+                                onClick?()
+                            }
+                        )
+                    } else {
+                        CustomNavBar(
+                            title: "Inspection Checklist",
+                            showBackButton: true,
+                            actions: [],
+                            backgroundColor: .applicationBGcolor,
+                            titleColor: .appPrimary,
+                            backAction: {
+                                viewModel.selectedItem = nil
+                                onClick?()
+                            }
+                        )
+                    }
                 }
-                let progress = viewModel.totalQuestions() == 0 ? 0 : Double(viewModel.totalSelected()) / Double(viewModel.totalQuestions())
+                let progress = (viewModel.selectedItem?.isAIGenerated ?? false) ? Double(viewModel.checkList?.totalAverageScore ?? 0) / 100 : viewModel.totalQuestions() == 0 ? 0 : Double(viewModel.totalSelected()) / Double(viewModel.totalQuestions())
                 VStack {
                     HStack{
-                        HStack(alignment: .center, spacing: 20) {
+                        HStack(alignment: .center, spacing: 10) {
                             let textColor: Color = Int(progress * 100) >= 90 ? .green : Int(progress * 100) >= 80 && Int(progress * 100) < 90 ? .blue : .appPrimary
                             Text("\(Int(progress * 100))%")
                                 .foregroundColor(textColor)
@@ -66,7 +85,7 @@ struct InspectionChecklistView: View {
                             .cornerRadius(8)
                             .contentShape(Rectangle())
                         
-                        HStack(alignment: .center, spacing: 20) {
+                        HStack(alignment: .center, spacing: 10) {
                             Text("\(viewModel.totalViolations())")
                                 .foregroundColor(.appPrimary)
                                 .font(ApplicationFont.bold(size: 26).value)
@@ -90,7 +109,7 @@ struct InspectionChecklistView: View {
                     }.padding(.horizontal, 10)
                     
                     HStack{
-                        HStack(alignment: .center, spacing: 20) {
+                        HStack(alignment: .center, spacing: 10) {
                             Text("\(0)")
                                 .foregroundColor(.appPrimary)
                                 .font(ApplicationFont.bold(size: 26).value)
@@ -112,7 +131,7 @@ struct InspectionChecklistView: View {
                             .cornerRadius(8)
                             .contentShape(Rectangle())
                         
-                        HStack(alignment: .center, spacing: 20) {
+                        HStack(alignment: .center, spacing: 10) {
                             Text("\(viewModel.totalNotesAdded())")
                                 .foregroundColor(.appPrimary)
                                 .font(ApplicationFont.bold(size: 26).value)
@@ -175,19 +194,19 @@ struct InspectionChecklistView: View {
                                 Text("Review Notes:")
                                     .font(ApplicationFont.bold(size: 12).value)
                                     .foregroundColor(.white)
-                                    TextEditor(
-                                        text: Binding(
-                                            get: { viewModel.selectedItem?.reviewNotes ?? "" },
-                                            set: { viewModel.selectedItem?.reviewNotes = $0 }
-                                        )
+                                TextEditor(
+                                    text: Binding(
+                                        get: { viewModel.selectedItem?.reviewNotes ?? "" },
+                                        set: { viewModel.selectedItem?.reviewNotes = $0 }
                                     )
-                                    .focused($focusedItemID, equals: "Review Notes")
-                                    .scrollContentBackground(.hidden)
-                                    .background(.white)
-                                    .frame(height: 70)
-                                    .font(ApplicationFont.regular(size: 12).value)
-                                    .textInputAutocapitalization(.never)
-                                    .autocorrectionDisabled()
+                                )
+                                .focused($focusedItemID, equals: "Review Notes")
+                                .scrollContentBackground(.hidden)
+                                .background(.white)
+                                .frame(height: 70)
+                                .font(ApplicationFont.regular(size: 12).value)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
                             }
                         }
                     }
@@ -198,7 +217,7 @@ struct InspectionChecklistView: View {
                     
                 }.padding(.horizontal, 15)
                     .padding(.bottom, 10)
-                    
+                
                 if (viewModel.selectedItem?.isCompleted ?? false) == false && isReadable == false {
                     HStack {
                         VStack (alignment: .leading){
@@ -239,7 +258,7 @@ struct InspectionChecklistView: View {
                             ]
                             
                             if var selectedItem = viewModel.selectedItem {
-                               // let duration = completedDate.timeIntervalSince(selectedItem.jobStartDate ?? Date())
+                                // let duration = completedDate.timeIntervalSince(selectedItem.jobStartDate ?? Date())
                                 let elapsed = completedDate.timeIntervalSince(selectedItem.jobStartDate ?? Date())
                                 if let lastVisit = LastVisit(id: UUID().uuidString, inspectorId: UserDefaultsStore.profileDetail?.id ?? "", inspectorName: (UserDefaultsStore.profileDetail?.firstName ?? "") + " " + (UserDefaultsStore.profileDetail?.lastName ?? ""), visitDate: selectedItem.jobStartDate ?? Date(), inspectionFrequency: selectedItem.inspectionFrequency, totalScore: Int(progress * 100), totalSpentTime: elapsed, totalVoilations: viewModel.totalViolations()).toFirestoreData() {
                                     updatedItems["lastVist"] = [lastVisit]
@@ -286,7 +305,7 @@ struct InspectionChecklistView: View {
                                                                 }
                                                             }
                                                         }
-
+                                                        
                                                     }
                                                 }
                                             }
@@ -345,81 +364,105 @@ struct InspectionChecklistView: View {
                     .padding(.vertical, 10)
                     .background(.appPrimary.opacity(0.2))
                 } else {
-                    if (UserDefaultsStore.profileDetail?.userType == 2), (viewModel.selectedItem?.isCompleted ?? false) == true, viewModel.selectedItem?.status == nil {
-                        let totalDueAmount = viewModel.getTotalAmountOnDue()
-                        let unPaidInspection = viewModel.getUnPaidInspection()
-                        if totalDueAmount > 0 {
-                            Text("can't review Customer yet to pay the Due Amount: \(String(format: "$%.2f", totalDueAmount))")
-                                .frame(maxWidth: .infinity)
-                                .lineLimit(2)
-                                .font(ApplicationFont.regular(size: 12).value)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 10)
-                                .padding(.bottom, 10)
-                            PrimaryButton(sendAction: {
-                                if var unPaidInspection {
-                                    unPaidInspection.isPaid = true
-                                    unPaidInspection.paidDate = Date()
-                                    
-                                    if let index = viewModel.selectedItem?.client?.invoiceDetails?.firstIndex(where: { $0.id == unPaidInspection.id }) {
-                                        viewModel.selectedItem?.client?.invoiceDetails?[index] = unPaidInspection
-                                    }
-                                    
-                                    if let index = viewModel.selectedItem?.invoiceDetails?.firstIndex(where: { $0.id == unPaidInspection.id }) {
-                                        viewModel.selectedItem?.invoiceDetails?[index] = unPaidInspection
-                                    }
-                                    
-                                    viewModel.reGenerateInvoiceMarkAsPaid(for: unPaidInspection) { invoiceDetail, error in
-                                        if error == nil {
-                                            if let index = viewModel.selectedItem?.client?.invoiceDetails?.firstIndex(where: { $0.id == invoiceDetail.id }) {
-                                                viewModel.selectedItem?.client?.invoiceDetails?[index] = invoiceDetail
-                                            }
-                                            
-                                            if let index = viewModel.selectedItem?.invoiceDetails?.firstIndex(where: { $0.id == invoiceDetail.id }) {
-                                                viewModel.selectedItem?.invoiceDetails?[index] = invoiceDetail
-                                            }
-                                            if let jobModel = viewModel.selectedItem {
-                                                viewModel.updateInspectionAndRefresh(for: jobModel) { error in
-                                                    
+                    if viewModel.isEditing {
+                        HStack(alignment: .top) {
+                            Button("Approve") {
+                                planReview(status: 1, isOnlyStatusUpdate: true)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 40)
+                            .background(.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            Button("Decline") {
+                                planReview(status: 2, isOnlyStatusUpdate: true)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 40)
+                            .background(.red)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            
+                        }.frame(maxWidth: .infinity)
+                            .padding(.bottom, 20)
+                            .padding(.horizontal, 10)
+                    } else {
+                        if (UserDefaultsStore.profileDetail?.userType == 2), (viewModel.selectedItem?.isCompleted ?? false) == true, viewModel.selectedItem?.status == nil {
+                            let totalDueAmount = viewModel.getTotalAmountOnDue()
+                            let unPaidInspection = viewModel.getUnPaidInspection()
+                            if totalDueAmount > 0 {
+                                Text("can't review Customer yet to pay the Due Amount: \(String(format: "$%.2f", totalDueAmount))")
+                                    .frame(maxWidth: .infinity)
+                                    .lineLimit(2)
+                                    .font(ApplicationFont.regular(size: 12).value)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 10)
+                                    .padding(.bottom, 10)
+                                PrimaryButton(sendAction: {
+                                    if var unPaidInspection {
+                                        unPaidInspection.isPaid = true
+                                        unPaidInspection.paidDate = Date()
+                                        
+                                        if let index = viewModel.selectedItem?.client?.invoiceDetails?.firstIndex(where: { $0.id == unPaidInspection.id }) {
+                                            viewModel.selectedItem?.client?.invoiceDetails?[index] = unPaidInspection
+                                        }
+                                        
+                                        if let index = viewModel.selectedItem?.invoiceDetails?.firstIndex(where: { $0.id == unPaidInspection.id }) {
+                                            viewModel.selectedItem?.invoiceDetails?[index] = unPaidInspection
+                                        }
+                                        
+                                        viewModel.reGenerateInvoiceMarkAsPaid(for: unPaidInspection) { invoiceDetail, error in
+                                            if error == nil {
+                                                if let index = viewModel.selectedItem?.client?.invoiceDetails?.firstIndex(where: { $0.id == invoiceDetail.id }) {
+                                                    viewModel.selectedItem?.client?.invoiceDetails?[index] = invoiceDetail
                                                 }
+                                                
+                                                if let index = viewModel.selectedItem?.invoiceDetails?.firstIndex(where: { $0.id == invoiceDetail.id }) {
+                                                    viewModel.selectedItem?.invoiceDetails?[index] = invoiceDetail
+                                                }
+                                                if let jobModel = viewModel.selectedItem {
+                                                    viewModel.updateInspectionAndRefresh(for: jobModel) { error in
+                                                        
+                                                    }
+                                                }
+                                                
                                             }
-                                            
                                         }
                                     }
-                                }
-                            }, buttonTitle: "Mark as Paid")
-                            .padding(.bottom, 20)
-                            .padding(.horizontal, 10)
-                        } else {
-                            HStack(alignment: .top) {
-                                Button("Approve") {
-                                    planReview(status: 1)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 40)
-                                .background(.green)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                                Button("Decline") {
-                                    planReview(status: 2)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 40)
-                                .background(.red)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                                
-                                Button("Revision") {
-                                    planReview(status: 3)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 40)
-                                .background(.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                            }.frame(maxWidth: .infinity)
-                            .padding(.bottom, 20)
-                            .padding(.horizontal, 10)
+                                }, buttonTitle: "Mark as Paid")
+                                .padding(.bottom, 20)
+                                .padding(.horizontal, 10)
+                            } else {
+                                HStack(alignment: .top) {
+                                    Button("Approve") {
+                                        planReview(status: 1)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 40)
+                                    .background(.green)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                                    Button("Decline") {
+                                        planReview(status: 2)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 40)
+                                    .background(.red)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                                    
+                                    Button("Revision") {
+                                        planReview(status: 3)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 40)
+                                    .background(.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                                }.frame(maxWidth: .infinity)
+                                    .padding(.bottom, 20)
+                                    .padding(.horizontal, 10)
+                            }
                         }
                     }
                 }
@@ -458,41 +501,58 @@ struct InspectionChecklistView: View {
         }
     }
     
-    private func planReview(status: Int) {
-        var updatedItems: [String: Any] = [
-            "status": status
-        ]
-        if let reviewNotes = viewModel.selectedItem?.reviewNotes, !reviewNotes.isEmpty {
-            updatedItems["reviewNotes"] = reviewNotes
-        }
-        
-        viewModel.selectedItem?.status = status
-        
-        if let selectedItem = viewModel.selectedItem {
-            
-            if let pdfURL = PDFGenerator.generateInspectionPDF(siteInfo: selectedItem, checklistItems: viewModel.checkList) {
-                
-                
-                viewModel.uploadReviewReport(url: pdfURL) { error, url in
-                    if error == nil, let url {
-                        updatedItems["reportPdfUrl"] = url
-                        viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
-                            DispatchQueue.main.async {
-                                if error == nil {
-                                    viewModel.selectedItem = nil
-                                    onClick?()
+    private func planReview(status: Int, isOnlyStatusUpdate: Bool = false) {
+        if isOnlyStatusUpdate {
+            if var jobModel = viewModel.selectedItem, let checklist = viewModel.checkList {
+                jobModel.status = status
+                jobModel.building.checkLists = [checklist]
+                if let pdfURL = PDFGenerator.generateInspectionPDF(siteInfo: jobModel, checklistItems: viewModel.checkList) {
+                    viewModel.uploadReviewReport(url: pdfURL) { error, url in
+                        if error == nil, let url {
+                            jobModel.reportPdfUrl = url
+                            viewModel.updateInspectionAndRefresh(for: jobModel) { error in
+                                DispatchQueue.main.async {
+                                    if error == nil {
+                                        self.viewModel.isEditing = false
+                                        viewModel.selectedItem = nil
+                                        onClick?()
+                                    }
                                 }
                             }
                         }
                     }
-                    
                 }
+            }
+        } else {
+            var updatedItems: [String: Any] = [
+                "status": status
+            ]
+            if let reviewNotes = viewModel.selectedItem?.reviewNotes, !reviewNotes.isEmpty {
+                updatedItems["reviewNotes"] = reviewNotes
+            }
+            
+            viewModel.selectedItem?.status = status
+            
+            if let selectedItem = viewModel.selectedItem {
                 
-                // Option 1: Share or Preview PDF
-//                let activityVC = UIActivityViewController(activityItems: [pdfURL], applicationActivities: nil)
-//                if let rootVC = UIApplication.shared.windows.first?.rootViewController {
-//                    rootVC.present(activityVC, animated: true)
-//                }
+                if let pdfURL = PDFGenerator.generateInspectionPDF(siteInfo: selectedItem, checklistItems: viewModel.checkList) {
+                    
+                    
+                    viewModel.uploadReviewReport(url: pdfURL) { error, url in
+                        if error == nil, let url {
+                            updatedItems["reportPdfUrl"] = url
+                            viewModel.updateStartOrStopInspectionDate(jobModel: selectedItem, updatedItems: updatedItems) { error in
+                                DispatchQueue.main.async {
+                                    if error == nil {
+                                        viewModel.selectedItem = nil
+                                        onClick?()
+                                    }
+                                }
+                            }
+                        }
+                        
+                    }
+                }
             }
         }
     }
@@ -529,7 +589,7 @@ struct InspectionChecklistView: View {
                                             .resizable()
                                             .frame(width: 20, height: 20)
                                             .foregroundColor(.white)
-                                    }
+                                    }.disabled(viewModel.selectedItem?.isAIGenerated ?? false)
                                     Text(answer.answer)
                                         .font(ApplicationFont.regular(size: 12).value)
                                         .foregroundColor(.white)
@@ -545,17 +605,6 @@ struct InspectionChecklistView: View {
                                             .font(ApplicationFont.regular(size: 10).value)
                                             .foregroundColor(.white)
                                     }
-                                    
-                                    // ✅ Image Preview
-//                                    if let uiImage = answersState[answer.answer ?? ""]?.photo {
-//                                        Image(uiImage: uiImage)
-//                                            .resizable()
-//                                            .scaledToFill()
-//                                            .frame(height: 120)
-//                                            .clipped()
-//                                            .cornerRadius(10)
-//                                            .padding(.leading, 28)
-//                                    }
                                     HStack {
                                         let isSelected = answer.isVoilated ?? false
                                         RadioButton(
@@ -591,42 +640,34 @@ struct InspectionChecklistView: View {
                                                 }
                                             }
                                         )
-//                                        Button{
-//                                            
-//                                        } label:{
-//                                            Image(systemName: "camera")
-//                                                .foregroundColor(.white)
-//                                        }
                                     }
                                     Text("Notes / Violations:")
                                         .font(ApplicationFont.regular(size: 10).value)
                                         .foregroundColor(.white)
-//                                    if answer.isVoilated ?? false {
-                                        TextEditor(
-                                            text: Binding(
-                                                get: {
-                                                    answer.voilationDescription ?? ""
-                                                },
-                                                set: { newValue in
-                                                    updateVoilationDescription(
-                                                        questionId: section.question,
-                                                        answerIndex: answerIndex,
-                                                        description: newValue
-                                                    )
-                                                }
-                                            )
+                                    TextEditor(
+                                        text: Binding(
+                                            get: {
+                                                answer.voilationDescription ?? ""
+                                            },
+                                            set: { newValue in
+                                                updateVoilationDescription(
+                                                    questionId: section.question,
+                                                    answerIndex: answerIndex,
+                                                    description: newValue
+                                                )
+                                            }
                                         )
-                                        .focused($focusedItemID, equals: answer.answer)
-                                        .scrollContentBackground(.hidden)
-                                        .background(.white)
-                                        .frame(height: 50)
-                                        .font(.system(size: 13))
-                                        .textInputAutocapitalization(.never)
-                                        .autocorrectionDisabled()
-//                                    }
+                                    )
+                                    .focused($focusedItemID, equals: answer.answer)
+                                    .scrollContentBackground(.hidden)
+                                    .background(.white)
+                                    .frame(height: 50)
+                                    .font(.system(size: 13))
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled()
                                 }
                             }
-                            .disabled(isReadable || viewModel.selectedItem?.isCompleted ?? false)
+                            .disabled( viewModel.isEditing ? false : (isReadable || viewModel.selectedItem?.isCompleted ?? false))
                             .padding(.bottom, 5)
                         }
                     }
@@ -651,13 +692,12 @@ struct InspectionChecklistView: View {
                 Spacer()
                 Button("Done") {
                     focusedItemID = nil
-//                                                    hideKeyboard()
                 }
                 .tint(.blue)
             }
         }
     }
-
+    
     func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
@@ -673,7 +713,7 @@ struct InspectionChecklistView: View {
             }
         }
     }
-
+    
     private func toggleVolationSelection(questionId: String, answerIndex: Int, isVolation: Bool) {
         guard var checkList = viewModel.checkList else { return }
         
@@ -685,7 +725,7 @@ struct InspectionChecklistView: View {
             }
         }
     }
-
+    
     private func updateVoilationDescription(questionId: String, answerIndex: Int, description: String) {
         guard var checkList = viewModel.checkList else { return }
         
@@ -709,7 +749,7 @@ struct InspectionChecklistView: View {
             }
         }
     }
-
+    
 }
 
 //#Preview {
@@ -720,7 +760,7 @@ struct RadioButton: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
-
+    
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
