@@ -153,6 +153,7 @@ struct AIChecklistDetailView: View {
         selectedItem.jobAssignedDate = date
         selectedItem.jobStartDate = date
         selectedItem.reviewNotes = viewModel.selectedAiChecklistModel?.compliance_report?.summary
+        selectedItem.isAIGenerated = true
         
         if let pdfURL = PDFGenerator.generateInspectionPDF(siteInfo: selectedItem, checklistItems: viewModel.checkList) {
             

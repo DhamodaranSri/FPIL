@@ -49,6 +49,7 @@ struct JobModel: Codable, Identifiable, Hashable {
     var client:ClientModel? = nil
     var invoiceDetails: [InvoiceDetails]? = nil
     var inspectorContact: String? = nil
+    var isAIGenerated: Bool? = false
     
     // Local only (UI state)
     var isExpanded: Bool?

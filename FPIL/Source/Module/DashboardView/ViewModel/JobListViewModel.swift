@@ -39,6 +39,7 @@ class JobListViewModel: ObservableObject {
     
     private let inspectionRepository: InspectionJobRepositoryProtocol
     private var isHistoryLoaded: Bool = false
+    @Published var isEditing: Bool = false
     
     init(inspectionRepository: InspectionJobRepositoryProtocol = FirebaseInspectionJobRepository(), isHistoryLoaded: Bool = false) {
         self.inspectionRepository = inspectionRepository
@@ -658,7 +659,7 @@ extension JobListViewModel {
                                     completion(NSError(domain: "Check your Backend team", code: 505), nil)
                                     return
                                 }
-                                self.updateStatusAIGeneratedChecklist(id: siteId, updatedItems: ["client": clientDetails?.toDictionary(), "projectName": projectName]) { error in
+                                self.updateStatusAIGeneratedChecklist(id: siteId, updatedItems: ["client": clientDetails?.toFirestoreData(), "projectName": projectName]) { error in
                                     self.isLoading = false
                                     if error == nil {
                                         completion(nil, url)
