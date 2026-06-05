@@ -10,10 +10,12 @@ import Foundation
 final class FirebaseInspectionJobRepository: InspectionJobRepositoryProtocol {
     private let inspectionService: FirebaseService<JobModel>
     private let clientService: FirebaseService<ClientModel>
+    private let sitePdfConversionService: FirebaseService<AICheckListModel>
     
     init() {
         inspectionService = FirebaseService<JobModel>(collectionName: "SiteInspectionsItems")
         clientService = FirebaseService<ClientModel>(collectionName: "ClientList")
+        sitePdfConversionService = FirebaseService<AICheckListModel>(collectionName: "fpil_jobs")
     }
     
     func fetchAllInspectionJobs(
@@ -99,6 +101,29 @@ final class FirebaseInspectionJobRepository: InspectionJobRepositoryProtocol {
     func fetchClient(clientId: String, completion: @escaping (Result<ClientModel, any Error>) -> Void) {
         if NetworkMonitor.shared.isConnected {
             clientService.fetch(byId: clientId) { result in
+                completion(result)
+            }
+        } else {
+            completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
+        }
+    }
+    
+    func fetchAIGeneratedAllChecklistIsNotVerified(completion: @escaping (Result<[AICheckListModel], any Error>) -> Void) {
+        let conditions: [(field: String, value: Any)] = [
+            ("user_id", UserDefaultsStore.profileDetail?.id)
+        ]
+        if NetworkMonitor.shared.isConnected {
+            sitePdfConversionService.fetchByMultipleWhere(conditions: conditions, optionalFalseField: "isVerified", orderBy: "") { result in
+                completion(result)
+            }
+        } else {
+            completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
+        }
+    }
+
+    func updateStatusAIGeneratedChecklist(id: String, updatedItems: [String: Any], completion: @escaping (Result<Void, any Error>) -> Void) {
+        if NetworkMonitor.shared.isConnected {
+            sitePdfConversionService.updateCollection(id, items: updatedItems) { result in
                 completion(result)
             }
         } else {
