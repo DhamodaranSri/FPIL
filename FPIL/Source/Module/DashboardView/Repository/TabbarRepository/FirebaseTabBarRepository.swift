@@ -12,17 +12,29 @@ final class FirebaseTabBarRepository: TabBarRepositoryProtocol {
     private let fireAuthService: FirebaseAuthService
     private let fireStationService: FirebaseService<OrganisationModel>
     private let fireStationInspectorService: FirebaseService<FireStationInspectorModel>
+    private let apiKeysService: FirebaseService<APIKeys>
     
     init() {
         fireAuthService = FirebaseAuthService()
         service = FirebaseService<TabBarItem>(collectionName: "TabbarList")
         fireStationService = FirebaseService<OrganisationModel>(collectionName: "FirestationsList")
         fireStationInspectorService = FirebaseService<FireStationInspectorModel>(collectionName: "InspectorsList")
+        apiKeysService = FirebaseService<APIKeys>(collectionName: "APIKeys")
     }
     
     func fetchTabs(forUserType userTypeId: Int, completion: @escaping (Result<[TabBarItem], Error>) -> Void) {
         if NetworkMonitor.shared.isConnected {
             service.fetchByContains(field: "userTypeIds", value: userTypeId, orderBy: "order") { result in
+                completion(result)
+            }
+        } else {
+            completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
+        }
+    }
+    
+    func fetchAPIKeys(completion: @escaping (Result<[APIKeys], Error>) -> Void) {
+        if NetworkMonitor.shared.isConnected {
+            apiKeysService.fetchAllData { result in
                 completion(result)
             }
         } else {
