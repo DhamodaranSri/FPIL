@@ -84,8 +84,6 @@ class ClientDetailViewModel: ObservableObject {
     }
     
     func refreshClientsList() async {
-        // Simulate async refresh (API call etc.)
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 sec delay
         if let clientId = selectedItem?.id {
             fetchClientDetail(clientId: clientId)
             fetchInspection(clientId: clientId, isCompleted: true)

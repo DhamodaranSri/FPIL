@@ -8,15 +8,13 @@
 import SwiftUI
 
 struct InspectionPage: View {
-    @State private var path = NavigationPath()
+    @StateObject private var router = Router()
     var clientViewModel: ClientDetailViewModel = ClientDetailViewModel(selectedItem: nil)
-    
+
     var body: some View {
-        NavigationStack(path: $path) {
-            ClientDetailView(viewModel: clientViewModel, path: $path, isBackButtonShown: false) {
-            } selectedPdfURL: { url in
-            } selectedJob: { job in
-            }
+        NavigationStack(path: $router.path) {
+            ClientDetailView(viewModel: clientViewModel, isBackButtonShown: false)
         }
+        .environmentObject(router)
     }
 }
