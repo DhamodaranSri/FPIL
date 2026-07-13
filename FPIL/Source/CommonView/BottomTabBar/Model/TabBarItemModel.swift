@@ -16,3 +16,8 @@ struct TabBarItem: Codable, Hashable, Identifiable {
     let navBarTitle: String
 }
 
+struct APIKeys: Codable, Hashable, Identifiable {
+    var id: String? = UUID().uuidString
+    let claudeKey: String?
+}
+

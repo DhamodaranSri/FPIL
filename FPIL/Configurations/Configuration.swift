@@ -43,6 +43,7 @@ class UserDefaultsStore {
     private static var allClientList = "clientList"
     private static var allServicesPerfomerdList = "allServicesPerfomerdList"
     private static var clientDetailInfo = "clientDetailInfo"
+    private static var apiKey = "apiKey"
     
     static var jobStartedDate :Date? {
         get {
@@ -135,6 +136,25 @@ class UserDefaultsStore {
             let encoder = JSONEncoder()
             if let encoded = try? encoder.encode(newValue) {
                 UserDefaults.standard.set(encoded, forKey: fireStationInfo)
+            }
+        }
+    }
+
+    static var claudeAPIKey :APIKeys? {
+        get {
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: apiKey)
+            {
+                let userDetail = try? decoder.decode(APIKeys.self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
+        }
+        set {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: apiKey)
             }
         }
     }
