@@ -32,11 +32,15 @@ platform :ios do
       scheme: "FPIL",
       workspace: "FPIL.xcworkspace",
       export_method: "app-store",
-      # Crucial: Using xcargs here forces Xcode to look for "Apple Distribution" 
-      # and overrides the broken "iOS Distribution" value at runtime securely.
-      xcargs: "DEVELOPMENT_TEAM=\"SU5Z39MX2P\" CODE_SIGN_IDENTITY=\"Apple Distribution\" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO",
+      
+      # 1. This handles the compile phase: lets Firebase build cleanly without errors
+      xcargs: "CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO",
+      
+      # 2. This forces the exporter phase to use the correct signature type
+      codesigning_identity: "Apple Distribution",
+      
       export_options: {
-        method: "app-store",
+        method: "app-store-connect", # Updated from app-store to match new Apple API standards
         signingStyle: "manual",
         teamID: "SU5Z39MX2P",
         provisioningProfiles: {
