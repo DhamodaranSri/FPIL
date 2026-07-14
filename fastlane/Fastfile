@@ -19,7 +19,8 @@ platform :ios do
       team_id: "SU5Z39MX2P",
       bundle_identifier: "com.blaster.fpil",
       profile_name: "AppStoreFPIL2025",
-      code_sign_identity: "Apple Distribution"
+      code_sign_identity: "Apple Distribution",
+      targets: ["FPIL"]
     )
     
     # 5. FORCE the timeout parameters directly into the sub-shell thread 
