@@ -19,7 +19,7 @@ platform :ios do
       team_id: "SU5Z39MX2P",
       bundle_identifier: "com.blaster.fpil",
       profile_name: "AppStoreFPIL2025",
-      code_sign_identity: "Apple Distribution",
+      code_sign_identity: "iPhone Distribution",
       targets: ["FPIL"]
     )
     
@@ -34,10 +34,10 @@ platform :ios do
       export_method: "app-store",
       
       # Step A: Controls the compilation step (stops Swift Packages from screaming)
-      xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\"",
+      xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO CODE_SIGN_IDENTITY=\"iPhone Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\"",
       
       # Step B: Forces the exporter to keep your certificate settings intact
-      export_xcargs: "CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\"",
+      export_xcargs: "CODE_SIGN_IDENTITY=\"iPhone Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\"",
       
       export_options: {
         method: "app-store-connect",
