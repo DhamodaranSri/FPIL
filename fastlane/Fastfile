@@ -23,12 +23,27 @@ platform :ios do
       targets: ["FPIL"]
     )
     
-    # 5. FORCE the timeout parameters directly into the sub-shell thread 
-    # This prevents xcodebuild from timing out due to slow GitHub runner disks
+    # 4. FORCEFUL PROJECT blue-print patch:
+    # This edits the underlying pbxproj text structure to completely delete 
+    # any residual "iOS Distribution" hardcodings and swap them to "Apple Distribution".
+    UI.message("Patching project configuration file structure...")
+    project_path = "FPIL.xcodeproj/project.pbxproj"
+    if File.exist?(project_path)
+      file_contents = File.read(project_path)
+      # Replaces the old identity keys with the modern profile standard
+      updated_contents = file_contents.gsub('"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iOS Distribution";', '"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";')
+      updated_contents = updated_contents.gsub('CODE_SIGN_IDENTITY = "iOS Distribution";', 'CODE_SIGN_IDENTITY = "Apple Distribution";')
+      File.open(project_path, "w") { |file| file.puts updated_contents }
+      UI.success("Successfully rewritten build settings signature structure inside project file!")
+    else
+      UI.error("Could not locate project file path to patch configuration.")
+    end
+    
+    # 6. FORCE the timeout parameters directly into the sub-shell thread 
     ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "120"
     ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "5"
     
-    # 6. Build your app cleanly
+    # 7. Build your app cleanly
     build_app(
       scheme: "FPIL",
       workspace: "FPIL.xcworkspace",
@@ -43,7 +58,7 @@ platform :ios do
       }
     )
 
-    # 7. Upload the built binary straight into TestFlight
+    # 8. Upload the built binary straight into TestFlight
     upload_to_testflight(
       skip_waiting_for_build_processing: true
     )
