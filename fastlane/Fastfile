@@ -13,6 +13,12 @@ platform :ios do
       readonly: true
     )
 
+sh("echo '=== Installed Provisioning Profiles ==='")
+sh("ls -la ~/Library/MobileDevice/Provisioning\\ Profiles || true")
+
+sh("echo '=== Installed Code Signing Identities ==='")
+sh("security find-identity -v -p codesigning || true")
+
     # 4. Configure manual signing ONLY for the main app target (protects Swift Packages)
     update_code_signing_settings(
       use_automatic_signing: false,
