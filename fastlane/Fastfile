@@ -14,7 +14,12 @@ platform :ios do
     build_app(
       scheme: "FPIL",              # Replace with your actual Xcode Scheme name
       workspace: "FPIL.xcworkspace", # Replace with your .xcworkspace filename
-      export_method: "app-store"
+      export_method: "app-store",
+export_options: {
+    provisioningProfiles: {
+      "com.blaster.fpil" => "AppStoreFPIL2025"
+    }
+  }
     )
 
     # 5. Upload the built binary straight into TestFlight
