@@ -41,5 +41,10 @@ jobs:
           
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
+          
+          MATCH_KEYCHAIN_NAME: "fastlane_tmp_keychain"
+          MATCH_KEYCHAIN_PASSWORD: "temporary_runner_password"
+          FASTLANE_DONT_STORE_PASSWORD_IN_KEYCHAIN: "1"
+          
           MATCH_P12_PASSWORD: "123"
         run: bundle exec fastlane deploy_testflight
