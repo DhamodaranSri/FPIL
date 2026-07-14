@@ -48,6 +48,7 @@ jobs:
           MATCH_GIT_URL: https://x-token-auth:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/DhamodaranSri/ios-certificates-fpil.git
           
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
+          FASTLANE_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
           
           # These point Fastlane to the keychain we just created above
