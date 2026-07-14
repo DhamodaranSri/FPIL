@@ -12,55 +12,40 @@ platform :ios do
       type: "appstore",
       readonly: true
     )
-
-    # 3. Configure manual signing ONLY for the main app target (protects Swift Packages)
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      team_id: "SU5Z39MX2P",
-      bundle_identifier: "com.blaster.fpil",
-      profile_name: "AppStoreFPIL2025",
-      code_sign_identity: "Apple Distribution",
-      targets: ["FPIL"]
-    )
     
-    # 5. FORCE the timeout parameters directly into the sub-shell thread 
+    # 4. Force slow cloud-runner stability variables
     ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "120"
     ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "5"
     
-    # CREATE A DYNAMIC TARGET OVERRIDE FILE:
-    # This forces Xcode to look for "Apple Distribution" and leaves 
-    # the external Swift bundles cleanly managed.
-    File.write("temp_signing.xcconfig", <<~XCCONFIG
-      CODE_SIGN_IDENTITY = Apple Distribution
-      CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Distribution
-      CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle] = NO
-    XCCONFIG
-    )
-    
-    # 6. Build your app cleanly using the custom configuration file
-    build_app(
-      scheme: "FPIL",
-      workspace: "FPIL.xcworkspace",
-      export_method: "app-store",
-      
-      # Tell Fastlane to load our custom configuration file
-      xcconfig: "temp_signing.xcconfig",
-      
-      export_options: {
-        method: "app-store-connect",
-        signingStyle: "manual",
-        teamID: "SU5Z39MX2P",
-        provisioningProfiles: {
-          "com.blaster.fpil" => "AppStoreFPIL2025"
-        }
+    # 5. DYNAMIC OPTIONS PLIST CREATION
+    # We build the packaging instructions manually so xcodebuild has no room to look at legacy settings.
+    export_options = {
+      method: "app-store-connect",
+      signingStyle: "manual",
+      teamID: "SU5Z39MX2P",
+      provisioningProfiles: {
+        "com.blaster.fpil" => "AppStoreFPIL2025"
       }
+    }
+    
+    # 6. DIRECT COMPILATION ENGINE INVOKE
+    # By running raw xcodebuild, we stamp the parameters globally across both steps.
+    xcodebuild(
+      workspace: "FPIL.xcworkspace",
+      scheme: "FPIL",
+      archive: true,
+      archive_path: "./build/FPIL.xcarchive",
+      export_archive: true,
+      export_options: export_options,
+      export_path: "./build",
+      # This targets the identity parameter across ALL child execution blocks cleanly,
+      # while removing signing constraints from underlying Firebase SPM bundles.
+      xcargs: "CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\" PROVISIONING_PROFILE_SPECIFIER=\"AppStoreFPIL2025\" 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO"
     )
 
-    # Clean up the temporary file after the build completes
-    File.delete("temp_signing.xcconfig") if File.exist?("temp_signing.xcconfig")
-
-    # 7. Upload the built binary straight into TestFlight
+    # 7. Upload the generated binary straight into TestFlight
     upload_to_testflight(
+      ipa: "./build/FPIL.ipa",
       skip_waiting_for_build_processing: true
     )
   end
