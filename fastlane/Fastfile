@@ -13,27 +13,12 @@ platform :ios do
       readonly: true
     )
 
-    # 3. ROOT CAUSE PATCH: Physically rewrite the project settings file on the runner.
-    # This prevents Fastlane and Xcode from reverting to "iOS Distribution".
-    UI.message("Patching project configuration file structure...")
-    project_path = "FPIL.xcodeproj/project.pbxproj"
-    if File.exist?(project_path)
-      file_contents = File.read(project_path)
-      # Forcefully replace all stale target text strings with the modern certificate title
-      updated_contents = file_contents.gsub("iOS Distribution", "Apple Distribution")
-      File.open(project_path, "w") { |file| file.puts updated_contents }
-      UI.success("Successfully replaced legacy signing target strings with Apple Distribution!")
-    else
-      UI.error("Could not locate project file path to patch configuration.")
-    end
-
     # 4. Configure manual signing ONLY for the main app target (protects Swift Packages)
     update_code_signing_settings(
       use_automatic_signing: false,
       team_id: "SU5Z39MX2P",
       bundle_identifier: "com.blaster.fpil",
       profile_name: "AppStoreFPIL2025",
-      code_sign_identity: "Apple Distribution",
       targets: ["FPIL"]
     )
     
@@ -46,10 +31,6 @@ platform :ios do
       scheme: "FPIL",
       workspace: "FPIL.xcworkspace",
       export_method: "app-store",
-      
-      # Controls compilation (stops Swift Packages from screaming)
-      xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\"",
-      
       export_options: {
         method: "app-store",
         signingStyle: "manual",
