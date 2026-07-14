@@ -41,4 +41,5 @@ jobs:
           
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
+          MATCH_P12_PASSWORD: "123"
         run: bundle exec fastlane deploy_testflight
