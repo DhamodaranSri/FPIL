@@ -4,13 +4,17 @@ platform :ios do
   desc "Build and upload directly to TestFlight on every push"
   lane :deploy_testflight do
     
-    # 1. Fetch your pre-existing profiles from your private Git repo
+    # 1. Standard CI initialization for headless keychain behavior
+    setup_ci
+    
+    # 2. Fetch your pre-existing profiles from your private Git repo
     match(
       type: "appstore",
       readonly: true
     )
 
-update_code_signing_settings(
+    # 3. Configure manual signing ONLY for the main app target (protects Swift Packages)
+    update_code_signing_settings(
       use_automatic_signing: false,
       team_id: "SU5Z39MX2P",
       bundle_identifier: "com.blaster.fpil",
@@ -18,25 +22,37 @@ update_code_signing_settings(
       code_sign_identity: "Apple Distribution"
     )
     
-    # 3. Build your app with explicit export options mapping
+    # 4. Grab the latest build number from TestFlight and increment it by 1
+    current_build = latest_testflight_build_number(
+      app_identifier: "com.blaster.fpil"
+    )
+    increment_build_number(
+      build_number: current_build + 1
+    )
+    
+    # 5. FORCE the timeout parameters directly into the sub-shell thread 
+    # This prevents xcodebuild from timing out due to slow GitHub runner disks
+    ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "120"
+    ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "5"
+    
+    # 6. Build your app cleanly
     build_app(
       scheme: "FPIL",
       workspace: "FPIL.xcworkspace",
       export_method: "app-store",
-      # FORCE Xcode to use the exact matching identities we just unlocked
       export_options: {
         method: "app-store",
         signingStyle: "manual",
         teamID: "SU5Z39MX2P",
         provisioningProfiles: {
-          "com.blaster.fpil" => "AppStoreFPIL2025" # Mapped from your match log output
+          "com.blaster.fpil" => "AppStoreFPIL2025"
         }
       }
     )
 
-    # 5. Upload the built binary straight into TestFlight
+    # 7. Upload the built binary straight into TestFlight
     upload_to_testflight(
-      skip_waiting_for_build_processing: true # Saves runner time by not waiting for Apple processing
+      skip_waiting_for_build_processing: true
     )
   end
 end
