@@ -31,6 +31,14 @@ jobs:
         run: |
           gem install bundler
           bundle install
+          
+        # ADD THIS STEP HERE: This builds and unlocks the keychain before Fastlane looks for it
+      - name: Create Temporary Keychain
+        run: |
+          security create-keychain -p "temporary_runner_password" fastlane_tmp_keychain
+          security default-keychain -s fastlane_tmp_keychain
+          security unlock-keychain -p "temporary_runner_password" fastlane_tmp_keychain
+          security set-keychain-settings -t 3600 -u fastlane_tmp_keychain
 
       - name: Execute Fastlane Beta Lane
         env:
@@ -42,6 +50,7 @@ jobs:
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
           
+          # These point Fastlane to the keychain we just created above
           MATCH_KEYCHAIN_NAME: "fastlane_tmp_keychain"
           MATCH_KEYCHAIN_PASSWORD: "temporary_runner_password"
           FASTLANE_DONT_STORE_PASSWORD_IN_KEYCHAIN: "1"
