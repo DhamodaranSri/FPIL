@@ -32,10 +32,13 @@ jobs:
           gem install bundler
           bundle install
 
-      - name: Run Fastlane Deployment Lane
+      - name: Execute Fastlane Beta Lane
         env:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          
+          # CHANGE THIS: Inject the token directly into the target clone URL
+          MATCH_GIT_URL: https://x-token-auth:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/DhamodaranSri/ios-certificates-fpil.git
+          
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
         run: bundle exec fastlane deploy_testflight
