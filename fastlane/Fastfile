@@ -22,14 +22,6 @@ platform :ios do
       code_sign_identity: "Apple Distribution"
     )
     
-    # 4. Grab the latest build number from TestFlight and increment it by 1
-    current_build = latest_testflight_build_number(
-      app_identifier: "com.blaster.fpil"
-    )
-    increment_build_number(
-      build_number: current_build + 1
-    )
-    
     # 5. FORCE the timeout parameters directly into the sub-shell thread 
     # This prevents xcodebuild from timing out due to slow GitHub runner disks
     ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "120"
