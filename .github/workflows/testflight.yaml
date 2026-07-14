@@ -1,0 +1,41 @@
+name: TestFlight Continuous Deployment
+
+on:
+  push:
+    branches:
+      - staging # Triggers the build automatically on every single commit to staging
+
+concurrency:
+  group: testflight-${{ github.ref }}
+  cancel-in-progress: true # Cancels an older build if a new commit is pushed immediately after
+
+jobs:
+  build-and-deploy:
+    name: TestFlight Upload
+    runs-on: macos-14 # Standard GitHub macOS runner environment
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode Version
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Setup Ruby Environment
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Install Fastlane
+        run: |
+          gem install bundler
+          bundle install
+
+      - name: Run Fastlane Deployment Lane
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
+        run: bundle exec fastlane deploy_testflight

@@ -9,11 +9,10 @@ import SwiftUI
 
 struct InspectorsListView: View {
     @ObservedObject var viewModel: InspectorsListViewModel
-    @Binding var path:NavigationPath
+    @EnvironmentObject private var router: Router
 
     var body: some View {
-        NavigationStack(path: $path) {
-            ZStack {
+        ZStack {
                 VStack {
                     let all = viewModel.items.count
                     let active = viewModel.items.filter { $0.status == 1 }.count
@@ -22,9 +21,9 @@ struct InspectorsListView: View {
                     let allKeys: [String] = ["All Inspectors", "Active Inspectors", "Inactive Inspectors"]
                     SmallCardInfoView(cardInfo: dic, keys: allKeys)
                         .frame(maxWidth: .infinity)
-                    
+
                     SearchView(searchText: $viewModel.searchText, searchPlaceholder: "Search for Inspector")
-                    
+
                     Group {
                         if viewModel.filteredItems.isEmpty {
                             NoDataView(message: "No Inspectors Available")
@@ -35,10 +34,7 @@ struct InspectorsListView: View {
                                     ForEach(viewModel.filteredItems, id:\.id) { inspectorModel in
                                         FireInspectorListCell(inspector: inspectorModel) { ins in
                                             viewModel.selectedItem = ins
-                                            if path.count > 0 {
-                                                path.removeLast()
-                                            }
-                                            path.append("createFireInspector")
+                                            router.navigate(to: .createFireInspector)
                                         }
                                     }
                                 }
@@ -50,30 +46,29 @@ struct InspectorsListView: View {
                             }
                         }
                     }
-                    
+
                 }
                 .frame(alignment: .top)
                 .navigationBarBackButtonHidden(true)
                 .background(.applicationBGcolor)
                 .ignoresSafeArea(edges: .bottom)
-                .navigationDestination(for: String.self) { value in
-                    if value == "createFireInspector" {
+                .navigationDestination(for: AppRoute.self) { route in
+                    switch route {
+                    case .createFireInspector:
                         CreateOrUpdateInspector(viewModel: viewModel) {
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            DispatchQueue.main.async { router.pop() }
                         }
+                    default:
+                        EmptyView()
                     }
                 }
-                
+
                 if viewModel.isLoading {
                     LoadingView()
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.isLoading)
                 }
-                
+
                 Group {
                     if let error = viewModel.serviceError {
                         let nsError = error as NSError
@@ -81,22 +76,19 @@ struct InspectorsListView: View {
                         let message = nsError.code == 92001
                         ? "Please check your WiFi or cellular data."
                         : nsError.localizedDescription
-                       
+
                         CustomAlertView(
                             title: title,
                             message: message,
                             primaryButtonTitle: "OK",
-                            primaryAction: {
-                                viewModel.serviceError = nil
-                            },
+                            primaryAction: { viewModel.serviceError = nil },
                             secondaryButtonTitle: nil,
                             secondaryAction: nil
                         )
                     }
                 }
-                
+
             }
-        }
     }
 }
 

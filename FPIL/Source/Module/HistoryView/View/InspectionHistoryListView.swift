@@ -9,17 +9,16 @@ import SwiftUI
 import AVFoundation
 
 struct InspectionHistoryListView: View {
-    @Binding var path:NavigationPath
     @ObservedObject var viewModel: JobListViewModel
+    @EnvironmentObject private var router: Router
     @State private var isScannerPresented = false
     @State private var cameraDenied = false
     @State private var qrCodeImage: UIImage?
     @State private var selectedFilter: InspectionFilter = .review
     @State private var selectedPdfURL: URL?
-    
+
     var body: some View {
-        NavigationStack(path: $path) {
-            ZStack {
+        ZStack {
                 VStack {
                     SearchBarWithNormalAndQRView(text: $viewModel.searchText, onQRScan: {
                         checkCameraPermission {
@@ -28,10 +27,7 @@ struct InspectionHistoryListView: View {
                     })
                     .sheet(isPresented: $isScannerPresented) {
                         QRScannerRepresentable { result in
-                            // assign to search field (trim if needed)
                             viewModel.searchText = result.trimmingCharacters(in: .whitespacesAndNewlines)
-                            // you can also trigger a search action here
-                            // performSearch(with: searchText)
                         }
                         .edgesIgnoringSafeArea(.all)
                     }
@@ -51,7 +47,7 @@ struct InspectionHistoryListView: View {
                         UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
                         UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.lightGray], for: .normal)
                     }
-                    
+
                     Group {
                         if viewModel.filteredItems.isEmpty {
                             NoDataView(message: "No Inspections Available")
@@ -59,49 +55,30 @@ struct InspectionHistoryListView: View {
                         } else {
                             ScrollView {
                                 VStack(spacing: 16) {
-                                    
                                     ForEach(viewModel.filteredItems.filter { job in
                                         switch selectedFilter {
-                                        case .review:
-                                            return job.status == nil
-                                        case .approved:
-                                            return job.status == 1
-                                        case .decline:
-                                            return job.status == 2
-                                        case .revision:
-                                            return job.status == 3
+                                        case .review:   return job.status == nil
+                                        case .approved: return job.status == 1
+                                        case .decline:  return job.status == 2
+                                        case .revision: return job.status == 3
                                         }
                                     }, id: \.id) { job in
                                         JobCardView(job: job, isHistory: true) {
-                                            withAnimation {
-                                                viewModel.toggleExpand(for: job)
-                                            }
-                                        } updateDetails: { updateJob in
-                                            
+                                            withAnimation { viewModel.toggleExpand(for: job) }
+                                        } updateDetails: { _ in
                                         } showQRDetails: { qrImage in
                                             qrCodeImage = qrImage
-                                            
-                                            if path.count > 0 {
-                                                path.removeLast()
-                                            }
-                                            path.append("showQRImage")
-                                        } assignJob: { updateJob in
+                                            router.navigate(to: .showQRImage)
+                                        } assignJob: { _ in
                                         } raiseRequestForJob: { requestForJob in
                                             if let pdfURL = requestForJob.reportPdfUrl {
                                                 selectedPdfURL = URL(string: pdfURL)
-                                                if path.count > 0 {
-                                                    path.removeLast()
-                                                }
-                                                path.append("PDFViewer")
+                                                router.navigate(to: .pdfViewer)
                                             }
                                         } startJob: { startedJob in
                                             if startedJob.jobStartDate != nil && startedJob.jobCompletionDate != nil && startedJob.isCompleted == true {
                                                 viewModel.selectedItem = startedJob
-                                                
-                                                if path.count > 0 {
-                                                    path.removeLast()
-                                                }
-                                                path.append("inspectionChecklistPage")
+                                                router.navigate(to: .inspectionChecklist)
                                             }
                                         }
                                     }
@@ -119,50 +96,32 @@ struct InspectionHistoryListView: View {
                 .navigationBarBackButtonHidden(true)
                 .background(.applicationBGcolor)
                 .ignoresSafeArea(edges: .bottom)
-                .navigationDestination(for: String.self) { value in
-                    if value == "reviewInspections" {
-                        DocReviewChecklistView(viewModel: viewModel, path: $path) {
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                .navigationDestination(for: AppRoute.self) { route in
+                    switch route {
+                    case .reviewInspections:
+                        DocReviewChecklistView(viewModel: viewModel) {
+                            DispatchQueue.main.async { router.pop() }
                         }
-                    } else if value == "showQRImage" {
+                    case .showQRImage:
                         QRPreviewView(image: $qrCodeImage) {
                             qrCodeImage = nil
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            DispatchQueue.main.async { router.pop() }
                         }
-                    } else if value == "inspectionChecklistPage" {
+                    case .inspectionChecklist:
                         InspectionChecklistView(viewModel: viewModel) {
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            DispatchQueue.main.async { router.pop() }
                         }
-                    } else if value == "PDFViewer" {
-                        
+                    case .pdfViewer:
                         PDFViewer(url: $selectedPdfURL) {
                             selectedPdfURL = nil
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            DispatchQueue.main.async { router.pop() }
                         }
-                    } else if value == "aiChecklistPage" {
+                    case .aiChecklist:
                         AIChecklistDetailView(viewModel: viewModel, checklist: viewModel.checkList) {
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            DispatchQueue.main.async { router.pop() }
                         }
+                    default:
+                        EmptyView()
                     }
                 }
                 .alert(isPresented: $cameraDenied) {
@@ -177,18 +136,16 @@ struct InspectionHistoryListView: View {
                     )
                 }
                 .onAppear {
-                    Task {
-                        await viewModel.refreshOrganisations()
-                    }
+                    Task { await viewModel.refreshOrganisations() }
                 }
-                
-                
+
+
                 if viewModel.isLoading {
                     LoadingView()
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.isLoading)
                 }
-                
+
                 Group {
                     if let error = viewModel.serviceError {
                         let nsError = error as NSError
@@ -196,24 +153,21 @@ struct InspectionHistoryListView: View {
                         let message = nsError.code == 92001
                         ? "Please check your WiFi or cellular data."
                         : nsError.localizedDescription
-                        
+
                         CustomAlertView(
                             title: title,
                             message: message,
                             primaryButtonTitle: "OK",
-                            primaryAction: {
-                                viewModel.serviceError = nil
-                            },
+                            primaryAction: { viewModel.serviceError = nil },
                             secondaryButtonTitle: nil,
                             secondaryAction: nil
                         )
                     }
                 }
-                 
+
             }
-        }
     }
-    
+
     private func checkCameraPermission(granted: @escaping () -> Void) {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
@@ -238,6 +192,6 @@ enum InspectionFilter: String, CaseIterable, Identifiable {
     case approved = "Approved"
     case decline = "Decline"
     case revision = "Revision"
-    
+
     var id: String { rawValue }
 }
