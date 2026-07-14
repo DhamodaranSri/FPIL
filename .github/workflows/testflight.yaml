@@ -56,5 +56,5 @@ jobs:
           MATCH_KEYCHAIN_PASSWORD: "temporary_runner_password"
           FASTLANE_DONT_STORE_PASSWORD_IN_KEYCHAIN: "1"
           
-          MATCH_P12_PASSWORD: "123"
+          MATCH_P12_PASSWORD: "12345"
         run: bundle exec fastlane deploy_testflight
