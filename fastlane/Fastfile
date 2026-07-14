@@ -12,40 +12,45 @@ platform :ios do
       type: "appstore",
       readonly: true
     )
+
+    # 3. Configure manual signing ONLY for the main app target (protects Swift Packages)
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: "SU5Z39MX2P",
+      bundle_identifier: "com.blaster.fpil",
+      profile_name: "AppStoreFPIL2025",
+      code_sign_identity: "Apple Distribution",
+      targets: ["FPIL"]
+    )
     
-    # 4. Force slow cloud-runner stability variables
+    # 5. Force slow cloud-runner stability variables
     ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "120"
     ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "5"
     
-    # 5. DYNAMIC OPTIONS PLIST CREATION
-    # We build the packaging instructions manually so xcodebuild has no room to look at legacy settings.
-    export_options = {
-      method: "app-store-connect",
-      signingStyle: "manual",
-      teamID: "SU5Z39MX2P",
-      provisioningProfiles: {
-        "com.blaster.fpil" => "AppStoreFPIL2025"
-      }
-    }
-    
-    # 6. DIRECT COMPILATION ENGINE INVOKE
-    # By running raw xcodebuild, we stamp the parameters globally across both steps.
-    xcodebuild(
-      workspace: "FPIL.xcworkspace",
+    # 6. Build and package the application cleanly
+    build_app(
       scheme: "FPIL",
-      archive: true,
-      archive_path: "./build/FPIL.xcarchive",
-      export_archive: true,
-      export_options: export_options,
-      export_path: "./build",
-      # This targets the identity parameter across ALL child execution blocks cleanly,
-      # while removing signing constraints from underlying Firebase SPM bundles.
-      xcargs: "CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\" PROVISIONING_PROFILE_SPECIFIER=\"AppStoreFPIL2025\" 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO"
+      workspace: "FPIL.xcworkspace",
+      export_method: "app-store",
+      
+      # Step A: Controls the compilation step (stops Swift Packages from screaming)
+      xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\"",
+      
+      # Step B: Forces the exporter to keep your certificate settings intact
+      export_xcargs: "CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\"",
+      
+      export_options: {
+        method: "app-store-connect",
+        signingStyle: "manual",
+        teamID: "SU5Z39MX2P",
+        provisioningProfiles: {
+          "com.blaster.fpil" => "AppStoreFPIL2025"
+        }
+      }
     )
 
-    # 7. Upload the generated binary straight into TestFlight
+    # 7. Upload the built binary straight into TestFlight
     upload_to_testflight(
-      ipa: "./build/FPIL.ipa",
       skip_waiting_for_build_processing: true
     )
   end
