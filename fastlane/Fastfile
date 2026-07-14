@@ -1,0 +1,36 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build and upload directly to TestFlight on every push"
+  lane :deploy_testflight do
+    
+    # 1. Fetch your pre-existing profiles from your private Git repo
+    match(
+      type: "appstore",
+      readonly: true
+    )
+    
+    # 2. Grab the latest build number from TestFlight
+    # Note: If no build exists on TestFlight yet, this will safely return 0
+    current_build = latest_testflight_build_number(
+      app_identifier: "com.blaster.fpil" # Replace with your exact Bundle ID
+    )
+    
+    # 3. Add 1 to the current TestFlight build number
+    increment_build_number(
+      build_number: current_build + 1
+    )
+    
+    # 4. Build and compile the IPA (replaces the 'gym' syntax seen in older profiles)
+    build_app(
+      scheme: "FPIL",              # Replace with your actual Xcode Scheme name
+      workspace: "FPIL.xcworkspace", # Replace with your .xcworkspace filename
+      export_method: "app-store"
+    )
+
+    # 5. Upload the built binary straight into TestFlight
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true # Saves runner time by not waiting for Apple processing
+    )
+  end
+end
