@@ -7,7 +7,8 @@ platform :ios do
     # 1. Fetch your pre-existing profiles from your private Git repo
     match(
       type: "appstore",
-      readonly: true
+      readonly: true,
+      p12_password: "123"
     )
     
     # 2. Grab the latest build number from TestFlight
