@@ -9,13 +9,20 @@ platform :ios do
       type: "appstore",
       readonly: true
     )
+
+update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: "SU5Z39MX2P",
+      bundle_identifier: "com.blaster.fpil",
+      profile_name: "AppStoreFPIL2025",
+      code_sign_identity: "Apple Distribution"
+    )
     
     # 3. Build your app with explicit export options mapping
     build_app(
       scheme: "FPIL",
       workspace: "FPIL.xcworkspace",
       export_method: "app-store",
-      xcargs: 'DEVELOPMENT_TEAM="SU5Z39MX2P" CODE_SIGN_STYLE="Manual" CODE_SIGN_IDENTITY="Apple Distribution" PROVISIONING_PROFILE_SPECIFIER="AppStoreFPIL2025"',
       # FORCE Xcode to use the exact matching identities we just unlocked
       export_options: {
         method: "app-store",
