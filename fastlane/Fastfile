@@ -33,12 +33,9 @@ platform :ios do
       workspace: "FPIL.xcworkspace",
       export_method: "app-store",
       
-      # 1. Clean the environment variables so they don't block the exporter execution
-      xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES",
-      
-      # 2. Tell Xcode to strip signing requirements ONLY from external SPM dependency bundles
-      # leaving your main app binary signed properly.
-      xcconfig: "CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle] = NO",
+      # Inject the target-specific signing rule safely inside xcargs.
+      # This leaves Swift Package dependencies unsigned while ensuring your main application signs perfectly.
+      xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO",
       
       export_options: {
         method: "app-store-connect",
