@@ -13,34 +13,45 @@ platform :ios do
       readonly: true
     )
 
-    # 3. Configure manual signing ONLY for the main app target (protects Swift Packages)
+    # 3. ROOT CAUSE PATCH: Physically rewrite the project settings file on the runner.
+    # This prevents Fastlane and Xcode from reverting to "iOS Distribution".
+    UI.message("Patching project configuration file structure...")
+    project_path = "FPIL.xcodeproj/project.pbxproj"
+    if File.exist?(project_path)
+      file_contents = File.read(project_path)
+      # Forcefully replace all stale target text strings with the modern certificate title
+      updated_contents = file_contents.gsub("iOS Distribution", "Apple Distribution")
+      File.open(project_path, "w") { |file| file.puts updated_contents }
+      UI.success("Successfully replaced legacy signing target strings with Apple Distribution!")
+    else
+      UI.error("Could not locate project file path to patch configuration.")
+    end
+
+    # 4. Configure manual signing ONLY for the main app target (protects Swift Packages)
     update_code_signing_settings(
       use_automatic_signing: false,
       team_id: "SU5Z39MX2P",
       bundle_identifier: "com.blaster.fpil",
       profile_name: "AppStoreFPIL2025",
-      code_sign_identity: "iOS Distribution",
+      code_sign_identity: "Apple Distribution",
       targets: ["FPIL"]
     )
     
-    # 5. Force slow cloud-runner stability variables
+    # 6. Force slow cloud-runner stability variables
     ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "120"
     ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "5"
     
-    # 6. Build and package the application cleanly
+    # 7. Build and package the application cleanly
     build_app(
       scheme: "FPIL",
       workspace: "FPIL.xcworkspace",
       export_method: "app-store",
       
-      # Step A: Controls the compilation step (stops Swift Packages from screaming)
-      xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO CODE_SIGN_IDENTITY=\"iOS Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\"",
-      
-      # Step B: Forces the exporter to keep your certificate settings intact
-      export_xcargs: "CODE_SIGN_IDENTITY=\"iOS Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\"",
+      # Controls compilation (stops Swift Packages from screaming)
+      xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"SU5Z39MX2P\"",
       
       export_options: {
-        method: "app-store-connect",
+        method: "app-store",
         signingStyle: "manual",
         teamID: "SU5Z39MX2P",
         provisioningProfiles: {
@@ -49,7 +60,7 @@ platform :ios do
       }
     )
 
-    # 7. Upload the built binary straight into TestFlight
+    # 8. Upload the built binary straight into TestFlight
     upload_to_testflight(
       skip_waiting_for_build_processing: true
     )
