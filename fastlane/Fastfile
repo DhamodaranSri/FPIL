@@ -31,7 +31,7 @@ platform :ios do
     build_app(
       scheme: "FPIL",
       workspace: "FPIL.xcworkspace",
-      export_method: "app-store-connect",
+      export_method: "app-store",
       
       # 1. Clean the environment variables so they don't block the exporter execution
       xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES",
