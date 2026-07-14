@@ -27,15 +27,24 @@ platform :ios do
     ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "120"
     ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "5"
     
-    # 6. Build your app cleanly
+    # CREATE A DYNAMIC TARGET OVERRIDE FILE:
+    # This forces Xcode to look for "Apple Distribution" and leaves 
+    # the external Swift bundles cleanly managed.
+    File.write("temp_signing.xcconfig", <<~XCCONFIG
+      CODE_SIGN_IDENTITY = Apple Distribution
+      CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Distribution
+      CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle] = NO
+    XCCONFIG
+    )
+    
+    # 6. Build your app cleanly using the custom configuration file
     build_app(
       scheme: "FPIL",
       workspace: "FPIL.xcworkspace",
       export_method: "app-store",
       
-      # Inject the target-specific signing rule safely inside xcargs.
-      # This leaves Swift Package dependencies unsigned while ensuring your main application signs perfectly.
-      xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO",
+      # Tell Fastlane to load our custom configuration file
+      xcconfig: "temp_signing.xcconfig",
       
       export_options: {
         method: "app-store-connect",
@@ -46,6 +55,9 @@ platform :ios do
         }
       }
     )
+
+    # Clean up the temporary file after the build completes
+    File.delete("temp_signing.xcconfig") if File.exist?("temp_signing.xcconfig")
 
     # 7. Upload the built binary straight into TestFlight
     upload_to_testflight(
