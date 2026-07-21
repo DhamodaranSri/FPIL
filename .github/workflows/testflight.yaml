@@ -50,9 +50,9 @@ jobs:
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
-          MATCH_P12_PASSWORD: "12345"
+          MATCH_P12_PASSWORD: ""
           
           # ADD THIS ENV VARIABLE TO FORCE FASTLANE TO USE THE KEYCHAIN 👇
           MATCH_KEYCHAIN_NAME: "build.keychain"
-          MATCH_KEYCHAIN_PASSWORD: "12345"
+          MATCH_KEYCHAIN_PASSWORD: ""
         run: bundle exec fastlane deploy_testflight
