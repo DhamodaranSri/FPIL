@@ -13,18 +13,20 @@ platform :ios do
       readonly: true
     )
 
-    # 3. ROOT CAUSE PATCH: Rewrite project file settings on the runner
-    # Replaces legacy "iOS Distribution" with "Apple Distribution" and updates Team ID
-    UI.message("Patching project configuration file structure...")
+    UI.message("Scrubbing project configuration file for legacy code signing identities...")
     project_path = "FPIL.xcodeproj/project.pbxproj"
     if File.exist?(project_path)
       file_contents = File.read(project_path)
+      
+      # 1. Replace legacy identity names with Apple Distribution
       updated_contents = file_contents.gsub("iOS Distribution", "Apple Distribution")
+                                      .gsub("iPhone Distribution", "Apple Distribution")
+      
+      # 2. Enforce new Team ID across all configuration blocks
       updated_contents = updated_contents.gsub(/DEVELOPMENT_TEAM = [A-Z0-9]+;/, "DEVELOPMENT_TEAM = 8R2YXVH749;")
+      
       File.open(project_path, "w") { |file| file.puts updated_contents }
-      UI.success("Successfully updated project settings for Team 8R2YXVH749!")
-    else
-      UI.error("Could not locate project file path to patch configuration.")
+      UI.success("Successfully updated project settings to Apple Distribution!")
     end
 
     # 4. Configure manual signing ONLY for the main app target (protects Swift Packages)
@@ -45,16 +47,15 @@ platform :ios do
     build_app(
       scheme: "FPIL",
       workspace: "FPIL.xcworkspace",
-      export_method: "app-store",
+      export_method: "app-store-connect",
       
-      # Step A: Allows SPM/Firebase bundles to build without requiring code signing
-      # Step B: Forces explicit "Apple Distribution" identity on the main app
       xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"8R2YXVH749\"",
       
       export_options: {
-        method: "app-store",
+        method: "app-store-connect",
         signingStyle: "manual",
         teamID: "8R2YXVH749",
+        signingCertificate: "Apple Distribution", # Forces exportArchive to search strictly for Apple Distribution
         provisioningProfiles: {
           "com.lmtech.fpil" => "fpil_store"
         }
