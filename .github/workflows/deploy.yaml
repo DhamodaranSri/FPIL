@@ -1,0 +1,13 @@
+- name: Execute Fastlane Beta Lane
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_URL: https://x-token-auth:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/DhamodaranSri/ios-certificates-fpil.git
+          
+          # App Store Connect API Key secrets (Replaces FASTLANE_USER and APPLE_ID_PASSWORD)
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+          
+          MATCH_KEYCHAIN_NAME: "build.keychain"
+          MATCH_KEYCHAIN_PASSWORD: ""
+        run: bundle exec fastlane deploy_testflight
