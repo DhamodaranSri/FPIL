@@ -1,5 +1,5 @@
 git_url(ENV["MATCH_GIT_URL"] || "https://github.com/DhamodaranSri/ios-certificates-fpil.git")
-app_identifier 'com.blaster.fpil'
+app_identifier 'com.lmtech.fpil'
 type "appstore"
-team_id "SU5Z39MX2P"
+team_id "8R2YXVH749"
 git_branch "main"

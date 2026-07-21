@@ -13,9 +13,9 @@ platform :ios do
     # 4. Configure manual signing ONLY for the main app target (protects Swift Packages)
     update_code_signing_settings(
       use_automatic_signing: false,
-      team_id: "SU5Z39MX2P",
-      bundle_identifier: "com.blaster.fpil",
-      profile_name: "AppStoreFPIL2025",
+      team_id: "8R2YXVH749",
+      bundle_identifier: "com.lmtech.fpil",
+      profile_name: "fpil_store",
       targets: ["FPIL"]
     )
     
@@ -31,9 +31,9 @@ platform :ios do
       export_options: {
         method: "app-store",
         signingStyle: "manual",
-        teamID: "SU5Z39MX2P",
+        teamID: "8R2YXVH749",
         provisioningProfiles: {
-          "com.blaster.fpil" => "AppStoreFPIL2025"
+          "com.lmtech.fpil" => "fpil_store"
         }
       }
     )
