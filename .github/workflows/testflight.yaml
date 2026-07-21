@@ -54,5 +54,5 @@ jobs:
           
           # ADD THIS ENV VARIABLE TO FORCE FASTLANE TO USE THE KEYCHAIN 👇
           MATCH_KEYCHAIN_NAME: "build.keychain"
-          MATCH_KEYCHAIN_PASSWORD: ""
+          MATCH_KEYCHAIN_PASSWORD: "12345"
         run: bundle exec fastlane deploy_testflight
