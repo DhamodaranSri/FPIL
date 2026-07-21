@@ -1,0 +1,59 @@
+
+  desc "Build and upload directly to TestFlight on every push"
+  lane :deploy_testflight do
+    
+    # 1. Initialize CI environment for headless keychain access
+    setup_ci
+    
+    # 2. Fetch your pre-existing profiles from your private Git repo
+    match(
+      type: "appstore",
+      readonly: true
+    )
+
+    # 4. Configure manual signing ONLY for the main app target (protects Swift Packages)
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: "8R2YXVH749",
+      bundle_identifier: "com.lmtech.fpil",
+      profile_name: "fpil_store",
+      code_sign_identity: "Apple Distribution",
+      targets: ["FPIL"]
+    )
+    
+    # 6. Force slow cloud-runner stability variables
+    ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "120"
+    ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "5"
+    
+    # 7. Build and package the application cleanly
+    build_app(
+      scheme: "FPIL",
+      workspace: "FPIL.xcworkspace",
+      export_method: "app-store",
+      
+      export_options: {
+        method: "app-store-connect",
+        signingStyle: "manual",
+        teamID: "8R2YXVH749",
+        signingCertificate: "Apple Distribution",
+        provisioningProfiles: {
+          "com.lmtech.fpil" => "fpil_store"
+        }
+      }
+    )
+
+# 8. Upload the built binary straight into TestFlight using API Key authentication
+  api_key = app_store_connect_api_key(
+    key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+    issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+    key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"],
+    is_key_content_base64: false,
+    in_house: false
+  )
+
+  upload_to_testflight(
+    api_key: api_key,
+    skip_waiting_for_build_processing: true
+  )
+
+  end
