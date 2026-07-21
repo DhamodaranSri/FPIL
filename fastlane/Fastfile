@@ -1,6 +1,4 @@
-default_platform(:ios)
 
-platform :ios do
   desc "Build and upload directly to TestFlight on every push"
   lane :deploy_testflight do
     
@@ -12,22 +10,6 @@ platform :ios do
       type: "appstore",
       readonly: true
     )
-
-    UI.message("Scrubbing project configuration file for legacy code signing identities...")
-    project_path = "FPIL.xcodeproj/project.pbxproj"
-    if File.exist?(project_path)
-      file_contents = File.read(project_path)
-      
-      # 1. Replace legacy identity names with Apple Distribution
-      updated_contents = file_contents.gsub("iOS Distribution", "Apple Distribution")
-                                      .gsub("iPhone Distribution", "Apple Distribution")
-      
-      # 2. Enforce new Team ID across all configuration blocks
-      updated_contents = updated_contents.gsub(/DEVELOPMENT_TEAM = [A-Z0-9]+;/, "DEVELOPMENT_TEAM = 8R2YXVH749;")
-      
-      File.open(project_path, "w") { |file| file.puts updated_contents }
-      UI.success("Successfully updated project settings to Apple Distribution!")
-    end
 
     # 4. Configure manual signing ONLY for the main app target (protects Swift Packages)
     update_code_signing_settings(
@@ -49,12 +31,6 @@ platform :ios do
       workspace: "FPIL.xcworkspace",
       export_method: "app-store",
       
-      # Controls compilation phase
-      xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"8R2YXVH749\"",
-      
-      # Controls export phase across ALL targets/bundles inside the archive
-      export_xcargs: "CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"8R2YXVH749\" 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO",
-      
       export_options: {
         method: "app-store-connect",
         signingStyle: "manual",
@@ -71,4 +47,3 @@ platform :ios do
       skip_waiting_for_build_processing: true
     )
   end
-end
