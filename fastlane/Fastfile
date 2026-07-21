@@ -47,7 +47,7 @@ platform :ios do
     build_app(
       scheme: "FPIL",
       workspace: "FPIL.xcworkspace",
-      export_method: "app-store-connect",
+      export_method: "app-store",
       
       xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"8R2YXVH749\"",
       
