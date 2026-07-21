@@ -49,13 +49,17 @@ platform :ios do
       workspace: "FPIL.xcworkspace",
       export_method: "app-store",
       
+      # Controls compilation phase
       xcargs: "CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"8R2YXVH749\"",
+      
+      # Controls export phase across ALL targets/bundles inside the archive
+      export_xcargs: "CODE_SIGN_IDENTITY=\"Apple Distribution\" DEVELOPMENT_TEAM=\"8R2YXVH749\" 'CODE_SIGNING_ALLOWED[sdk=iphoneos*][type=com.apple.product-type.bundle]'=NO",
       
       export_options: {
         method: "app-store-connect",
         signingStyle: "manual",
         teamID: "8R2YXVH749",
-        signingCertificate: "Apple Distribution", # Forces exportArchive to search strictly for Apple Distribution
+        signingCertificate: "Apple Distribution",
         provisioningProfiles: {
           "com.lmtech.fpil" => "fpil_store"
         }
