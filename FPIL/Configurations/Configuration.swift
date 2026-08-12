@@ -285,6 +285,7 @@ class UserDefaultsStore {
         UserDefaults.standard.removeObject(forKey: allClientList)
         UserDefaults.standard.removeObject(forKey: allServicesPerfomerdList)
         UserDefaults.standard.removeObject(forKey: clientDetailInfo)
+        UserDefaults.standard.removeObject(forKey: apiKey)
     }
     
     

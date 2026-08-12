@@ -11,9 +11,8 @@ import SwiftUI
 struct OrganisationListView: View {
     @ObservedObject var viewModel: OrganisationViewModel
     @State private var path = NavigationPath()
-    
+
     var body: some View {
-        
         NavigationStack(path: $path) {
             ZStack {
                 VStack(spacing: 0) {
@@ -22,10 +21,7 @@ struct OrganisationListView: View {
                         showBackButton: false,
                         actions: [
                             NavBarAction(icon: "plus") {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                                path.append("createOrganisation")
+                                path.append(AppRoute.createOrganisation)
                             },
                             NavBarAction(icon: "logout") {
                                 viewModel.signout()
@@ -34,8 +30,8 @@ struct OrganisationListView: View {
                         backgroundColor: .applicationBGcolor,
                         titleColor: .appPrimary
                     )
-                    
-                    HStack (spacing: 15) {
+
+                    HStack(spacing: 15) {
                         VStack {
                             Text("\(viewModel.items.count)")
                                 .foregroundColor(.appPrimary)
@@ -51,7 +47,7 @@ struct OrganisationListView: View {
                         .background(Color.inspectionCellBG)
                         .cornerRadius(12)
                         .contentShape(Rectangle())
-                        
+
                         VStack {
                             let activeStationsCount = viewModel.items.filter { $0.status == 1 }.count
                             Text("\(activeStationsCount)")
@@ -66,7 +62,7 @@ struct OrganisationListView: View {
                             .background(Color.inspectionCellBG)
                             .cornerRadius(12)
                             .contentShape(Rectangle())
-                        
+
                         VStack {
                             let inactiveStationsCount = viewModel.items.filter { $0.status == 0 }.count
                             Text("\(inactiveStationsCount)")
@@ -82,15 +78,15 @@ struct OrganisationListView: View {
                             .cornerRadius(12)
                             .contentShape(Rectangle())
                     }.padding(5)
-                    
+
                     HStack {
                         TextField(
-                                "Search for Firestation",
-                                text: $viewModel.searchText,
-                                prompt: Text("Search for Firestation").foregroundColor(.gray) // placeholder gray
-                            )
-                            .foregroundColor(.white) // search text white
-                            .padding()
+                            "Search for Firestation",
+                            text: $viewModel.searchText,
+                            prompt: Text("Search for Firestation").foregroundColor(.gray)
+                        )
+                        .foregroundColor(.white)
+                        .padding()
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.white)
                             .padding()
@@ -102,10 +98,9 @@ struct OrganisationListView: View {
                     .contentShape(Rectangle())
                     .padding(.horizontal, 15)
                     .padding(.vertical, 10)
-                    
+
                     Group {
                         if viewModel.filteredItems.isEmpty {
-                            // No Data
                             NoDataView(message: "No Firestations Available")
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         } else {
@@ -114,10 +109,7 @@ struct OrganisationListView: View {
                                     ForEach(viewModel.filteredItems, id:\.id) { organisation in
                                         OrganisationListCell(organisation: organisation) { org in
                                             viewModel.selectedItem = org
-                                            if path.count > 0 {
-                                                path.removeLast()
-                                            }
-                                            path.append("createOrganisation")
+                                            path.append(AppRoute.createOrganisation)
                                         }
                                     }
                                 }
@@ -133,39 +125,37 @@ struct OrganisationListView: View {
                 .navigationBarBackButtonHidden(true)
                 .background(.applicationBGcolor)
                 .ignoresSafeArea(edges: .bottom)
-                .navigationDestination(for: String.self) { value in
-                    if value == "createOrganisation" {
+                .navigationDestination(for: AppRoute.self) { route in
+                    switch route {
+                    case .createOrganisation:
                         CreateOrganisationView(viewModel: viewModel) {
                             DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
+                                if !path.isEmpty { path.removeLast() }
                             }
                         }
+                    default:
+                        EmptyView()
                     }
                 }
-                
+
                 if viewModel.isLoading {
                     LoadingView()
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.isLoading)
                 }
-                
+
                 Group {
                     if let error = viewModel.serviceError {
                         let nsError = error as NSError
                         let title = nsError.code == 92001 ? "No Internet Connection" : "Error"
                         let message = nsError.code == 92001
-                        ? "Please check your WiFi or cellular data."
-                        : nsError.localizedDescription
-                       
+                            ? "Please check your WiFi or cellular data."
+                            : nsError.localizedDescription
                         CustomAlertView(
                             title: title,
                             message: message,
                             primaryButtonTitle: "OK",
-                            primaryAction: {
-                                viewModel.serviceError = nil
-                            },
+                            primaryAction: { viewModel.serviceError = nil },
                             secondaryButtonTitle: nil,
                             secondaryAction: nil
                         )
@@ -182,7 +172,7 @@ struct OrganisationListView: View {
 
 struct NoDataView: View {
     let message: String
-    
+
     var body: some View {
         VStack {
             Image(systemName: "tray")

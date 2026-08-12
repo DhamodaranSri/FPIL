@@ -11,6 +11,12 @@ import FirebaseFirestore
 import FirebaseAuth
 import FirebaseMessaging
 
+enum UserRole: Int {
+    case organisation = 1
+    case employee     = 2
+    case inspector    = 5
+}
+
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
     var qrGenerator: QRGenerator = QRGenerator()
@@ -30,32 +36,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         }
         UIRefreshControl.appearance().tintColor = .gray
         UITextView.appearance().backgroundColor = .clear
-        
-        let appLaunchRepository = FirebaseAppLaunchRepository()
-        appLaunchRepository.fetchBuildings { result in
-            if case .success(let buildings) = result {
-                UserDefaultsStore.buildings = buildings
-            }
-        }
-        
-        appLaunchRepository.fetchBillingFrequency { result in
-            if case .success(let buildings) = result {
-                UserDefaultsStore.frequency = buildings
-            }
-        }
-        
-        appLaunchRepository.fetchClientsType { result in
-            if case .success(let clientsType) = result {
-                UserDefaultsStore.clientType = clientsType
-            }
-        }
-        
-        appLaunchRepository.fetchServicePerformed { result in
-            if case .success(let servicePerfomerdTypes) = result {
-                UserDefaultsStore.servicesPerfomerdTypes = servicePerfomerdTypes
-            }
-        }
-        
+
         return true
     }
 
@@ -106,20 +87,24 @@ struct FPILApp: App {
     
     var body: some Scene {
         WindowGroup {
-            if isLoggedIn {
-                switch UserDefaultsStore.profileDetail?.userType {
-                case 1: OrganisationListView(viewModel: OrganisationViewModel())
-                case 2: DashboardView()
-                case 5: InspectionPage()
-                default: DashboardView()
+            Group {
+                if isLoggedIn {
+                    switch UserRole(rawValue: UserDefaultsStore.profileDetail?.userType ?? 0) {
+                    case .organisation:
+                        OrganisationListView(viewModel: OrganisationViewModel())
+                    case .employee:
+                        DashboardView()
+                    case .inspector:
+                        InspectionPage()
+                    default:
+                        DashboardView()
+                    }
+                } else {
+                    LoginView()
                 }
-            } else {
-                LoginView()
             }
-        }
-        .onChange(of: isLoggedIn) { newValue in
-            if newValue {
-                fetchData() // ✅ call your Firebase data fetch
+            .task(id: isLoggedIn) {
+                if isLoggedIn { fetchData() }
             }
         }
     }

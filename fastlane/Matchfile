@@ -1,0 +1,5 @@
+git_url("https://github.com/DhamodaranSri/ios-certificates-fpil.git")
+app_identifier 'com.lmtech.fpil'
+type "appstore"
+team_id "8R2YXVH749"
+git_branch "main"
