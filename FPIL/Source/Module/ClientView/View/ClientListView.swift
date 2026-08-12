@@ -9,15 +9,14 @@ import SwiftUI
 
 struct ClientListView: View {
     @ObservedObject var viewModel: ClientListViewModel
-    @Binding var path:NavigationPath
+    @EnvironmentObject private var router: Router
     @State private var selectedPdfURL: URL?
     @State private var selectedQRImageJob: UIImage?
     @State var selectedItem: ClientModel?
-    var jobViewModel: JobListViewModel = JobListViewModel()
+    @StateObject private var jobViewModel = JobListViewModel()
 
     var body: some View {
-        NavigationStack(path: $path) {
-            ZStack {
+        ZStack {
                 VStack {
                     SearchView(searchText: $viewModel.searchText, searchPlaceholder: "Search for Client")
                     Group {
@@ -33,17 +32,11 @@ struct ClientListView: View {
                                         ClientListCell(client: clientModel) { client, isButton in
                                             selectedItem = client
                                             viewModel.selectedItem = selectedItem
-                                            if path.count > 0 {
-                                                path.removeLast()
-                                            }
-                                            path.append(isButton ? "createInspection" : "createClients")
+                                            router.navigate(to: isButton ? .createInspection : .createClient)
                                         } onTapCell: { client in
                                             selectedItem = client
                                             viewModel.selectedItem = selectedItem
-                                            if path.count > 0 {
-                                                path.removeLast()
-                                            }
-                                            path.append("ClientDetails")
+                                            router.navigate(to: .clientDetails)
                                         }
                                     }
                                 }
@@ -57,119 +50,76 @@ struct ClientListView: View {
                     }
                 }
                 .onAppear {
-                    Task {
-                        await viewModel.refreshClientsList()
-                    }
+                    Task { await viewModel.refreshClientsList() }
                 }
-                .navigationDestination(for: String.self) { value in
-                    if value == "createClients" {
+                .navigationDestination(for: AppRoute.self) { route in
+                    switch route {
+                    case .createClient:
                         CreateOrUpdateClientView(viewModel: viewModel) {
                             selectedItem = nil
                             viewModel.selectedItem = nil
-                            Task {
-                                await viewModel.refreshClientsList()
-                            }
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            Task { await viewModel.refreshClientsList() }
+                            DispatchQueue.main.async { router.pop() }
                         }
-                    } else if value == "createInspection" {
+                    case .createInspection:
                         InvoiceGenerationView(viewModel: InvoiceViewModel(items: UserDefaultsStore.servicesPerfomerdTypes ?? [], client: viewModel.selectedItem)) {
                             selectedItem = nil
                             viewModel.selectedItem = nil
-                            Task {
-                                await viewModel.refreshClientsList()
-                            }
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            Task { await viewModel.refreshClientsList() }
+                            DispatchQueue.main.async { router.pop() }
                         }
-                    } else if value == "ClientDetails" {
-                        ClientDetailView(viewModel: ClientDetailViewModel(selectedItem: selectedItem), path: $path) {
+                    case .clientDetails:
+                        ClientDetailView(viewModel: ClientDetailViewModel(selectedItem: selectedItem)) {
                             selectedItem = nil
                             viewModel.selectedItem = nil
-                            Task {
-                                await viewModel.refreshClientsList()
-                            }
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            Task { await viewModel.refreshClientsList() }
+                            router.pop()
                         } selectedPdfURL: { url in
                             selectedPdfURL = url
                         } selectedJob: { job in
                             jobViewModel.selectedItem = job
                         } selectedClient: { client, invoice in
-                            DispatchQueue.main.async {
-                                viewModel.selectedClient = client
-                                viewModel.selectedInvoice = invoice
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                                path.append("createNewInspection")
-                            }
+                            viewModel.selectedClient = client
+                            viewModel.selectedInvoice = invoice
+                            router.navigate(to: .createNewInspection)
                         } selectedQRImage: { qrImage in
                             selectedQRImageJob = qrImage
                         }
-                    } else if value == "PDFViewer" {
+                    case .pdfViewer:
                         PDFViewer(url: $selectedPdfURL) {
                             selectedPdfURL = nil
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            DispatchQueue.main.async { router.pop() }
                         }
-                    } else if value == "inspectionChecklistPage" {
-                        InspectionDetailsPage(viewModel: jobViewModel, path: $path) {
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                    case .inspectionChecklist:
+                        InspectionDetailsPage(viewModel: jobViewModel) {
+                            DispatchQueue.main.async { router.pop() }
                         } selectedPdfURL: { url in
                             selectedPdfURL = url
                         }
-//                        InspectionChecklistView(viewModel: jobViewModel, isReadable: true) {
-//                            DispatchQueue.main.async {
-//                                if path.count > 0 {
-//                                    path.removeLast()
-//                                }
-//                            }
-//                        }
-                    } else if value == "createNewInspection" {
+                    case .createNewInspection:
                         CreateInspection(viewModel: jobViewModel, clientModel: viewModel.selectedClient, inspectionForInvoice: viewModel.selectedInvoice) {
                             DispatchQueue.main.async {
                                 viewModel.selectedClient = nil
                                 viewModel.selectedInvoice = nil
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
+                                router.pop()
                             }
                         }
-                    } else if value == "QRCodePage" {
+                    case .qrCodePage:
                         QRPreviewView(image: $selectedQRImageJob) {
                             selectedQRImageJob = nil
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            DispatchQueue.main.async { router.pop() }
                         }
+                    default:
+                        EmptyView()
                     }
                 }
-                
+
                 if viewModel.isLoading {
                     LoadingView()
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.isLoading)
                 }
-                
+
                 Group {
                     if let error = viewModel.serviceError {
                         let nsError = error as NSError
@@ -177,21 +127,18 @@ struct ClientListView: View {
                         let message = nsError.code == 92001
                         ? "Please check your WiFi or cellular data."
                         : nsError.localizedDescription
-                        
+
                         CustomAlertView(
                             title: title,
                             message: message,
                             primaryButtonTitle: "OK",
-                            primaryAction: {
-                                viewModel.serviceError = nil
-                            },
+                            primaryAction: { viewModel.serviceError = nil },
                             secondaryButtonTitle: nil,
                             secondaryAction: nil
                         )
                     }
                 }
-                 
+
             }
-        }
     }
 }

@@ -9,18 +9,17 @@ import SwiftUI
 import AVFoundation
 
 struct SiteListView: View {
-    @Binding var path:NavigationPath
     @ObservedObject var viewModel: JobListViewModel
+    @EnvironmentObject private var router: Router
     @State private var isScannerPresented = false
     @State private var cameraDenied = false
     @State private var qrCodeImage: UIImage?
     @State private var raiseRequestForJob: JobModel?
     @State private var startJob: Bool = false
     @State private var tempViewModel: JobListViewModel?
-    
+
     var body: some View {
-        NavigationStack(path: $path) {
-            ZStack {
+        ZStack {
                 VStack {
                     SearchBarWithNormalAndQRView(text: $viewModel.searchText, onQRScan: {
                         checkCameraPermission {
@@ -30,7 +29,6 @@ struct SiteListView: View {
                     })
                     .sheet(isPresented: $isScannerPresented) {
                         QRScannerRepresentable { result in
-                            // assign to search field (trim if needed)
                             if startJob {
                                 if let selectedJob = viewModel.selectedItem, selectedJob.id == result.trimmingCharacters(in: .whitespacesAndNewlines) {
                                     let startDate = Date()
@@ -38,10 +36,7 @@ struct SiteListView: View {
                                         if error == nil {
                                             viewModel.selectedItem?.jobStartDate = startDate
                                             tempViewModel = viewModel
-                                            if path.count > 0 {
-                                                path.removeLast()
-                                            }
-                                            path.append("inspectionChecklistPage")
+                                            router.navigate(to: .inspectionChecklist)
                                         }
                                     }
                                 } else {
@@ -50,23 +45,20 @@ struct SiteListView: View {
                             } else {
                                 viewModel.searchText = result.trimmingCharacters(in: .whitespacesAndNewlines)
                             }
-                            // you can also trigger a search action here
-                            // performSearch(with: searchText)
                         }
                         .edgesIgnoringSafeArea(.all)
                     }
-                    
+
                     let all = viewModel.items.count
-//                    let today = viewModel.items.filter { $0.jobAssignedDate?.convertDateAloneFromFullDateFormat() == Date().convertDateAloneFromFullDateFormat() }.count
-                    let inprogress = viewModel.items.filter { $0.jobStartDate != nil && $0.jobCompletionDate == nil && $0.isCompleted == false  }.count
+                    let inprogress = viewModel.items.filter { $0.jobStartDate != nil && $0.jobCompletionDate == nil && $0.isCompleted == false }.count
                     let completed = viewModel.items.filter { $0.isCompleted == true }.count
                     let assignedToday = viewModel.items.filter { $0.jobAssignedDate?.formatedDateAloneAsString() == Date().formatedDateAloneAsString() }.count
-                    
+
                     let dic: Dictionary<String, Any> = ["All Sites": all, "Today": assignedToday, "InProgress": inprogress, "Completed": completed]
                     let allKeys: [String] = ["All Sites", "Today", "InProgress", "Completed"]
                     SmallCardInfoView(cardInfo: dic, keys: allKeys)
                         .frame(maxWidth: .infinity)
-                    
+
                     Group {
                         if viewModel.filteredItems.isEmpty {
                             NoDataView(message: "No Inspections Available")
@@ -76,58 +68,22 @@ struct SiteListView: View {
                                 VStack(spacing: 16) {
                                     ForEach(viewModel.filteredItems, id:\.id) { job in
                                         JobCardView(job: job) {
-                                            withAnimation {
-                                                viewModel.toggleExpand(for: job)
-                                            }
+                                            withAnimation { viewModel.toggleExpand(for: job) }
                                         } updateDetails: { updateJob in
-                                            
                                         } showQRDetails: { qrImage in
                                             qrCodeImage = qrImage
-                                            
-                                            if path.count > 0 {
-                                                path.removeLast()
-                                            }
-                                            path.append("showQRImage")
+                                            router.navigate(to: .showQRImage)
                                         } assignJob: { updateJob in
                                         } raiseRequestForJob: { requestForJob in
                                             raiseRequestForJob = requestForJob
-                                            if path.count > 0 {
-                                                path.removeLast()
-                                            }
-                                            path.append("raiseRequest")
+                                            router.navigate(to: .raiseRequest)
                                         } startJob: { startedJob in
                                             if startedJob.jobStartDate != nil && startedJob.jobCompletionDate == nil && startedJob.isCompleted == false {
-                                                /*
-                                                var updatedItems: [String: Any] = [
-                                                    "isCompleted": true,
-                                                    "jobCompletionDate": Date()
-                                                ]
-
-                                                if let lastVisit = LastVisit(id: UUID().uuidString, inspectorId: UserDefaultsStore.profileDetail?.id ?? "", inspectorName: (UserDefaultsStore.profileDetail?.firstName ?? "") + " " + (UserDefaultsStore.profileDetail?.lastName ?? ""), visitDate: startedJob.jobStartDate ?? Date(), inspectionFrequency: startedJob.inspectionFrequency, totalScore: 0, totalSpentTime: 0, totalVoilations: 0).toFirestoreData() {
-                                                    updatedItems["lastVist"] = [lastVisit]
-                                                }
-                                                
-                                                viewModel.updateStartOrStopInspectionDate(jobModel: startedJob, updatedItems: updatedItems) { error in
-                                                    if error == nil {
-                                                        UserDefaultsStore.startedJobDetail = nil
-                                                    }
-                                                }
-                                                */
-                                                
                                                 viewModel.selectedItem = startedJob
-                                                
-                                                if path.count > 0 {
-                                                    path.removeLast()
-                                                }
-                                                path.append("inspectionChecklistPage")
-                                                
+                                                router.navigate(to: .inspectionChecklist)
                                             } else if startedJob.jobStartDate != nil && startedJob.jobCompletionDate != nil && startedJob.isCompleted == true {
                                                 viewModel.selectedItem = startedJob
-                                                
-                                                if path.count > 0 {
-                                                    path.removeLast()
-                                                }
-                                                path.append("inspectionChecklistPage")
+                                                router.navigate(to: .inspectionChecklist)
                                             } else {
                                                 startJob = true
                                                 viewModel.selectedItem = startedJob
@@ -150,58 +106,37 @@ struct SiteListView: View {
                 .navigationBarBackButtonHidden(true)
                 .background(.applicationBGcolor)
                 .ignoresSafeArea(edges: .bottom)
-                .navigationDestination(for: String.self) { value in
-                    if value == "createSites" {
+                .navigationDestination(for: AppRoute.self) { route in
+                    switch route {
+                    case .createSite:
                         CreateOrUpdateSiteView(viewModel: viewModel) {
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            DispatchQueue.main.async { router.pop() }
                         }
-                    } else if value == "showQRImage" {
+                    case .showQRImage:
                         QRPreviewView(image: $qrCodeImage) {
                             qrCodeImage = nil
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            DispatchQueue.main.async { router.pop() }
                         }
-                    } else if value == "raiseRequest" {
+                    case .raiseRequest:
                         RequestView(viewModel: viewModel) {
                             raiseRequestForJob = nil
-                            DispatchQueue.main.async {
-                                if path.count > 0 {
-                                    path.removeLast()
-                                }
-                            }
+                            DispatchQueue.main.async { router.pop() }
                         }
-                    } else if value == "inspectionChecklistPage" {
+                    case .inspectionChecklist:
                         if let tempViewModel {
                             InspectionChecklistView(viewModel: tempViewModel) {
                                 self.tempViewModel = nil
-                                DispatchQueue.main.async {
-                                    if path.count > 0 {
-                                        path.removeLast()
-                                    }
-                                }
-                                Task {
-                                    await viewModel.refreshOrganisations()
-                                }
+                                DispatchQueue.main.async { router.pop() }
+                                Task { await viewModel.refreshOrganisations() }
                             }
                         } else {
                             InspectionChecklistView(viewModel: viewModel) {
-                                DispatchQueue.main.async {
-                                    if path.count > 0 {
-                                        path.removeLast()
-                                    }
-                                }
-                                Task {
-                                    await viewModel.refreshOrganisations()
-                                }
+                                DispatchQueue.main.async { router.pop() }
+                                Task { await viewModel.refreshOrganisations() }
                             }
                         }
+                    default:
+                        EmptyView()
                     }
                 }
                 .alert(isPresented: $cameraDenied) {
@@ -215,14 +150,14 @@ struct SiteListView: View {
                         secondaryButton: .cancel()
                     )
                 }
-                
-                
+
+
                 if viewModel.isLoading {
                     LoadingView()
                         .transition(.opacity)
                         .animation(.easeInOut, value: viewModel.isLoading)
                 }
-                
+
                 Group {
                     if let error = viewModel.serviceError {
                         let nsError = error as NSError
@@ -230,24 +165,21 @@ struct SiteListView: View {
                         let message = nsError.code == 92001
                         ? "Please check your WiFi or cellular data."
                         : nsError.localizedDescription
-                        
+
                         CustomAlertView(
                             title: title,
                             message: message,
                             primaryButtonTitle: "OK",
-                            primaryAction: {
-                                viewModel.serviceError = nil
-                            },
+                            primaryAction: { viewModel.serviceError = nil },
                             secondaryButtonTitle: nil,
                             secondaryAction: nil
                         )
                     }
                 }
-                 
+
             }
-        }
     }
-    
+
     private func checkCameraPermission(granted: @escaping () -> Void) {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
@@ -267,5 +199,5 @@ struct SiteListView: View {
 }
 
 //#Preview {
-//    SiteListView(, path: <#Binding<NavigationPath>#>)
+//    SiteListView(viewModel: JobListViewModel())
 //}

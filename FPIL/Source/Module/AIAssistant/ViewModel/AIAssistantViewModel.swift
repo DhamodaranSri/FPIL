@@ -106,8 +106,7 @@ final class AIAssistantChatService {
 
     func sendFireSafetyQuery(_ userText: String) async throws -> String {
 
-//        let apiKey = "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"
-        let apiKey = UserDefaultsStore.claudeAPIKey?.claudeKey ?? "" //"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"
+        let apiKey = UserDefaultsStore.claudeAPIKey?.claudeKey ?? ""
 
         guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
             throw URLError(.badURL)

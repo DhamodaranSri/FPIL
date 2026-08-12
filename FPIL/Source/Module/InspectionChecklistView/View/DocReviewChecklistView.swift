@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct DocReviewChecklistView: View {
-    @Binding var path: NavigationPath
     @ObservedObject var viewModel: JobListViewModel
-    var onClick: (() -> ())? = nil
+    @EnvironmentObject private var router: Router
+    var onClick: (() -> ())?
     @State private var showPicker = false
     @State private var isLoading: Bool = false
     @State private var siteId: String?
@@ -20,14 +20,13 @@ struct DocReviewChecklistView: View {
     @State var createdById: String? = UserDefaultsStore.profileDetail?.id
     @State var stationId: String = UserDefaultsStore.profileDetail?.parentId ?? ""
     @FocusState private var focusedItemID: String?
-    
-    init(viewModel: JobListViewModel, path: Binding<NavigationPath>, onClick: (() -> ())? = nil) {
+
+    init(viewModel: JobListViewModel, onClick: (() -> ())? = nil) {
         self.onClick = onClick
         self.viewModel = viewModel
-        self._path = path
         _form = StateObject(wrappedValue: DocReviewState(clients: UserDefaultsStore.allClientDetail ?? [], selectedClient: nil))
     }
-    
+
     var body: some View {
         ZStack {
             VStack {
@@ -42,7 +41,7 @@ struct DocReviewChecklistView: View {
                         onClick?()
                     }
                 )
-                
+
                 Group {
                     VStack(spacing: 10) {
                         HStack {
@@ -50,17 +49,14 @@ struct DocReviewChecklistView: View {
                                 .font(ApplicationFont.regular(size: 14).value)
                                 .foregroundColor(.white)
                             Spacer()
-                            TextField(
-                                "",
-                                text: $projectName
-                            )
-                            .focused($focusedItemID, equals: "answer.answer")
-                            .font(ApplicationFont.bold(size: 14).value)
-                            .multilineTextAlignment(.leading)
-                            .foregroundColor(.black)
-                            .padding(.vertical, 6)
-                            .padding(.horizontal, 4)
-                            .background(Color.white)
+                            TextField("", text: $projectName)
+                                .focused($focusedItemID, equals: "answer.answer")
+                                .font(ApplicationFont.bold(size: 14).value)
+                                .multilineTextAlignment(.leading)
+                                .foregroundColor(.black)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 4)
+                                .background(Color.white)
                         }
                         HStack {
                             Text("Client: ")
@@ -79,7 +75,7 @@ struct DocReviewChecklistView: View {
                                 showPicker = true
                             }
                         }
-                        
+
                         HStack {
                             Text("AI Generated Inspections List: ")
                                 .font(ApplicationFont.regular(size: 14).value)
@@ -105,27 +101,21 @@ struct DocReviewChecklistView: View {
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 .navigationBarBackButtonHidden()
                 .background(.applicationBGcolor)
-                .onAppear() {
-                }
                 .sheet(isPresented: $showPicker) {
                     DocumentPicker { result in
-
                         switch result {
                         case .success(let url):
                             siteId = "Site-\(getShortUUID())-\((createdById ?? "").getShortID())-AI"
                             isLoading = true
-                            self.viewModel.uploadSitePlanReport(url: url, siteId: siteId ?? "", clientDetails: form.client, projectName: projectName) { error, uploadedUrl in
+                            self.viewModel.uploadSitePlanReport(url: url, siteId: siteId ?? "", clientDetails: form.client, projectName: projectName) { error, _ in
                                 isLoading = false
                                 if error == nil {
                                     self.viewModel.fetchAIGeneratedAllChecklists()
-                                } else {
-                                    isLoading = false
                                 }
                             }
                         case .failure(let error):
                             isLoading = false
                             viewModel.serviceError = error
-                            return
                         }
                     }
                 }
@@ -135,22 +125,19 @@ struct DocReviewChecklistView: View {
                     .transition(.opacity)
                     .animation(.easeInOut, value: viewModel.isLoading)
             }
-            
+
             Group {
                 if let error = viewModel.serviceError {
                     let nsError = error as NSError
                     let title = nsError.code == 92001 ? "No Internet Connection" : "Error"
                     let message = nsError.code == 92001
-                    ? "Please check your WiFi or cellular data."
-                    : nsError.localizedDescription
-                    
+                        ? "Please check your WiFi or cellular data."
+                        : nsError.localizedDescription
                     CustomAlertView(
                         title: title,
                         message: message,
                         primaryButtonTitle: "OK",
-                        primaryAction: {
-                            viewModel.serviceError = nil
-                        },
+                        primaryAction: { viewModel.serviceError = nil },
                         secondaryButtonTitle: nil,
                         secondaryAction: nil
                     )
@@ -158,7 +145,7 @@ struct DocReviewChecklistView: View {
             }
         }
     }
-    
+
     private func aiCheckListGeneratedListView(for checklists: [CheckList]) -> some View {
         VStack {
             ForEach(checklists, id: \.id) { checklist in
@@ -178,31 +165,22 @@ struct DocReviewChecklistView: View {
                 .cornerRadius(8)
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.red.opacity(0.5), lineWidth: 1))
                 .onTapGesture {
-                    
                     if checklist.aiCheckListStatus?.caseInsensitiveCompare("completed") != .orderedSame {
                         viewModel.serviceError = NSError(domain: "Checklists can be opened only when the status is Completed.", code: 92002)
                         return
                     }
-                    
-                    guard let matchedChecklist = viewModel.aiGeneratedSiteChecklist.first(where: {
-                        $0.request_id == checklist.id
-                    }) else {
-                        return
-                    }
-                    
-                    guard let client = matchedChecklist.client else {
-                        return
-                    }
+                    guard let matchedChecklist = viewModel.aiGeneratedSiteChecklist.first(where: { $0.request_id == checklist.id }),
+                          let client = matchedChecklist.client else { return }
 
                     viewModel.checkList = checklist
                     viewModel.jobModelAIGenerated = buildJobModelForInspector(client: client, checkList: checklist)
                     viewModel.selectedAiChecklistModel = matchedChecklist
-                    path.append("aiChecklistPage")
+                    router.navigate(to: .aiChecklist)
                 }
             }
         }
     }
-    
+
     func buildJobModelForInspector(client: ClientModel, checkList: CheckList) -> JobModel {
         let siteName = projectName.count > 0 ? projectName : (form.client?.fullName ?? siteId)
         return JobModel(
@@ -238,7 +216,7 @@ struct UploadDocumentView: View {
     let message: String
     let buttonTitle: String
     let primaryAction: () -> Void
-    
+
     var body: some View {
         VStack {
             Image(systemName: "tray")

@@ -56,8 +56,6 @@ class JobListViewModel: ObservableObject {
     }
     
     func refreshOrganisations() async {
-        // Simulate async refresh (API call etc.)
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 sec delay
         if isHistoryLoaded {
             fetchAllInspections()
         } else {

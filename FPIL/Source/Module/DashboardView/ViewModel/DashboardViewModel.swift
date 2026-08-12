@@ -6,9 +6,9 @@
 //
 
 import Foundation
-import Combine
 import SwiftUI
 
+@MainActor
 final class DashboardViewModel: ObservableObject {
     @Published var tabs: [TabBarItem] = []
     @Published var selectedTab: TabBarItem?
@@ -25,11 +25,6 @@ final class DashboardViewModel: ObservableObject {
         if (UserDefaultsStore.profileDetail?.userType ?? 2) == 2 {
             fetchFireStation(stationId: UserDefaultsStore.profileDetail?.parentId ?? "")
             fetchFireStationInspectors(stationId: UserDefaultsStore.profileDetail?.parentId ?? "")
-        }
-        Task {
-            await MainActor.run {
-                ClientListViewModel().fetchClientsList()
-            }
         }
     }
     
