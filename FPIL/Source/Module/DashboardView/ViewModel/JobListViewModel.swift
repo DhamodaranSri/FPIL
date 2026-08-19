@@ -638,7 +638,7 @@ extension JobListViewModel {
         }
     }
 
-    func uploadSitePlanReport(url: URL, siteId: String, clientDetails: ClientModel?, projectName: String, completion: @escaping (Error?, String?) -> Void) {
+    func uploadSitePlanReport(url: URL, siteId: String, clientDetails: ClientModel?, projectName: String, buildingType: String?, completion: @escaping (Error?, String?) -> Void) {
         if NetworkMonitor.shared.isConnected {
             
             isLoading = true
@@ -647,7 +647,7 @@ extension JobListViewModel {
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let url):
-                        let sitePlan = SitePlanAPIRequestModel(request_id: siteId, userId: UserDefaultsStore.profileDetail?.id, pdf_url: url)
+                        let sitePlan = SitePlanAPIRequestModel(request_id: siteId, userId: UserDefaultsStore.profileDetail?.id, pdf_url: url, type: buildingType)
                         APIServiceManager.shared.request(servicename: .uploadSiteApproval(model: sitePlan)) { data, json, result, error, statusCode in
                             
                             if error == nil {

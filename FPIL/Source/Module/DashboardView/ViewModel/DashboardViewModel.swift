@@ -21,6 +21,7 @@ final class DashboardViewModel: ObservableObject {
     init(repository: TabBarRepositoryProtocol = FirebaseTabBarRepository()) {
         self.repository = repository
         fetchAPIKeys()
+        fetchBuildingTypes()
         fetchTabs(forUserType: UserDefaultsStore.profileDetail?.userType ?? 2)
         if (UserDefaultsStore.profileDetail?.userType ?? 2) == 2 {
             fetchFireStation(stationId: UserDefaultsStore.profileDetail?.parentId ?? "")
@@ -54,6 +55,23 @@ final class DashboardViewModel: ObservableObject {
                 case .success(let items):
                     if items.count > 0 {
                         UserDefaultsStore.claudeAPIKey = items.first
+                    }
+                case .failure(let error):
+                    self?.serviceError = error
+                }
+            }
+        }
+    }
+
+    func fetchBuildingTypes() {
+        isLoading = true
+        repository.fetchBuildingTypes { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                switch result {
+                case .success(let items):
+                    if items.count > 0 {
+                        UserDefaultsStore.buildTypeModel = items.first
                     }
                 case .failure(let error):
                     self?.serviceError = error

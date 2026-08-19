@@ -137,13 +137,13 @@ final class AIAssistantChatService {
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
-            throw NSError(domain: "ClaudeAPI", code: 0)
+            throw NSError(domain: "FPIL AI API", code: 0)
         }
 
         let decoded = try JSONDecoder().decode(ClaudeResponse.self, from: data)
 
         guard let text = decoded.content.first?.text else {
-            throw NSError(domain: "ClaudeParsing", code: 0)
+            throw NSError(domain: "FPIL AI API Parsing", code: 0)
         }
 
         if !responseIsOnTopic(text) {

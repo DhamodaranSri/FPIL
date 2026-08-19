@@ -3,7 +3,7 @@ name: TestFlight Continuous Deployment
 on:
   push:
     branches:
-      - staging # Triggers the build automatically on every single commit to staging
+      - feat/12Aug2026 #- staging # Triggers the build automatically on every single commit to staging
 
 concurrency:
   group: testflight-${{ github.ref }}

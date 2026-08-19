@@ -13,4 +13,5 @@ protocol TabBarRepositoryProtocol {
     func fetchFireStation(stationId: String, completion: @escaping (Result<[OrganisationModel], Error>) -> Void)
     func fetchAllFireStationInspectors(stationId: String, completion: @escaping (Result<[FireStationInspectorModel], Error>) -> Void)
     func fetchAPIKeys(completion: @escaping (Result<[APIKeys], Error>) -> Void)
+    func fetchBuildingTypes(completion: @escaping (Result<[BuildingTypeModel], Error>) -> Void)
 }
