@@ -30,7 +30,7 @@
       scheme: "FPIL",
       workspace: "FPIL.xcworkspace",
       export_method: "app-store",
-      
+      configuration: "Debug",
       export_options: {
         method: "app-store-connect",
         signingStyle: "manual",

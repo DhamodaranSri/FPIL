@@ -13,6 +13,7 @@ final class FirebaseTabBarRepository: TabBarRepositoryProtocol {
     private let fireStationService: FirebaseService<OrganisationModel>
     private let fireStationInspectorService: FirebaseService<FireStationInspectorModel>
     private let apiKeysService: FirebaseService<APIKeys>
+    private let buildingTypeService: FirebaseService<BuildingTypeModel>
     
     init() {
         fireAuthService = FirebaseAuthService()
@@ -20,6 +21,7 @@ final class FirebaseTabBarRepository: TabBarRepositoryProtocol {
         fireStationService = FirebaseService<OrganisationModel>(collectionName: "FirestationsList")
         fireStationInspectorService = FirebaseService<FireStationInspectorModel>(collectionName: "InspectorsList")
         apiKeysService = FirebaseService<APIKeys>(collectionName: "APIKeys")
+        buildingTypeService = FirebaseService<BuildingTypeModel>(collectionName: "BuildingTypes")
     }
     
     func fetchTabs(forUserType userTypeId: Int, completion: @escaping (Result<[TabBarItem], Error>) -> Void) {
@@ -66,6 +68,16 @@ final class FirebaseTabBarRepository: TabBarRepositoryProtocol {
     func fetchAllFireStationInspectors(stationId: String, completion: @escaping (Result<[FireStationInspectorModel], Error>) -> Void) {
         if NetworkMonitor.shared.isConnected {
             fireStationInspectorService.fetchBy(field: "parentId", value: stationId) { result in
+                completion(result)
+            }
+        } else {
+            completion(.failure(NSError(domain: "Internet Connection Error", code: 92001)))
+        }
+    }
+
+    func fetchBuildingTypes(completion: @escaping (Result<[BuildingTypeModel], any Error>) -> Void) {
+        if NetworkMonitor.shared.isConnected {
+            buildingTypeService.fetchAllData { result in
                 completion(result)
             }
         } else {

@@ -44,6 +44,7 @@ class UserDefaultsStore {
     private static var allServicesPerfomerdList = "allServicesPerfomerdList"
     private static var clientDetailInfo = "clientDetailInfo"
     private static var apiKey = "apiKey"
+    private static var buildTypeModelKey = "buildTypeModel"
     
     static var jobStartedDate :Date? {
         get {
@@ -98,6 +99,25 @@ class UserDefaultsStore {
             let encoder = JSONEncoder()
             if let encoded = try? encoder.encode(newValue) {
                 UserDefaults.standard.set(encoded, forKey: allClientList)
+            }
+        }
+    }
+
+    static var buildTypeModel :BuildingTypeModel? {
+        get {
+            let decoder = JSONDecoder()
+            if let user = UserDefaults.standard.data(forKey: buildTypeModelKey)
+            {
+                let userDetail = try? decoder.decode(BuildingTypeModel.self, from: user)
+                return userDetail
+            }else{
+                return nil
+            }
+        }
+        set {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: buildTypeModelKey)
             }
         }
     }
@@ -286,6 +306,7 @@ class UserDefaultsStore {
         UserDefaults.standard.removeObject(forKey: allServicesPerfomerdList)
         UserDefaults.standard.removeObject(forKey: clientDetailInfo)
         UserDefaults.standard.removeObject(forKey: apiKey)
+        UserDefaults.standard.removeObject(forKey: buildTypeModelKey)
     }
     
     

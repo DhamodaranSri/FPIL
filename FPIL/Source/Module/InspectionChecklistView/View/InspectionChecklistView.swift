@@ -13,6 +13,9 @@ struct InspectionChecklistView: View {
     @State private var expandedSections: Set<String> = []
     @State private var selectedPhotoAnswerID: String?
     @FocusState private var focusedItemID: String?
+    @State private var showScoreAlert: Bool = false
+    @State private var scoreAlertTitle: String = ""
+    @State private var scoreAlertMessage: String = ""
     var isReadable: Bool = false
     var isNavigationNeeded: Bool = true
     
@@ -470,6 +473,7 @@ struct InspectionChecklistView: View {
                 .navigationBarBackButtonHidden()
                 .background(.applicationBGcolor)
                 .onAppear() {
+                    checkScoreAndShowAlert()
                 }
             
             if viewModel.isLoading {
@@ -497,6 +501,19 @@ struct InspectionChecklistView: View {
                         secondaryAction: nil
                     )
                 }
+
+                if showScoreAlert {
+                        CustomAlertView(
+                            title: scoreAlertTitle,
+                            message: scoreAlertMessage,
+                            primaryButtonTitle: "OK",
+                            primaryAction: {
+                                showScoreAlert = false
+                            },
+                            secondaryButtonTitle: nil,
+                            secondaryAction: nil
+                        )
+                    }
             }
         }
     }
@@ -748,6 +765,27 @@ struct InspectionChecklistView: View {
                 UserDefaultsStore.startedJobDetail?.building.checkLists[index] = checkList
             }
         }
+    }
+
+    private func checkScoreAndShowAlert() {
+        // Check if in editing mode
+        guard (UserDefaultsStore.profileDetail?.userType == 2), (viewModel.selectedItem?.isCompleted ?? false) == true, viewModel.selectedItem?.status == nil else { return }
+        
+        let progress = (viewModel.selectedItem?.isAIGenerated ?? false)
+            ? Double(viewModel.checkList?.totalAverageScore ?? 0) / 100
+            : (viewModel.totalQuestions() == 0 ? 0 : Double(viewModel.totalSelected()) / Double(viewModel.totalQuestions()))
+        
+        let scorePercentage = Int(progress * 100)
+        
+        if scorePercentage >= 75 {
+            scoreAlertTitle = "High Score (\(scorePercentage)%)"
+            scoreAlertMessage = "The inspection score is \(scorePercentage)%. You can proceed to Approve this checklist."
+        } else {
+            scoreAlertTitle = "Low Score (\(scorePercentage)%)"
+            scoreAlertMessage = "The inspection score is \(scorePercentage)%. You can choose to Approve, Decline, or request a Revision."
+        }
+        
+        showScoreAlert = true
     }
     
 }
