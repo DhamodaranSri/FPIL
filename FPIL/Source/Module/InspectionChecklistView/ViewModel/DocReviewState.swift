@@ -13,11 +13,19 @@ class DocReviewState: ObservableObject {
     
     let clients: [ClientModel]
     
+    let buildingTypes: [String]
+    
+    @Published var buildingType: String? = nil
+    
     init(
         clients: [ClientModel] = [],
-        selectedClient: ClientModel? = nil
+        selectedClient: ClientModel? = nil,
+        buildingTypes: [String] = [],
+        buildingType: String? = nil
     ) {
         self.clients = clients
         self.client = selectedClient
+        self.buildingTypes = buildingTypes
+        self.buildingType = buildingType
     }
 }

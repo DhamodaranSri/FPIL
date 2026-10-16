@@ -111,6 +111,11 @@ struct AIViolations: Codable, Hashable {
     let description: String?
     let severity: String?
 }
+
+struct BuildingTypeModel: Codable, Hashable, Identifiable {
+    var id: String? = UUID().uuidString
+    let buildType: [String]?
+}
 /*
  struct CheckList: Codable, Identifiable, Hashable {
  var id: String? = UUID().uuidString

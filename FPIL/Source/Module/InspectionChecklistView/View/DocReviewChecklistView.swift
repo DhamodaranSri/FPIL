@@ -24,7 +24,12 @@ struct DocReviewChecklistView: View {
     init(viewModel: JobListViewModel, onClick: (() -> ())? = nil) {
         self.onClick = onClick
         self.viewModel = viewModel
-        _form = StateObject(wrappedValue: DocReviewState(clients: UserDefaultsStore.allClientDetail ?? [], selectedClient: nil))
+        _form = StateObject(wrappedValue: DocReviewState(
+            clients: UserDefaultsStore.allClientDetail ?? [],
+            selectedClient: nil,
+            buildingTypes: UserDefaultsStore.buildTypeModel?.buildType ?? [],
+            buildingType: nil
+        ))
     }
 
     var body: some View {
@@ -70,6 +75,18 @@ struct DocReviewChecklistView: View {
                                 displayKey: \.fullName
                             )
                         }.padding(.vertical, 10)
+                        HStack {
+                            Text("Building Type: ")
+                                .font(ApplicationFont.regular(size: 14).value)
+                                .foregroundStyle(.white)
+                            Spacer()
+                            CustomPickerOptionalSelection<String>(
+                                title: "Type",
+                                options: form.buildingTypes,
+                                selection: $form.buildingType,
+                                displayKey: \.self
+                            )
+                        }.padding(.vertical, 10)
                         UploadDocumentView(message: "Please upload your document", buttonTitle: "Upload") {
                             if form.client != nil, projectName.count > 0 {
                                 showPicker = true
@@ -107,7 +124,7 @@ struct DocReviewChecklistView: View {
                         case .success(let url):
                             siteId = "Site-\(getShortUUID())-\((createdById ?? "").getShortID())-AI"
                             isLoading = true
-                            self.viewModel.uploadSitePlanReport(url: url, siteId: siteId ?? "", clientDetails: form.client, projectName: projectName) { error, _ in
+                            self.viewModel.uploadSitePlanReport(url: url, siteId: siteId ?? "", clientDetails: form.client, projectName: projectName, buildingType: form.buildingType) { error, _ in
                                 isLoading = false
                                 if error == nil {
                                     self.viewModel.fetchAIGeneratedAllChecklists()
@@ -236,4 +253,8 @@ struct UploadDocumentView: View {
         }
         .padding()
     }
+}
+
+extension String: @retroactive Identifiable {
+    public var id: String { self }
 }
