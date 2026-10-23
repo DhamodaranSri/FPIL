@@ -27,8 +27,8 @@ struct CreateOrUpdateSiteView: View {
     init(viewModel: JobListViewModel, onClick: (() -> ())? = nil, assignTheJob: Bool? = true) {
         self.onClick = onClick
         self.viewModel = viewModel
-        self.assignTheJob = assignTheJob
         _form = StateObject(wrappedValue: SiteFormState(buildings: UserDefaultsStore.buildings ?? [], frequencys: UserDefaultsStore.frequency ?? [], site: viewModel.selectedItem, isAssign: assignTheJob ?? false, inspectors: UserDefaultsStore.inspectorsList ?? []))
+        _assignTheJob = State(initialValue: assignTheJob)
     }
     
     var body: some View {

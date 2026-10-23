@@ -216,7 +216,7 @@ struct ClientDetailView: View {
 
 enum CustomerDetailFilter: String, CaseIterable, Identifiable {
     case currentInspections = "Current Inspections"
-    case inspectionsHistory = "Inspections Hisotry"
+    case inspectionsHistory = "Inspections History"
     case estimatedInvoices = "Estimated Invoices"
 
     var id: String { rawValue }

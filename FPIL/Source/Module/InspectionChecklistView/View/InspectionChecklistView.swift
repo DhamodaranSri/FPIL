@@ -122,7 +122,7 @@ struct InspectionChecklistView: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 16, height: 16)
-                                Text("Photos Addes")
+                                Text("Photos Added")
                                     .foregroundColor(.white)
                                     .font(ApplicationFont.regular(size: 12).value)
                             }

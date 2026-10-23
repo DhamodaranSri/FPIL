@@ -16,8 +16,8 @@ struct JobCardView: View {
     let raiseRequestForJob: ((JobModel) -> Void)?
     let startJob: ((JobModel) -> Void)?
     
-    @State private var showAlert = false
-    @State private var alertMessage = ""
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
     @Environment(\.openURL) private var openURL
     var isHistory: Bool = false
     
@@ -29,13 +29,14 @@ struct JobCardView: View {
         self.job = job
         self.onToggle = onToggle
         self.updateDetails = updateDetails
-        self.showAlert = showAlert
-        self.alertMessage = alertMessage
         self.showQRDetails = showQRDetails
         self.assignJob = assignJob
         self.raiseRequestForJob = raiseRequestForJob
         self.startJob = startJob
         self.isHistory = isHistory
+        // Initialize @State via their backing storage using leading underscore
+        _showAlert = State(initialValue: showAlert)
+        _alertMessage = State(initialValue: alertMessage)
     }
     
     var body: some View {
@@ -60,7 +61,7 @@ struct JobCardView: View {
                     }
                     .foregroundColor(.white)
                     if UserDefaultsStore.profileDetail?.userType == 2 && job.jobAssignedDate != nil  {
-                        Text("Assigned To: " + (job.inspectorName ?? "Nil"))
+                        Text("Assigned To: " + (job.inspectorName ?? "Unassigned"))
                             .font(ApplicationFont.regular(size: 12).value)
                             .foregroundColor(.white)
                     }
@@ -398,3 +399,4 @@ struct QRPreviewView: View {
     }
 
 }
+

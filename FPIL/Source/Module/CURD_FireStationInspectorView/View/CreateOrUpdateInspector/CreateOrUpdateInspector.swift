@@ -75,7 +75,7 @@ struct CreateOrUpdateInspector: View {
                                 )
                             }.padding(.vertical, 10)
                             BottomBorderTextField(text: $form.email, placeholder: "Official Email")
-                            BottomBorderTextField(text: $form.stationCode, placeholder: "Firesation Code").disabled(true)
+                            BottomBorderTextField(text: $form.stationCode, placeholder: "Fire Station Code").disabled(true)
                             BottomBorderTextField(text: $form.address, placeholder: "Address")
                             BottomBorderTextField(text: $form.street, placeholder: "Street")
                             BottomBorderTextField(text: $form.city, placeholder: "City")

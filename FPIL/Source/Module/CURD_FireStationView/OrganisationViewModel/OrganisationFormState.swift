@@ -106,12 +106,12 @@ class OrganisationFormState: ObservableObject {
     func validate() -> [String] {
         var errors: [String] = []
 
-        if let error = Validator.isNotEmpty(firestationName, fieldName: "Firestation Name") { errors.append(error) }
+        if let error = Validator.isNotEmpty(firestationName, fieldName: "Fire Station Name") { errors.append(error) }
         if let error = Validator.isNotEmpty(stationCode, fieldName: "Station Code") { errors.append(error) }
         if let error = Validator.isNotEmpty(firestationAddress, fieldName: "Address") { errors.append(error) }
         if let error = Validator.isNotEmpty(city, fieldName: "City") { errors.append(error) }
         if let error = Validator.isValidZip(zipCode) { errors.append(error) }
-        if let error = Validator.isValidPhone(firestationContactNumber, fieldName: "Firestation Contact Number") { errors.append(error) }
+        if let error = Validator.isValidPhone(firestationContactNumber, fieldName: "Fire Station Contact Number") { errors.append(error) }
         if let error = Validator.isValidEmail(firestationAdminEmail) { errors.append(error) }
         if let error = Validator.isNotEmpty(firestationCheifFirstName, fieldName: "Chief First Name") { errors.append(error) }
         if let error = Validator.isNotEmpty(firestationCheifLastName, fieldName: "Chief Last Name") { errors.append(error) }

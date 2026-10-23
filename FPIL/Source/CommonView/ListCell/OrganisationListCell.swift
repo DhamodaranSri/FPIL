@@ -53,7 +53,7 @@ struct OrganisationListCell: View {
                         .foregroundColor(.white)
                     
                     HStack {
-                        Text("Firestation Cheif Contact:")
+                        Text("Fire Station Chief Contact:")
                             .font(ApplicationFont.bold(size: 12).value)
                     }
                     .foregroundColor(.white)
@@ -69,7 +69,7 @@ struct OrganisationListCell: View {
                     }
                     
                     HStack {
-                        Text("Firestation Contact:")
+                        Text("Fire Station Contact:")
                             .font(ApplicationFont.bold(size: 12).value)
                     }
                     .foregroundColor(.white)

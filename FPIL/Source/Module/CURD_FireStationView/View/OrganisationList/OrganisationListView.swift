@@ -17,7 +17,7 @@ struct OrganisationListView: View {
             ZStack {
                 VStack(spacing: 0) {
                     CustomNavBar(
-                        title: "Firestations List",
+                        title: "Fire Stations List",
                         showBackButton: false,
                         actions: [
                             NavBarAction(icon: "plus") {

@@ -30,9 +30,22 @@ struct CreateInspection: View {
         self.onClick = onClick
         self.viewModel = viewModel
         self.clientModel = clientModel
-        self.assignTheJob = assignTheJob
         self.inspectionForInvoice = inspectionForInvoice
-        _form = StateObject(wrappedValue: SiteFormState(buildings: UserDefaultsStore.buildings ?? [], frequencys: UserDefaultsStore.frequency ?? [], site: viewModel.selectedItem, isAssign: assignTheJob ?? false, inspectors: UserDefaultsStore.inspectorsList ?? [], clients: UserDefaultsStore.allClientDetail ?? [], selectedClient: clientModel, selectedInvoice: inspectionForInvoice))
+        
+        // Build the SiteFormState without referencing self
+        let initialForm = SiteFormState(
+            buildings: UserDefaultsStore.buildings ?? [],
+            frequencys: UserDefaultsStore.frequency ?? [],
+            site: viewModel.selectedItem,
+            isAssign: assignTheJob ?? false,
+            inspectors: UserDefaultsStore.inspectorsList ?? [],
+            clients: UserDefaultsStore.allClientDetail ?? [],
+            selectedClient: clientModel,
+            selectedInvoice: inspectionForInvoice
+        )
+        
+        _assignTheJob = State(initialValue: assignTheJob)
+        _form = StateObject(wrappedValue: initialForm)
     }
     
     var body: some View {
@@ -318,3 +331,4 @@ struct CreateInspection: View {
         }
     }
 }
+
