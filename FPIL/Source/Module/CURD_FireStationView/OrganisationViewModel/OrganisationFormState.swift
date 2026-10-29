@@ -14,8 +14,24 @@ class OrganisationFormState: ObservableObject {
     @Published var firestationCheifFirstName = ""
     @Published var firestationCheifLastName = ""
     @Published var firestationAddress = ""
-    @Published var firestationContactNumber = ""
-    @Published var firestationCheifContactNumber = ""
+    @Published var firestationContactNumber = "" {
+        didSet {
+            let digits = firestationContactNumber.filter { $0.isNumber }
+            let truncated = digits.count > 10 ? String(digits.prefix(10)) : digits
+            if firestationContactNumber != truncated {
+                firestationContactNumber = truncated
+            }
+        }
+    }
+    @Published var firestationCheifContactNumber = "" {
+        didSet {
+            let digits = firestationCheifContactNumber.filter { $0.isNumber }
+            let truncated = digits.count > 10 ? String(digits.prefix(10)) : digits
+            if firestationCheifContactNumber != truncated {
+                firestationCheifContactNumber = truncated
+            }
+        }
+    }
     @Published var firestationAdminEmail = ""
     @Published var street = ""
     @Published var city = ""
@@ -51,8 +67,8 @@ class OrganisationFormState: ObservableObject {
             firestationCheifFirstName = org.firestationCheifFirstName
             firestationCheifLastName = org.firestationCheifLastName
             firestationAddress = org.firestationAddress
-            firestationContactNumber = org.firestationContactNumber
-            firestationCheifContactNumber = org.firestationCheifContactNumber
+            firestationContactNumber = org.firestationContactNumber.rawPhoneNumber()
+            firestationCheifContactNumber = org.firestationCheifContactNumber.rawPhoneNumber()
             firestationAdminEmail = org.firestationAdminEmail
             stationCode = org.stationCode
             street = org.street
@@ -88,8 +104,8 @@ class OrganisationFormState: ObservableObject {
             firestationCheifFirstName: firestationCheifFirstName,
             firestationCheifLastName: firestationCheifLastName,
             firestationAddress: firestationAddress,
-            firestationContactNumber: firestationContactNumber,
-            firestationCheifContactNumber: firestationCheifContactNumber,
+            firestationContactNumber: firestationContactNumber.rawPhoneNumber(),
+            firestationCheifContactNumber: firestationCheifContactNumber.rawPhoneNumber(),
             firestationAdminEmail: firestationAdminEmail,
             timeZone: selectedTimeZone,
             jurisdiction: selectedJurisdiction,

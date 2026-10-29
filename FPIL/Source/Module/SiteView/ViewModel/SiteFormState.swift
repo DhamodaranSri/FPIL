@@ -23,7 +23,15 @@ class SiteFormState: ObservableObject {
     @Published var latitude: Double = 0.0
     @Published var longitude: Double = 0.0
     @Published var clientId: String? = nil
-    @Published var contactNumber = ""
+    @Published var contactNumber = "" {
+        didSet {
+            let digits = contactNumber.filter { $0.isNumber }
+            let truncated = digits.count > 10 ? String(digits.prefix(10)) : digits
+            if contactNumber != truncated {
+                contactNumber = truncated
+            }
+        }
+    }
     @Published var email = ""
     @Published var street = ""
     @Published var city = ""
@@ -85,7 +93,7 @@ class SiteFormState: ObservableObject {
             lastName = org.lastName
             address = org.address
             geoLocationAddress = org.geoLocationAddress
-            contactNumber = org.phone
+            contactNumber = org.phone.rawPhoneNumber()
             email = org.email
             stationId = stationId
             street = org.street
@@ -106,7 +114,7 @@ class SiteFormState: ObservableObject {
             lastDate = org.lastDateToInspection
             client = org.client
             invoice = org.invoiceDetails
-            inspectorContact = org.inspectorContact
+            inspectorContact = org.inspectorContact?.rawPhoneNumber()
         }
     }
 
@@ -150,7 +158,7 @@ class SiteFormState: ObservableObject {
             clientId: client?.id,
             firstName: firstName,
             lastName: lastName,
-            phone: contactNumber,
+            phone: contactNumber.rawPhoneNumber(),
             email: email,
             alternateContactNumber: "",
             building: building,
@@ -163,7 +171,7 @@ class SiteFormState: ObservableObject {
             jobAssignedDate: (UserDefaultsStore.profileDetail?.userType == 2 && jobAssignedDate == nil && !isAssign) ? nil : (jobAssignedDate ?? Date()),
             client: client,
             invoiceDetails: invoice,
-            inspectorContact: inspector?.contactNumber ?? inspectorContact
+            inspectorContact: (inspector?.contactNumber ?? inspectorContact)?.rawPhoneNumber()
         )
     }
     
@@ -183,7 +191,7 @@ class SiteFormState: ObservableObject {
             clientId: self.client?.id,
             firstName: firstName,
             lastName: lastName,
-            phone: contactNumber,
+            phone: contactNumber.rawPhoneNumber(),
             email: email,
             alternateContactNumber: "",
             building: building,
@@ -196,7 +204,7 @@ class SiteFormState: ObservableObject {
             jobAssignedDate: (UserDefaultsStore.profileDetail?.userType == 2 && jobAssignedDate == nil && !isAssign) ? nil : (jobAssignedDate ?? Date()),
             client: self.client,
             invoiceDetails: [invoice],
-            inspectorContact: inspector?.contactNumber ?? inspectorContact
+            inspectorContact: (inspector?.contactNumber ?? inspectorContact)?.rawPhoneNumber()
         )
     }
 
@@ -216,7 +224,7 @@ class SiteFormState: ObservableObject {
             clientId: self.client?.id,
             firstName: firstName,
             lastName: lastName,
-            phone: contactNumber,
+            phone: contactNumber.rawPhoneNumber(),
             email: email,
             alternateContactNumber: "",
             building: building,
@@ -229,7 +237,7 @@ class SiteFormState: ObservableObject {
             jobAssignedDate: (UserDefaultsStore.profileDetail?.userType == 2 && jobAssignedDate == nil && !isAssign) ? nil : (jobAssignedDate ?? Date()),
             client: self.client,
             invoiceDetails: invoice,
-            inspectorContact: inspector?.contactNumber ?? inspectorContact
+            inspectorContact: (inspector?.contactNumber ?? inspectorContact)?.rawPhoneNumber()
         )
     }
 

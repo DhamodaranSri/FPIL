@@ -115,7 +115,7 @@ struct JobCardView: View {
                 Button(action: {
                     PhoneCallManager.shared.call(job.phone, openURL: openURL)
                 }) {
-                    IconLabel(labelTitle: job.phone, imageName: "phone", textColor: .white)
+                    IconLabel(labelTitle: job.phone.formatPhoneNumber(), imageName: "phone", textColor: .white)
                 }
             }
             

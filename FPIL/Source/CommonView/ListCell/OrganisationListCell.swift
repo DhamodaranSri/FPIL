@@ -64,7 +64,7 @@ struct OrganisationListCell: View {
                         Button(action: {
                             PhoneCallManager.shared.call(organisation.firestationCheifContactNumber, openURL: openURL)
                         }) {
-                            IconLabel(labelTitle: organisation.firestationCheifContactNumber, imageName: "phone", textColor: .white)
+                            IconLabel(labelTitle: organisation.firestationCheifContactNumber.formatPhoneNumber(), imageName: "phone", textColor: .white)
                         }
                     }
                     
@@ -79,7 +79,7 @@ struct OrganisationListCell: View {
                         Button(action: {
                             PhoneCallManager.shared.call(organisation.firestationContactNumber, openURL: openURL)
                         }) {
-                            IconLabel(labelTitle: organisation.firestationContactNumber, imageName: "phone", textColor: .white)
+                            IconLabel(labelTitle: organisation.firestationContactNumber.formatPhoneNumber(), imageName: "phone", textColor: .white)
                         }
                         
                         Button(action: {

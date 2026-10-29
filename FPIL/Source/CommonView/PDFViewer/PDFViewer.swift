@@ -89,7 +89,7 @@ struct PDFViewer: View {
         ZStack {
             VStack(spacing: 40) {
                 CustomNavBar(
-                    title: "Plan Review Report",
+                    title: "Plan Review",
                     showBackButton: true,
                     actions: [
                         NavBarAction(icon: "print") {

@@ -17,7 +17,7 @@ struct OrganisationListView: View {
             ZStack {
                 VStack(spacing: 0) {
                     CustomNavBar(
-                        title: "Fire Stations List",
+                        title: "Fire Station(s) List",
                         showBackButton: false,
                         actions: [
                             NavBarAction(icon: "plus") {
@@ -36,7 +36,7 @@ struct OrganisationListView: View {
                             Text("\(viewModel.items.count)")
                                 .foregroundColor(.appPrimary)
                                 .font(ApplicationFont.bold(size: 26).value)
-                            Text("All Firestations")
+                            Text("All Fire Station(s)")
                                 .foregroundColor(.white)
                                 .font(ApplicationFont.regular(size: 12).value)
                         }
@@ -53,7 +53,7 @@ struct OrganisationListView: View {
                             Text("\(activeStationsCount)")
                                 .foregroundColor(.appPrimary)
                                 .font(ApplicationFont.bold(size: 26).value)
-                            Text("Active Stations")
+                            Text("Active Station(s)")
                                 .foregroundColor(.white)
                                 .font(ApplicationFont.regular(size: 12).value)
                         }.padding(.horizontal, 10)
@@ -68,7 +68,7 @@ struct OrganisationListView: View {
                             Text("\(inactiveStationsCount)")
                                 .foregroundColor(.appPrimary)
                                 .font(ApplicationFont.bold(size: 26).value)
-                            Text("Inactive Stations")
+                            Text("Inactive Station(s)")
                                 .foregroundColor(.white)
                                 .font(ApplicationFont.regular(size: 12).value)
                         }.padding(.horizontal, 10)
@@ -101,7 +101,7 @@ struct OrganisationListView: View {
 
                     Group {
                         if viewModel.filteredItems.isEmpty {
-                            NoDataView(message: "No Firestations Available")
+                            NoDataView(message: "No Fire Station(s) Available")
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         } else {
                             ScrollView {

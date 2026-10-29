@@ -111,7 +111,7 @@ struct CreateOrUpdateClientView: View {
                             BottomBorderTextField(text: $form.street, placeholder: "Street")
                             BottomBorderTextField(text: $form.city, placeholder: "City")
                             BottomBorderTextField(text: $form.zipCode, placeholder: "Zip Code")
-                            BottomBorderTextField(text: $form.contactNumber, placeholder: "Contact Number")
+                            BottomBorderTextField(text: $form.contactNumber, placeholder: "Contact Number", keyboardType: .numberPad)
                             
                             Text("Notes:")
                                 .font(ApplicationFont.regular(size: 10).value)

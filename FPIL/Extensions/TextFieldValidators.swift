@@ -76,12 +76,13 @@ struct Validator {
     }
     
     static func isValidPhone(_ number: String?, fieldName: String) -> String? {
-        guard let number = number, !number.isEmpty else {
+        guard let number = number, !number.trimmingCharacters(in: .whitespaces).isEmpty else {
             return "\(fieldName) is required."
         }
         
+        let digits = number.filter { $0.isNumber }
         let regex = #"^[0-9]{10,15}$"#
-        if NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: number) {
+        if NSPredicate(format: "SELF MATCHES %@", regex).evaluate(with: digits) {
             return nil
         } else {
             return "\(fieldName) must be 10–15 digits."

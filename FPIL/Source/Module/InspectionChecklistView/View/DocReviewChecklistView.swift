@@ -36,7 +36,7 @@ struct DocReviewChecklistView: View {
         ZStack {
             VStack {
                 CustomNavBar(
-                    title: "AI - Review Inspection",
+                    title: "Plan Review",
                     showBackButton: true,
                     actions: [],
                     backgroundColor: .applicationBGcolor,
@@ -94,7 +94,7 @@ struct DocReviewChecklistView: View {
                         }
 
                         HStack {
-                            Text("AI Generated Inspections List: ")
+                            Text("Plan Review: ")
                                 .font(ApplicationFont.regular(size: 14).value)
                                 .foregroundColor(.white)
                             Spacer()

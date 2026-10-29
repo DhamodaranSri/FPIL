@@ -93,13 +93,13 @@ struct StatusInspectionCell: View {
                     }
                     .foregroundColor(.white)
                     if job.jobAssignedDate != nil  {
-                        Text("Inspector: " + (job.inspectorName ?? "Nil"))
+                        Text("Inspector: " + (job.inspectorName ?? "N/A - AI Review"))
                             .font(ApplicationFont.regular(size: 12).value)
                             .foregroundColor(.white)
                         Button(action: {
                             PhoneCallManager.shared.call(job.inspectorContact ?? "", openURL: openURL)
                         }) {
-                            IconLabel(labelTitle: job.inspectorContact ?? "", imageName: "phone", textColor: .white)
+                            IconLabel(labelTitle: job.inspectorContact.formatPhoneNumber(), imageName: "phone", textColor: .white)
                         }
                         HStack {
                             Text("Assigned Date: \(job.jobAssignedDate?.formatedDateAloneAsString() ?? "")")

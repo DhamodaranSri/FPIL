@@ -127,7 +127,15 @@ struct CreateInspection: View {
                             BottomBorderTextField(text: $form.street, placeholder: "Street")
                             BottomBorderTextField(text: $form.city, placeholder: "City")
                             BottomBorderTextField(text: $form.zipCode, placeholder: "Zip Code")
-                            BottomBorderTextField(text: $form.contactNumber, placeholder: "Contact Number")
+                            BottomBorderTextField(text: $form.contactNumber, placeholder: "Contact Number", keyboardType: .numberPad)
+                                .onChange(of: form.contactNumber) { oldValue, newValue in
+                                    let digits = newValue.filter { $0.isNumber }
+                                    if digits.count > 10 {
+                                        form.contactNumber = String(digits.prefix(10))
+                                    } else if digits != newValue {
+                                        form.contactNumber = digits
+                                    }
+                                }
                             HStack {
                                 Text("Assign To: ")
                                     .font(ApplicationFont.regular(size: 14).value)

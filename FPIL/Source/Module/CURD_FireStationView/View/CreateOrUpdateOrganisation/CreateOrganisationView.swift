@@ -79,11 +79,11 @@ struct CreateOrganisationView: View {
                             BottomBorderTextField(text: $form.street, placeholder: "Street")//.disabled(viewModel.selectedItem != nil)
                             BottomBorderTextField(text: $form.city, placeholder: "City")//.disabled(viewModel.selectedItem != nil)
                             BottomBorderTextField(text: $form.zipCode, placeholder: "Zip Code")//.disabled(viewModel.selectedItem != nil)
-                            BottomBorderTextField(text: $form.firestationContactNumber, placeholder: "Fire Station Contact Number")
+                            BottomBorderTextField(text: $form.firestationContactNumber, placeholder: "Fire Station Contact Number", keyboardType: .numberPad)
                             BottomBorderTextField(text: $form.firestationAdminEmail, placeholder: "Fire Station Admin Email")//.disabled(viewModel.selectedItem != nil)
                             BottomBorderTextField(text: $form.firestationCheifFirstName, placeholder: "Fire Station Cheif First Name")
                             BottomBorderTextField(text: $form.firestationCheifLastName, placeholder: "Last Name")
-                            BottomBorderTextField(text: $form.firestationCheifContactNumber, placeholder: "Fire Station Cheif Contact Number")
+                            BottomBorderTextField(text: $form.firestationCheifContactNumber, placeholder: "Fire Station Cheif Contact Number", keyboardType: .numberPad)
                         }.padding(5)
                             .disabled(viewModel.selectedItem != nil && !isEditMode)
                         

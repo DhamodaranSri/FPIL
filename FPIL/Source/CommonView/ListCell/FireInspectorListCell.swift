@@ -63,7 +63,7 @@ struct FireInspectorListCell: View {
                         Button(action: {
                             PhoneCallManager.shared.call(inspector.contactNumber, openURL: openURL)
                         }) {
-                            IconLabel(labelTitle: inspector.contactNumber, imageName: "phone", textColor: .white)
+                            IconLabel(labelTitle: inspector.contactNumber.formatPhoneNumber(), imageName: "phone", textColor: .white)
                         }
                         
                         Button(action: {

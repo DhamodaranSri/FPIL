@@ -82,7 +82,7 @@ struct AIChecklistDetailView: View {
             
             VStack {
                 CustomNavBar(
-                    title: "Inspection Checklist",
+                    title: "Plan Review",
                     showBackButton: true,
                     actions: [],
                     backgroundColor: .applicationBGcolor,

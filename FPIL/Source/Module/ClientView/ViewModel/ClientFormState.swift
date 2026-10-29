@@ -17,7 +17,15 @@ class ClientFormState: ObservableObject {
     @Published var latitude: Double = 0.0
     @Published var longitude: Double = 0.0
     @Published var address = ""
-    @Published var contactNumber = ""
+    @Published var contactNumber = "" {
+        didSet {
+            let digits = contactNumber.filter { $0.isNumber }
+            let truncated = digits.count > 10 ? String(digits.prefix(10)) : digits
+            if contactNumber != truncated {
+                contactNumber = truncated
+            }
+        }
+    }
     @Published var email = ""
     @Published var street = ""
     @Published var city = ""
@@ -56,7 +64,7 @@ class ClientFormState: ObservableObject {
             latitude = clientData.latitude
             longitude = clientData.longitude
             address = clientData.address
-            contactNumber = clientData.contactNumber
+            contactNumber = clientData.contactNumber.rawPhoneNumber()
             email = clientData.email
             parentId = clientData.stationId
             city = clientData.city
@@ -98,7 +106,7 @@ class ClientFormState: ObservableObject {
             address: address,
             latitude: latitude,
             longitude: longitude,
-            contactNumber: contactNumber,
+            contactNumber: contactNumber.rawPhoneNumber(),
             alternateContactNumber: "",
             email: email,
             stationId: parentId,

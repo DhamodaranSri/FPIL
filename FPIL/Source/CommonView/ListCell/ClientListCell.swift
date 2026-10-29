@@ -72,7 +72,7 @@ struct ClientListCell: View {
                         Button(action: {
                             PhoneCallManager.shared.call(client.contactNumber, openURL: openURL)
                         }) {
-                            IconLabel(labelTitle: client.contactNumber, imageName: "phone", textColor: .white)
+                            IconLabel(labelTitle: client.contactNumber.formatPhoneNumber(), imageName: "phone", textColor: .white)
                         }
                     }
                     

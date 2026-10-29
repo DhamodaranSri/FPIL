@@ -11,6 +11,7 @@ struct BottomBorderTextField: View {
     @Binding var text: String
     var placeholder: String
     var isSecure: Bool = false
+    var keyboardType: UIKeyboardType = .default
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -23,6 +24,7 @@ struct BottomBorderTextField: View {
                     }
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
+                    .keyboardType(keyboardType)
                     .font(ApplicationFont.regular(size: 14).value)
                     .foregroundColor(.white)
                     .padding(.horizontal, 5)
@@ -36,6 +38,7 @@ struct BottomBorderTextField: View {
                     }
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
+                    .keyboardType(keyboardType)
                     .font(ApplicationFont.regular(size: 14).value)
                     .foregroundColor(.white)
                     .padding(.horizontal, 5)
@@ -62,6 +65,7 @@ extension View {
         }
     }
 }
+
 #Preview {
     BottomBorderTextField(text: .constant(""), placeholder: "Test")
 }

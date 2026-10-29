@@ -83,7 +83,7 @@ struct PDFGenerator {
             
             drawLine(label: "Site Name:", value: siteInfo.siteName)
             drawLine(label: "Site Address:", value: siteInfo.address)
-            drawLine(label: "Inspector:", value: siteInfo.inspectorName ?? "No Inspector")
+            drawLine(label: "Inspector:", value: siteInfo.inspectorName ?? "N/A - AI Review")
             drawLine(label: "Review Date:", value: Date().convertDateAloneFromFullDateFormat())
             drawLine(label: "Score:", value: "\(checklistItems.totalAverageScore ?? 0)%")
             
@@ -111,7 +111,7 @@ struct PDFGenerator {
             yPosition += remarksBoundingRect.height + 25
             
             // --- Inspection Checklist Header ---
-            let checklistHeader = "Inspection Checklist"
+            let checklistHeader = "Plan Review"
             checklistHeader.draw(in: CGRect(x: margin, y: yPosition, width: contentWidth, height: 30), withAttributes: [.font: subHeaderFont])
             yPosition += subHeaderFont.lineHeight + 12
             

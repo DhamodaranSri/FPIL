@@ -13,7 +13,15 @@ class InspectorFormState: ObservableObject {
     @Published var firstName = ""
     @Published var lastName = ""
     @Published var address = ""
-    @Published var contactNumber = ""
+    @Published var contactNumber = "" {
+        didSet {
+            let digits = contactNumber.filter { $0.isNumber }
+            let truncated = digits.count > 10 ? String(digits.prefix(10)) : digits
+            if contactNumber != truncated {
+                contactNumber = truncated
+            }
+        }
+    }
     @Published var email = ""
     @Published var street = ""
     @Published var city = ""
@@ -42,7 +50,7 @@ class InspectorFormState: ObservableObject {
             firstName = org.firstName
             lastName = org.lastName
             address = org.address
-            contactNumber = org.contactNumber
+            contactNumber = org.contactNumber.rawPhoneNumber()
             email = org.email
             stationCode = stationCode
             street = org.street
@@ -79,7 +87,7 @@ class InspectorFormState: ObservableObject {
             firstName: firstName,
             lastName: lastName,
             address: address,
-            contactNumber: contactNumber,
+            contactNumber: contactNumber.rawPhoneNumber(),
             email: email,
             timeZone: selectedTimeZone,
             jurisdiction: selectedJurisdiction,

@@ -32,7 +32,7 @@ struct InspectionChecklistView: View {
                 if isNavigationNeeded {
                     if viewModel.selectedItem?.status == 3, self.viewModel.isEditing == false {
                         CustomNavBar(
-                            title: "Inspection Checklist",
+                            title: "Plan Review",
                             showBackButton: true,
                             actions: [
                                 NavBarAction(icon: "edit") {
@@ -49,7 +49,7 @@ struct InspectionChecklistView: View {
                         )
                     } else {
                         CustomNavBar(
-                            title: "Inspection Checklist",
+                            title: "Plan Review",
                             showBackButton: true,
                             actions: [],
                             backgroundColor: .applicationBGcolor,

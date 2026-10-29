@@ -113,7 +113,7 @@ struct CreateOrUpdateSiteView: View {
                                 .disabled(viewModel.selectedItem != nil)
                             BottomBorderTextField(text: $form.zipCode, placeholder: "Zip Code")
                                 .disabled(viewModel.selectedItem != nil)
-                            BottomBorderTextField(text: $form.contactNumber, placeholder: "Contact Number")
+                            BottomBorderTextField(text: $form.contactNumber, placeholder: "Contact Number", keyboardType: .numberPad)
                                 .disabled(viewModel.selectedItem != nil)
                             if let isAssign = assignTheJob, (isAssign == true || UserDefaultsStore.profileDetail?.userType == 2) {
                                 if isAssign {
